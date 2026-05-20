@@ -1,0 +1,162 @@
+/* Page */
+.courses-page {
+  padding-top: 120px;
+  padding-bottom: 80px;
+}
+
+/* Header */
+.courses-header {
+  margin-bottom: 48px;
+  text-align: center;
+}
+
+.courses-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #001943;
+}
+
+.courses-header p {
+  font-size: 18px;
+  color: #64748b;
+}
+
+/* Grid */
+.courses-grid {
+  display: grid;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .courses-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .courses-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Card */
+.course-card {
+  position: relative;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px;
+  border-radius: 16px;
+
+  background: rgba(0, 25, 67, 0.9);
+  border: 1px solid rgba(255,255,255,0.08);
+
+  backdrop-filter: blur(14px);
+  box-shadow: 0 6px 30px rgba(0,0,0,0.25);
+
+  transition: 0.3s;
+}
+
+.course-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0,82,254,0.3);
+}
+
+/* 🔥 Top Row (Badges) */
+.course-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+/* Badges */
+.course-card-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  backdrop-filter: blur(6px);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mode-badge {
+  background: rgba(0, 82, 254, 0.35);
+  color: #c7d2fe;
+}
+
+/* Content */
+.course-card-title {
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
+.course-card-desc {
+  font-size: 15px;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 28px;
+}
+
+/* Footer */
+.course-card-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 1024px) {
+  .course-card-footer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.course-price {
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+}
+
+/* Buttons */
+.course-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-outline {
+  padding: 10px 14px;
+  border-radius: 8px;
+
+  border: 1px solid rgba(96,165,250,0.4);
+  color: #60a5fa;
+  background: transparent;
+}
+
+.btn-outline:hover {
+  background: rgba(96,165,250,0.1);
+}
+
+.btn-primary-small {
+  padding: 10px 14px;
+  border-radius: 8px;
+
+  background: linear-gradient(135deg, #0052fe, #003ec6);
+  color: white;
+  border: none;
+}
+
+.btn-primary-small:hover {
+  box-shadow: 0 6px 20px rgba(0,82,254,0.4);
+}

@@ -1,0 +1,300 @@
+/* about.css - Semantic CSS for About Us Page */
+
+.about-page {
+  padding-top: 140px;
+  padding-bottom: 96px;
+  background-color: #ffffff;
+  color: #001943;
+  min-height: 100vh;
+}
+
+.abt-container {
+  max-width: 1536px;
+  margin: 0 auto;
+}
+
+/* Base Utilities extracted from Tailwind */
+.glass-panel {
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 25, 67, 0.05);
+}
+
+.glow-text {
+  text-shadow: 0 2px 4px rgba(0, 25, 67, 0.05);
+}
+
+.ambient-shadow {
+  box-shadow: 0 10px 40px -10px rgba(0, 25, 67, 0.08);
+}
+
+.text-secondary {
+  color: #0056b3;
+}
+
+/* HERO SECTION */
+.abt-hero {
+  margin-bottom: 64px;
+  position: relative;
+}
+
+.abt-hero-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('../assets/images/about/about-hero-bg.jpg');
+  background-size: cover; 
+  background-position: center;
+  opacity: 1;
+  /* The glass panel above provides the frosted transparency */
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+.abt-hero-panel {
+  border-radius: 24px;
+  padding: 48px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+}
+
+@media (min-width: 1024px) {
+  .abt-hero-panel {
+    padding: 80px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.abt-hero-content {
+  z-index: 10;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.85);
+  padding: 32px;
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 25, 67, 0.08);
+}
+
+@media (min-width: 1024px) {
+  .abt-hero-content {
+    width: 60%;
+  }
+}
+
+.abt-hero-title {
+  font-size: 42px;
+  font-weight: 700;
+  color: #001943;
+  letter-spacing: -0.05em;
+  margin-bottom: 24px;
+  line-height: 1.1;
+}
+
+@media (min-width: 768px) {
+  .abt-hero-title {
+    font-size: 64px;
+  }
+}
+
+.abt-hero-subtitle {
+  color: #495057;
+  font-size: 18px;
+  max-width: 672px;
+  line-height: 1.625;
+}
+
+@media (min-width: 768px) {
+  .abt-hero-subtitle {
+    font-size: 20px;
+  }
+}
+
+.abt-hero-stats {
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .abt-hero-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .abt-hero-stats {
+    width: 35%;
+    grid-template-columns: 1fr;
+  }
+}
+
+.abt-stat-card {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 25, 67, 0.08);
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 25, 67, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.abt-stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #001943;
+  margin-bottom: 4px;
+}
+
+.abt-stat-label {
+  font-size: 13px;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* VISION & MISSION SECTION */
+.abt-vision-mission {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  margin-bottom: 80px;
+}
+
+@media (min-width: 768px) {
+  .abt-vision-mission {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.abt-glass-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #dee2e6;
+  padding: 40px;
+  transition: all 0.3s ease;
+}
+
+.abt-glass-card:hover {
+  border-color: rgba(0, 25, 67, 0.3);
+}
+
+.abt-vm-icon {
+  width: 48px;
+  height: 48px;
+  background-color: #e7f0ff;
+  color: #0056b3;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.abt-vm-icon .material-symbols-outlined {
+  font-size: 28px;
+}
+
+.abt-section-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #001943;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+
+.abt-vm-text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #495057;
+}
+
+/* GENERAL SECTION HEADER */
+.abt-section {
+  margin-bottom: 80px;
+}
+
+.abt-section-header {
+  font-size: 32px;
+  font-weight: 700;
+  color: #001943;
+  letter-spacing: -0.02em;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+/* GOALS GRID */
+.abt-goals-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .abt-goals-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .abt-goals-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.abt-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: all 0.3s ease;
+}
+
+.abt-card:hover {
+  border-color: rgba(0, 25, 67, 0.3);
+  transform: translateY(-4px);
+}
+
+.abt-card-icon {
+  font-size: 32px;
+  color: #0056b3;
+  margin-bottom: 20px;
+  opacity: 0.8;
+}
+
+.abt-card-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: #001943;
+  line-height: 1.5;
+}
+
+@media (min-width: 1024px) {
+  .abt-card-span {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .abt-card-span .abt-card-icon {
+    margin-bottom: 0;
+  }
+}

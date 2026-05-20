@@ -1,0 +1,138 @@
+.why-agenticx-section {
+  padding: 80px 0;
+  background: transparent;
+}
+
+.why-agenticx-header {
+  font-size: 32px;
+  font-weight: 700;
+  color: #001943;
+  letter-spacing: -0.02em;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.why-agenticx-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+
+@media (min-width: 768px) {
+  .why-agenticx-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .why-agenticx-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.why-agenticx-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #dee2e6;
+  padding: 32px;
+  height: 100%;
+  box-shadow: 0 10px 40px -10px rgba(0, 25, 67, 0.08);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.why-agenticx-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px -10px rgba(0, 25, 67, 0.15);
+  border-color: rgba(0, 25, 67, 0.2);
+}
+
+.why-cat-span {
+  grid-column: 1 / -1;
+}
+
+.why-cat-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #f1f3f5;
+  padding-bottom: 16px;
+}
+
+.why-cat-icon {
+  font-size: 28px;
+  color: #0056b3;
+}
+
+.why-cat-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #001943;
+}
+
+.why-cat-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.why-cat-content li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 15px;
+  color: #495057;
+  line-height: 1.5;
+}
+
+.why-cat-content li::before {
+  content: '•';
+  color: #0056b3;
+  position: absolute;
+  left: 0;
+  font-size: 18px;
+  line-height: 1;
+  top: 2px;
+}
+
+.why-sub-group {
+  margin-bottom: 24px;
+}
+
+.why-sub-group:last-child {
+  margin-bottom: 0;
+}
+
+.why-sub-group h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #001943;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.why-cat-cols {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .why-cat-cols {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Animations */
+.fade-in-hidden {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.fade-in-visible {
+  opacity: 1;
+  transform: translateY(0);
+}

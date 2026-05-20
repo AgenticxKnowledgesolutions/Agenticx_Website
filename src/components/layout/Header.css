@@ -1,0 +1,248 @@
+/* ========================= */
+/* HEADER BASE */
+/* ========================= */
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  padding: 14px 0;
+
+  transition: all 0.3s ease;
+
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* Overlay background */
+.header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: rgba(0, 25, 67, 0.94);
+
+  z-index: -1;
+}
+
+/* ========================= */
+/* LAYOUT */
+/* ========================= */
+
+.header-inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+/* ========================= */
+/* LOGO */
+/* ========================= */
+
+.header-logo {
+  text-decoration: none;
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  margin-right: 12px;
+}
+
+/* ========================= */
+/* DESKTOP NAV */
+/* ========================= */
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px;
+  border-radius: 999px;
+
+  background: rgba(255,255,255,0.08);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* Links */
+
+.nav-link {
+  padding: 8px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+
+  color: rgba(255,255,255,0.75);
+
+  font-size: 14px;
+  font-weight: 500;
+
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.nav-link:hover {
+  color: white;
+  background: rgba(255,255,255,0.08);
+}
+
+.nav-link.active {
+  background: white;
+  color: #001943;
+  font-weight: 600;
+}
+
+/* ========================= */
+/* ACTION BUTTONS */
+/* ========================= */
+
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.login-btn {
+  text-decoration: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.demo-btn {
+  text-decoration: none;
+
+  padding: 12px 22px;
+  border-radius: 999px;
+
+  background: white;
+  color: #001943;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  transition: transform 0.2s ease, opacity 0.25s ease;
+}
+
+.demo-btn:hover {
+  opacity: 0.92;
+}
+
+.demo-btn:active {
+  transform: scale(0.96);
+}
+
+/* ========================= */
+/* HAMBURGER */
+/* ========================= */
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.line {
+  width: 22px;
+  height: 2px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+/* ========================= */
+/* MOBILE MENU */
+/* ========================= */
+
+.mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+
+  background: rgba(0, 25, 67, 0.98);
+  backdrop-filter: blur(20px);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+
+  padding: 20px 0;
+
+  transform: translateY(-20px);
+  opacity: 0;
+  pointer-events: none;
+
+  transition: all 0.3s ease;
+}
+
+.mobile-menu.show {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-menu a {
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Mobile actions */
+
+.mobile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.mobile-demo {
+  background: white;
+  color: #001943 !important;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* ========================= */
+/* RESPONSIVE */
+/* ========================= */
+
+@media (max-width: 992px) {
+
+  .header {
+    padding: 18px 0;
+  }
+
+  .header-nav {
+    display: none;
+  }
+
+  .header-actions {
+    display: none;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .header-inner {
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+  }
+}

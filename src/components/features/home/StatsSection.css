@@ -1,0 +1,57 @@
+.stats {
+  padding: 32px 0;
+
+  background: rgba(255,255,255,0.7);
+
+  backdrop-filter: blur(10px);
+
+  border-top: 1px solid rgba(0,0,0,0.04);
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.stats-grid {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 24px;
+}
+
+.stats-card {
+  text-align: center;
+}
+
+.stats-value {
+  font-size: 36px;
+  font-weight: 700;
+
+  color: #001943;
+
+  margin-bottom: 6px;
+}
+
+.stats-label {
+  font-size: 12px;
+  font-weight: 700;
+
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  color: #94a3b8;
+}
+
+/* Mobile */
+
+@media (max-width: 768px) {
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 32px 20px;
+  }
+
+  .stats-value {
+    font-size: 28px;
+  }
+
+}
