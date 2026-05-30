@@ -1,10 +1,12 @@
 // import { , useRef, useState } from 'react';
 import './OfferingsBento.css';
-
+import NeuralCanvas from "@/components/ui/NeuralCanvas";
 export default function OfferingsBento() {
 
   return (
     <section className="bento-section">
+      <NeuralCanvas nodeCount={25} />
+
       <div className="container">
 
         <div className="bento-header">

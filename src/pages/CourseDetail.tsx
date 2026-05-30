@@ -116,28 +116,47 @@ const MOCK_COURSES_DB: Record<string, CourseDetailData> = {
   }
 }
 
+import { getCourseBySlug, type Course as CourseDetailData } from '@/services/courseService'
+
 export default function CourseDetail() {
   const { slug } = useParams()
   const [course, setCourse] = useState<CourseDetailData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [prevSlug, setPrevSlug] = useState(slug)
   const [activeTab, setActiveTab] = useState(0)
+
+  if (slug !== prevSlug) {
+    setPrevSlug(slug)
+    setActiveTab(0)
+  }
 
   useEffect(() => {
     window.scrollTo(0, 0)
-
-    // Simulate fetching data from backend based on URL slug
-    if (slug && MOCK_COURSES_DB[slug]) {
-      setCourse(MOCK_COURSES_DB[slug])
-      setActiveTab(0) // Reset tab when course changes
-    } else {
-      // Fallback if course not found
-      setCourse(null)
+    
+    const fetchCourse = async () => {
+      if (slug) {
+        setLoading(true)
+        const data = await getCourseBySlug(slug)
+        setCourse(data)
+        setLoading(false)
+      }
     }
+    
+    fetchCourse()
   }, [slug])
+
+  if (loading) {
+    return (
+      <div className="cd-page container cd-loading">
+        <h2>Loading course details...</h2>
+      </div>
+    )
+  }
 
   if (!course) {
     return (
       <div className="cd-page container cd-loading">
-        <h2>Loading course details or course not found...</h2>
+        <h2>Course not found...</h2>
       </div>
     )
   }

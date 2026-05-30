@@ -1,8 +1,40 @@
 /* Live Activities Component Styles */
 
 .live-activities-section {
-  padding: 60px 0;
-  background-color: #f8fafc;
+  padding: 80px 0;
+  background: #0A1628;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background gradient glows */
+.live-activities-section::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 60%;
+  height: 70%;
+  background: radial-gradient(circle, rgba(0, 201, 200, 0.12) 0%, rgba(0, 201, 200, 0) 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.live-activities-section::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  left: -10%;
+  width: 60%;
+  height: 70%;
+  background: radial-gradient(circle, rgba(10, 58, 122, 0.22) 0%, rgba(10, 58, 122, 0) 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.live-activities-content {
+  position: relative;
+  z-index: 1;
 }
 
 .live-activities-header {
@@ -13,12 +45,13 @@
 .live-activities-title {
   font-size: 32px;
   font-weight: 800;
-  color: #001943;
+  color: #ffffff;
   margin-bottom: 12px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .live-activities-subtitle {
-  color: #64748b;
+  color: #cbd5e1;
   font-size: 16px;
   max-width: 600px;
   margin: 0 auto;
@@ -161,7 +194,7 @@
 /* Mobile Responsiveness - Horizontal Scroll */
 @media (max-width: 768px) {
   .live-activities-section {
-    padding: 40px 0;
+    padding: 60px 0;
   }
   
   .live-activities-title {

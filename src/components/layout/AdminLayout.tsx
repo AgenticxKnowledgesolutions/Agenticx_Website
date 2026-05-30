@@ -4,10 +4,15 @@ import '../features/admin/Admin.css';
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCoursesOpen, setIsCoursesOpen] = useState(false);
+  const [isActivitiesOpen, setIsActivitiesOpen] = useState(false);
+  const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.removeItem("isAdmin");
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_refresh_token");
     navigate("/admin/login");
   };
 
@@ -31,15 +36,61 @@ export default function AdminLayout() {
           <NavLink to="/admin/dashboard" onClick={closeSidebar} className={({isActive}) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
             <span className="material-symbols-outlined">dashboard</span> Dashboard
           </NavLink>
-          <NavLink to="/admin/courses" onClick={closeSidebar} className={({isActive}) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
-            <span className="material-symbols-outlined">school</span> Courses
-          </NavLink>
-          <NavLink to="/admin/activities" onClick={closeSidebar} className={({isActive}) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
-            <span className="material-symbols-outlined">event</span> Activities
-          </NavLink>
-          <NavLink to="/admin/reviews" onClick={closeSidebar} className={({isActive}) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
-            <span className="material-symbols-outlined">star</span> Reviews
-          </NavLink>
+
+          {/* Courses Collapsible Group */}
+          <div className="admin-nav-group">
+            <button className="admin-nav-link dropdown-toggle" onClick={() => setIsCoursesOpen(!isCoursesOpen)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined">school</span> Courses
+              </div>
+              <span className={`material-symbols-outlined chevron ${isCoursesOpen ? 'rotated' : ''}`}>expand_more</span>
+            </button>
+            <div className={`admin-submenu ${isCoursesOpen ? 'open' : ''}`}>
+              <NavLink to="/admin/courses" onClick={closeSidebar} end className={({isActive}) => isActive ? "admin-sub-link active" : "admin-sub-link"}>
+                View Courses
+              </NavLink>
+              <NavLink to="/admin/courses/add" onClick={closeSidebar} className={({isActive}) => isActive ? "admin-sub-link active" : "admin-sub-link"}>
+                Add Course
+              </NavLink>
+            </div>
+          </div>
+
+          {/* Activities Collapsible Group */}
+          <div className="admin-nav-group">
+            <button className="admin-nav-link dropdown-toggle" onClick={() => setIsActivitiesOpen(!isActivitiesOpen)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined">event</span> Activities
+              </div>
+              <span className={`material-symbols-outlined chevron ${isActivitiesOpen ? 'rotated' : ''}`}>expand_more</span>
+            </button>
+            <div className={`admin-submenu ${isActivitiesOpen ? 'open' : ''}`}>
+              <NavLink to="/admin/activities" onClick={closeSidebar} end className={({isActive}) => isActive ? "admin-sub-link active" : "admin-sub-link"}>
+                View Activities
+              </NavLink>
+              <NavLink to="/admin/activities/add" onClick={closeSidebar} className={({isActive}) => isActive ? "admin-sub-link active" : "admin-sub-link"}>
+                Add Activity
+              </NavLink>
+            </div>
+          </div>
+
+          {/* Reviews Collapsible Group */}
+          <div className="admin-nav-group">
+            <button className="admin-nav-link dropdown-toggle" onClick={() => setIsReviewsOpen(!isReviewsOpen)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined">star</span> Reviews
+              </div>
+              <span className={`material-symbols-outlined chevron ${isReviewsOpen ? 'rotated' : ''}`}>expand_more</span>
+            </button>
+            <div className={`admin-submenu ${isReviewsOpen ? 'open' : ''}`}>
+              <NavLink to="/admin/reviews" onClick={closeSidebar} end className={({isActive}) => isActive ? "admin-sub-link active" : "admin-sub-link"}>
+                View Reviews
+              </NavLink>
+              <NavLink to="/admin/reviews/add" onClick={closeSidebar} className={({isActive}) => isActive ? "admin-sub-link active" : "admin-sub-link"}>
+                Add Review
+              </NavLink>
+            </div>
+          </div>
+
           <NavLink to="/admin/leads" onClick={closeSidebar} className={({isActive}) => isActive ? "admin-nav-link active" : "admin-nav-link"}>
             <span className="material-symbols-outlined">leaderboard</span> Leads
           </NavLink>

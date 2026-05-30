@@ -1,5 +1,6 @@
 import heroOfficeImg from "@/assets/images/hero/hero-office.jpg";
 import phoneIcon from "@/assets/images/hero/phone-call.png";
+import NeuralCanvas from "@/components/ui/NeuralCanvas";
 import "./HeroSection.css";
 import { Link } from "react-router-dom";
 
@@ -16,6 +17,8 @@ export default function HeroSection({ onOpenDemo }: { onOpenDemo?: () => void })
         />
         <div className="hero-overlay" />
       </div>
+
+      <NeuralCanvas nodeCount={35} />
 
       {/* Content */}
       <div className="container hero-content">

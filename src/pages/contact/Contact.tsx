@@ -107,7 +107,9 @@ export default function Contact() {
               <div className="card-content">
                 <h3 className="card-title">Send Email</h3>
                 <p className="card-text">
-                  support@agenticx.com
+                  anju.muraleedharan@agenticx.co.in<br/>
+                  agenticxknowledgesolutions@gmail.com
+                  
                 </p>
               </div>
             </div>

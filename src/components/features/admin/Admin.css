@@ -81,7 +81,12 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-.admin-form-group input::placeholder {
+.admin-form-group input::placeholder,
+.admin-form-group textarea::placeholder {
+  color: #94a3b8;
+}
+
+.admin-login-container .admin-form-group input::placeholder {
   color: rgba(255, 255, 255, 0.3);
 }
 
@@ -321,4 +326,72 @@
   .admin-content-area {
     padding: 20px;
   }
+}
+
+/* Submenu and Accordion navigation */
+.admin-nav-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.chevron {
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.admin-submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.25, 1, 0.5, 1), padding 0.3s ease;
+  padding-left: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-submenu.open {
+  max-height: 200px;
+  padding-top: 4px;
+  padding-bottom: 8px;
+}
+
+.admin-sub-link {
+  display: block;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.admin-sub-link:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-sub-link.active {
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.15);
+  font-weight: 500;
+}
+
+/* General button styles for forms */
+.admin-back-btn:hover {
+  background: #e2e8f0 !important;
+  color: #475569 !important;
 }

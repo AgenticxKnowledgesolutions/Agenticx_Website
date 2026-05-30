@@ -29,6 +29,9 @@ export default function Footer() {
             <Link to="/about" className="footer-link">
               About
             </Link>
+            <Link to="/admin/login" className="footer-link">
+              Admin Login
+            </Link>
           </div>
         </div>
 
@@ -51,7 +54,7 @@ export default function Footer() {
           </div>
           <div className="footer-designer">
             Designed by{" "}
-            <a href="#" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/fazilyousuf" target="_blank" rel="noopener noreferrer">
               Muhammad Fazil V K
             </a>
           </div>

@@ -11,7 +11,7 @@ export default function Header() {
 
         {/* Logo */}
         <NavLink to="/" className="header-logo">
-          AgenticX
+          AgenticX Knowledge Solutions
         </NavLink>
 
         {/* Desktop Nav */}
@@ -35,7 +35,6 @@ export default function Header() {
 
         {/* Desktop Actions */}
         <div className="header-actions">
-          <NavLink to="/admin/login" className="login-btn">Login</NavLink>
           <NavLink to="/contact" className="demo-btn">Contact Us</NavLink>
         </div>
 
@@ -55,7 +54,6 @@ export default function Header() {
         <NavLink to="/about" onClick={() => setIsOpen(false)}>About</NavLink>
 
         <div className="mobile-actions">
-          <NavLink to="/admin/login" onClick={() => setIsOpen(false)}>Login</NavLink>
           <NavLink to="/contact" className="mobile-demo" onClick={() => setIsOpen(false)}>
             Contact Us
           </NavLink>

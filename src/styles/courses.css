@@ -1,7 +1,41 @@
 /* Page */
+.courses-page-wrapper {
+  background-color: #0A1628;
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+}
+
+/* Background gradient glows */
+.courses-page-wrapper::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -10%;
+  width: 50%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(0, 201, 200, 0.12) 0%, rgba(0, 201, 200, 0) 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.courses-page-wrapper::after {
+  content: '';
+  position: absolute;
+  bottom: -10%;
+  left: -10%;
+  width: 50%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(10, 58, 122, 0.22) 0%, rgba(10, 58, 122, 0) 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
 .courses-page {
   padding-top: 120px;
   padding-bottom: 80px;
+  position: relative;
+  z-index: 1;
 }
 
 /* Header */
@@ -13,12 +47,12 @@
 .courses-header h1 {
   font-size: 36px;
   font-weight: 700;
-  color: #001943;
+  color: #ffffff;
 }
 
 .courses-header p {
   font-size: 18px;
-  color: #64748b;
+  color: #cbd5e1;
 }
 
 /* Grid */
@@ -47,20 +81,25 @@
   display: flex;
   flex-direction: column;
   padding: 28px 24px;
-  border-radius: 16px;
+  border-radius: 20px;
 
-  background: rgba(0, 25, 67, 0.9);
-  border: 1px solid rgba(255,255,255,0.08);
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 
-  backdrop-filter: blur(14px);
-  box-shadow: 0 6px 30px rgba(0,0,0,0.25);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
-  transition: 0.3s;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .course-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 16px 40px rgba(0,82,254,0.3);
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(0, 201, 200, 0.35);
+  box-shadow: 0 20px 40px -15px rgba(0, 201, 200, 0.12),
+              0 0 0 1px rgba(0, 201, 200, 0.05);
 }
 
 /* 🔥 Top Row (Badges) */
@@ -100,7 +139,7 @@
 
 .course-card-desc {
   font-size: 15px;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: 28px;
 }
 
@@ -108,7 +147,7 @@
 .course-card-footer {
   margin-top: auto;
   padding-top: 20px;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 
   display: flex;
   flex-direction: column;
@@ -139,13 +178,13 @@
   padding: 10px 14px;
   border-radius: 8px;
 
-  border: 1px solid rgba(96,165,250,0.4);
+  border: 1px solid rgba(96, 165, 250, 0.4);
   color: #60a5fa;
   background: transparent;
 }
 
 .btn-outline:hover {
-  background: rgba(96,165,250,0.1);
+  background: rgba(96, 165, 250, 0.1);
 }
 
 .btn-primary-small {
@@ -158,5 +197,5 @@
 }
 
 .btn-primary-small:hover {
-  box-shadow: 0 6px 20px rgba(0,82,254,0.4);
+  box-shadow: 0 6px 20px rgba(0, 82, 254, 0.4);
 }

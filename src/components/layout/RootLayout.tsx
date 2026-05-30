@@ -8,7 +8,7 @@ export default function RootLayout() {
   return (
     <div className="root-layout">
       <Header />
-      
+
       {/* Main Content Area */}
       <main className="main-content">
         <Outlet />
