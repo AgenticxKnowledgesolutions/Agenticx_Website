@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type Review } from '@/types/review';
-import { getReviews, saveReviews } from '@/services/reviewsService';
+import { saveReviews } from '@/services/reviewsService';
 import '../Admin.css';
 
 export default function ReviewAdd() {
