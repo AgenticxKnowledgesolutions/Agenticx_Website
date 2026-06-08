@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getReviews } from '@/services/reviewsService';
 import type { Review } from '@/types/review';
+import { ReviewCardSkeleton } from '@/components/ui/Skeletons';
 import './SuccessStories.css'
 
 const getInitials = (name: string): string => {
@@ -39,9 +40,15 @@ export default function SuccessStories() {
     return (
       <section className="success-section">
         <div className="container">
-          <p style={{ textAlign: "center", color: "#64748b" }}>
-            Loading reviews...
-          </p>
+          <div className="success-header">
+            <h2 className="success-title">What Our Students Say</h2>
+            <p className="success-subtitle">Real feedback from our learners and professionals</p>
+          </div>
+          <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '40px' }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <ReviewCardSkeleton key={i} />
+            ))}
+          </div>
         </div>
       </section>
     );

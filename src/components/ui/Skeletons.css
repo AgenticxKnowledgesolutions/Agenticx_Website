@@ -1,0 +1,38 @@
+/* Base Pulse Element in Company Dark Theme */
+.skeleton-pulse {
+  background: linear-gradient(90deg, #001232 25%, #002e8a 50%, #001232 75%);
+  background-size: 200% 100%;
+  animation: loading-pulse 1.5s infinite;
+  border-radius: 6px;
+  display: block;
+}
+
+@keyframes loading-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Disable Hover Animations/Styles on Skeleton Cards */
+.course-card-skeleton:hover,
+.activity-card-skeleton:hover,
+.review-card-skeleton:hover {
+  transform: none !important;
+  border-color: rgba(0, 82, 254, 0.15) !important;
+  background-color: rgba(0, 25, 67, 0.2) !important;
+  box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(0, 82, 254, 0.1) !important;
+}
+
+/* Table Row Skeleton in Company Light/Blue Accent Theme */
+.skeleton-line {
+  height: 16px;
+  background: linear-gradient(90deg, #f0f4fa 25%, #dbeafe 50%, #f0f4fa 75%);
+  background-size: 200% 100%;
+  animation: loading-pulse 1.5s infinite;
+  border-radius: 4px;
+  display: inline-block;
+}

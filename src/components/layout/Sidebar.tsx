@@ -30,7 +30,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             position: 'fixed',
             inset: 0,
             background: 'rgba(15, 23, 42, 0.4)',
-            backdropFilter: 'blur(4px)',
             zIndex: 999
           }}
         />

@@ -5,6 +5,7 @@ import LiveActivities from '@/components/features/home/LiveActivities'
 import '../styles/courses.css'
 import NeuralCanvas from '@/components/ui/NeuralCanvas'
 import { getCourses } from '@/services/courseService'
+import { CourseCardSkeleton } from '@/components/ui/Skeletons'
 
 export interface CourseData {
   id: string
@@ -60,10 +61,12 @@ export default function Courses() {
             <p>Career Training Programs at AgenticX Knowledge Solutions</p>
           </div>
 
-          {loading ? (
-            <div className="courses-empty">Loading courses...</div>
-          ) : courses.length === 0 ? (
-            <div className="courses-empty">No courses available</div>
+          {loading || courses.length === 0 ? (
+            <CourseGrid>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <CourseCardSkeleton key={i} />
+              ))}
+            </CourseGrid>
           ) : (
             <CourseGrid>
               {courses.map((course) => (

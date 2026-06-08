@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getCourses } from '@/services/courseService'
+import { CourseCardSkeleton } from '@/components/ui/Skeletons'
 import NeuralCanvas from '@/components/ui/NeuralCanvas'
 import analyticsImg from '@/assets/images/courses/analytics.jpg'
 import systemsImg from '@/assets/images/courses/systems.jpg'
@@ -43,6 +44,7 @@ const DEFAULT_COURSES = [
 
 export default function PopularCourses() {
   const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -66,6 +68,8 @@ export default function PopularCourses() {
       } catch (err) {
         console.error('Failed to load popular courses:', err);
         setCourses(DEFAULT_COURSES);
+      } finally {
+        setLoading(false);
       }
     };
     fetchCourses();
@@ -84,33 +88,39 @@ export default function PopularCourses() {
             <Link to="/courses" className="courses-view-all">View All Courses</Link>
           </div>
           <div className="courses-grid">
-            {courses.map((course) => {
-              const imgSrc = course.coverImageUrl || defaultPlaceholder;
-              return (
-                <div className="course-card" key={course.id}>
-                  <div className="course-img-wrapper">
-                    <img 
-                      className="course-img" 
-                      alt={course.title} 
-                      src={imgSrc} 
-                      onError={(e) => {
-                        e.currentTarget.src = defaultPlaceholder;
-                      }}
-                      loading="lazy"
-                    />
-                    <div className="course-badge">{course.badge}</div>
-                  </div>
-                  <div className="course-content">
-                    <h4 className="course-card-title">{course.title}</h4>
-                    <p className="course-card-desc">{course.description}</p>
-                    <div className="course-footer">
-                      <span className="course-duration">{course.duration}</span>
-                      <span className="material-symbols-outlined course-icon">{course.icon}</span>
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <CourseCardSkeleton key={i} />
+              ))
+            ) : (
+              courses.map((course) => {
+                const imgSrc = course.coverImageUrl || defaultPlaceholder;
+                return (
+                  <div className="course-card" key={course.id}>
+                    <div className="course-img-wrapper">
+                      <img 
+                        className="course-img" 
+                        alt={course.title} 
+                        src={imgSrc} 
+                        onError={(e) => {
+                          e.currentTarget.src = defaultPlaceholder;
+                        }}
+                        loading="lazy"
+                      />
+                      <div className="course-badge">{course.badge}</div>
+                    </div>
+                    <div className="course-content">
+                      <h4 className="course-card-title">{course.title}</h4>
+                      <p className="course-card-desc">{course.description}</p>
+                      <div className="course-footer">
+                        <span className="course-duration">{course.duration}</span>
+                        <span className="material-symbols-outlined course-icon">{course.icon}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>

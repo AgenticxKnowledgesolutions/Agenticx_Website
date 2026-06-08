@@ -1,18 +1,49 @@
 import { useEffect, useState } from 'react';
 import { type Activity, getActivities } from '@/services/activityService';
 import NeuralCanvas from '@/components/ui/NeuralCanvas';
+import { ActivityCardSkeleton } from '@/components/ui/Skeletons';
 import './LiveActivities.css';
 
 export default function LiveActivities() {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchActivities = async () => {
-      const data = await getActivities();
-      setActivities(data);
+      try {
+        const data = await getActivities();
+        setActivities(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchActivities();
   }, []);
+
+  if (loading) {
+    return (
+      <section className="live-activities-section">
+        <NeuralCanvas />
+        <div className="live-activities-content">
+          <div className="container">
+            <div className="live-activities-header">
+              <h2 className="live-activities-title">Live Activities & Events</h2>
+              <p className="live-activities-subtitle">
+                Join our expert-led webinars, interactive workshops, and intensive bootcamps to accelerate your career.
+              </p>
+            </div>
+            <div className="live-activities-container">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <ActivityCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (activities.length === 0) return null;
 

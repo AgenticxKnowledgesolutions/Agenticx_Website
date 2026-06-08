@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useSettingsStore } from './store/useSettingsStore'
+import AppLoader from './components/ui/AppLoader'
 import RootLayout from './components/layout/RootLayout'
 import Home from './pages/Home'
 import Courses from './pages/Courses'
@@ -28,9 +29,27 @@ import ErrorBoundary from './components/ui/ErrorBoundary'
 function App() {
   const fetchSettings = useSettingsStore(state => state.fetchSettings)
   const settings = useSettingsStore(state => state.settings)
+  const [bootstrapFinished, setBootstrapFinished] = useState(false)
+  const [showLoader, setShowLoader] = useState(true)
 
   useEffect(() => {
-    fetchSettings()
+    const bootstrap = async () => {
+      try {
+        await fetchSettings();
+      } catch (err) {
+        console.error("Initial bootstrap failed:", err);
+      } finally {
+        // Ensure a minimum display of 1500ms for visual smoothness
+        setTimeout(() => {
+          setBootstrapFinished(true);
+          // Unmount after CSS fadeout animation completes (500ms)
+          setTimeout(() => {
+            setShowLoader(false);
+          }, 500);
+        }, 1500);
+      }
+    };
+    bootstrap();
   }, [fetchSettings])
 
   useEffect(() => {
@@ -53,40 +72,43 @@ function App() {
   }, [settings])
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Main Public Website */}
-        <Route path="/" element={<RootLayout />}>
-          <Route index element={<ErrorBoundary><Home /></ErrorBoundary>} />
-          <Route path="courses" element={<ErrorBoundary><Courses /></ErrorBoundary>} />
-          <Route path="courses/:slug" element={<ErrorBoundary><CourseDetail /></ErrorBoundary>} />
-          <Route path="services" element={<ErrorBoundary><Services /></ErrorBoundary>} />
-          <Route path="about" element={<ErrorBoundary><About /></ErrorBoundary>} />
-          <Route path="contact" element={<ErrorBoundary><Contact /></ErrorBoundary>} />
-        </Route>
-
-        {/* Admin Login */}
-        <Route path="/admin/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
-
-        {/* Protected Admin Routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/admin" element={<ErrorBoundary><AdminLayout /></ErrorBoundary>}>
-            <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
-            <Route path="courses" element={<ErrorBoundary><CourseList /></ErrorBoundary>} />
-            <Route path="courses/add" element={<ErrorBoundary><CourseAdd /></ErrorBoundary>} />
-            <Route path="courses/edit/:id" element={<ErrorBoundary><CourseEdit /></ErrorBoundary>} />
-            <Route path="activities" element={<ErrorBoundary><ActivityList /></ErrorBoundary>} />
-            <Route path="activities/add" element={<ErrorBoundary><ActivityAdd /></ErrorBoundary>} />
-            <Route path="activities/edit/:id" element={<ErrorBoundary><ActivityEdit /></ErrorBoundary>} />
-            <Route path="reviews" element={<ErrorBoundary><ReviewList /></ErrorBoundary>} />
-            <Route path="reviews/add" element={<ErrorBoundary><ReviewAdd /></ErrorBoundary>} />
-            <Route path="reviews/edit/:id" element={<ErrorBoundary><ReviewEdit /></ErrorBoundary>} />
-            <Route path="leads" element={<ErrorBoundary><LeadsAdmin /></ErrorBoundary>} />
-            <Route path="settings" element={<ErrorBoundary><CompanySettingsAdmin /></ErrorBoundary>} />
+    <>
+      {showLoader && <AppLoader isFadeOut={bootstrapFinished} />}
+      <BrowserRouter>
+        <Routes>
+          {/* Main Public Website */}
+          <Route path="/" element={<RootLayout />}>
+            <Route index element={<ErrorBoundary><Home /></ErrorBoundary>} />
+            <Route path="courses" element={<ErrorBoundary><Courses /></ErrorBoundary>} />
+            <Route path="courses/:slug" element={<ErrorBoundary><CourseDetail /></ErrorBoundary>} />
+            <Route path="services" element={<ErrorBoundary><Services /></ErrorBoundary>} />
+            <Route path="about" element={<ErrorBoundary><About /></ErrorBoundary>} />
+            <Route path="contact" element={<ErrorBoundary><Contact /></ErrorBoundary>} />
           </Route>
-        </Route>
-      </Routes>
-    </BrowserRouter>
+
+          {/* Admin Login */}
+          <Route path="/admin/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+
+          {/* Protected Admin Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/admin" element={<ErrorBoundary><AdminLayout /></ErrorBoundary>}>
+              <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+              <Route path="courses" element={<ErrorBoundary><CourseList /></ErrorBoundary>} />
+              <Route path="courses/add" element={<ErrorBoundary><CourseAdd /></ErrorBoundary>} />
+              <Route path="courses/edit/:id" element={<ErrorBoundary><CourseEdit /></ErrorBoundary>} />
+              <Route path="activities" element={<ErrorBoundary><ActivityList /></ErrorBoundary>} />
+              <Route path="activities/add" element={<ErrorBoundary><ActivityAdd /></ErrorBoundary>} />
+              <Route path="activities/edit/:id" element={<ErrorBoundary><ActivityEdit /></ErrorBoundary>} />
+              <Route path="reviews" element={<ErrorBoundary><ReviewList /></ErrorBoundary>} />
+              <Route path="reviews/add" element={<ErrorBoundary><ReviewAdd /></ErrorBoundary>} />
+              <Route path="reviews/edit/:id" element={<ErrorBoundary><ReviewEdit /></ErrorBoundary>} />
+              <Route path="leads" element={<ErrorBoundary><LeadsAdmin /></ErrorBoundary>} />
+              <Route path="settings" element={<ErrorBoundary><CompanySettingsAdmin /></ErrorBoundary>} />
+            </Route>
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </>
   )
 }
 

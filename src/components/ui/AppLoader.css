@@ -1,0 +1,225 @@
+/* Full-screen Loader Overlay */
+.app-loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #001232 0%, #00081a 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s;
+  user-select: none;
+}
+
+/* Fade Out Transition */
+.app-loader-overlay.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.app-loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* AI Orb Container */
+.ai-orb-container {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Glowing Aura Background */
+.ai-orb-glow {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(0, 82, 254, 0.45) 0%, rgba(0, 82, 254, 0) 70%);
+  filter: blur(25px);
+  animation: orb-pulse 3s ease-in-out infinite alternate;
+  z-index: 1;
+}
+
+/* Concentric Scanning Rings */
+.ai-orb-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 2;
+}
+
+.ai-orb-ring.ring-outer {
+  width: 140px;
+  height: 140px;
+  border-top: 1.5px solid rgba(0, 82, 254, 0.4);
+  border-bottom: 1.5px solid rgba(0, 242, 254, 0.2);
+  animation: orb-spin-clockwise 12s linear infinite;
+}
+
+.ai-orb-ring.ring-inner {
+  width: 120px;
+  height: 120px;
+  border-left: 1px solid rgba(0, 242, 254, 0.3);
+  border-right: 1px solid rgba(0, 82, 254, 0.2);
+  animation: orb-spin-counter 8s linear infinite;
+}
+
+/* Liquid Morphing Blob Centerpiece */
+.ai-orb-blob {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, #0052FE 0%, #1d4ed8 45%, #00f2fe 100%);
+  box-shadow: 0 0 25px rgba(0, 82, 254, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.25);
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  animation: orb-morph 7s ease-in-out infinite, orb-float 5s ease-in-out infinite;
+  filter: contrast(1.15);
+  z-index: 3;
+}
+
+/* Brand Branding Text */
+.loader-brand {
+  margin-bottom: 16px;
+  animation: fade-in-up 0.8s ease-out;
+}
+
+.loader-logo-text {
+  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin: 0;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.15), 0 0 30px rgba(0, 82, 254, 0.2);
+}
+
+.loader-subtitle {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #60a5fa;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Message Display Container */
+.loader-message-container {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-message {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.5px;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.loading-message.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Animations Definition */
+@keyframes orb-morph {
+  0% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  33% {
+    border-radius: 53% 47% 43% 57% / 40% 50% 50% 60%;
+  }
+  66% {
+    border-radius: 40% 60% 65% 35% / 60% 40% 60% 40%;
+  }
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+}
+
+@keyframes orb-float {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) rotate(180deg) scale(1.02);
+  }
+  100% {
+    transform: translateY(0) rotate(360deg) scale(1);
+  }
+}
+
+@keyframes orb-pulse {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.1);
+    opacity: 0.95;
+  }
+}
+
+@keyframes orb-spin-clockwise {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes orb-spin-counter {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Accessibility: Respect Reduced Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+  .ai-orb-blob,
+  .ai-orb-glow,
+  .ai-orb-ring,
+  .app-loader-overlay {
+    animation: none !important;
+    transition: none !important;
+  }
+  .ai-orb-blob {
+    border-radius: 50% !important;
+    transform: none !important;
+  }
+  .loading-message {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .loader-brand {
+    animation: none !important;
+  }
+}
