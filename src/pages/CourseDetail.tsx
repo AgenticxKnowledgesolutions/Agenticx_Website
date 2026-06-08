@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getCourseBySlug, type Course } from '@/services/courseService'
 import { createLead } from '@/services/leadService'
+import { CourseDetailSkeleton } from '@/components/ui/Skeletons'
 import '../styles/course-detail.css'
 
 export default function CourseDetail() {
@@ -40,11 +41,7 @@ export default function CourseDetail() {
   }, [slug])
 
   if (loading) {
-    return (
-      <div className="cd-page container cd-loading">
-        <h2>Loading course details...</h2>
-      </div>
-    )
+    return <CourseDetailSkeleton />
   }
 
   if (!course) {

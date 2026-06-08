@@ -76,34 +76,93 @@ export const mapCourse = (data: any): Course => {
   };
 };
 
-export const getCourses = async (): Promise<Course[]> => {
+// Client Caching State
+let cachedCourses: Course[] = [];
+let coursesLoaded = false;
+let lastFetched: number | null = null;
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes cache TTL
+
+export const invalidateCourseCache = () => {
+  coursesLoaded = false;
+  cachedCourses = [];
+  lastFetched = null;
+};
+
+export const getCourses = async (forceRefresh = false): Promise<Course[]> => {
+  const now = Date.now();
+  const isExpired = lastFetched ? (now - lastFetched > CACHE_TTL) : true;
+
+  if (coursesLoaded && !forceRefresh && !isExpired) {
+    return cachedCourses;
+  }
+
   try {
     const res = await api.get("/courses/");
-    return Array.isArray(res.data) ? res.data.map(mapCourse) : [];
+    const mapped = Array.isArray(res.data) ? res.data.map(mapCourse) : [];
+    cachedCourses = mapped;
+    coursesLoaded = true;
+    lastFetched = now;
+    return cachedCourses;
   } catch (err) {
     console.error("Failed to fetch courses from API:", err);
-    return [];
+    return cachedCourses; // Return stale cache if load fails
   }
 };
 
-export const getCourseBySlug = async (slug: string): Promise<Course | null> => {
+export const getCourseBySlug = async (slug: string, forceRefresh = false): Promise<Course | null> => {
+  if (coursesLoaded && !forceRefresh) {
+    const cached = cachedCourses.find(c => c.slug === slug);
+    if (cached) return cached;
+  }
+
   try {
     const res = await api.get(`/courses/${slug}`);
-    return res.data ? mapCourse(res.data) : null;
+    const mapped = res.data ? mapCourse(res.data) : null;
+    if (mapped) {
+      if (!coursesLoaded) {
+        cachedCourses = [mapped];
+        coursesLoaded = true;
+        lastFetched = Date.now();
+      } else {
+        const index = cachedCourses.findIndex(c => c.slug === slug);
+        if (index > -1) {
+          cachedCourses[index] = mapped;
+        } else {
+          cachedCourses.push(mapped);
+        }
+      }
+    }
+    return mapped;
   } catch (err: unknown) {
     const axiosErr = err as { response?: { status: number } };
     if (axiosErr.response?.status === 404) return null;
-    console.error("Failed to fetch course:", err);
+    console.error("Failed to fetch course by slug:", err);
     return null;
   }
 };
 
-export const getCourseById = async (id: string): Promise<Course | null> => {
+export const getCourseById = async (id: string, forceRefresh = false): Promise<Course | null> => {
+  if (coursesLoaded && !forceRefresh) {
+    const cached = cachedCourses.find(c => c.id === id);
+    if (cached) return cached;
+  }
+
   try {
     const res = await api.get(`/courses/`);
     if (Array.isArray(res.data)) {
-      const match = res.data.find((c: any) => c.id === id);
-      return match ? mapCourse(match) : null;
+      const match = res.data.find((c: any) => String(c.id) === id);
+      if (match) {
+        const mapped = mapCourse(match);
+        if (coursesLoaded) {
+          const index = cachedCourses.findIndex(c => c.id === id);
+          if (index > -1) {
+            cachedCourses[index] = mapped;
+          } else {
+            cachedCourses.push(mapped);
+          }
+        }
+        return mapped;
+      }
     }
     return null;
   } catch (err) {
@@ -115,6 +174,7 @@ export const getCourseById = async (id: string): Promise<Course | null> => {
 export const createCourse = async (payload: any): Promise<Course | null> => {
   try {
     const res = await api.post("/courses/", payload);
+    invalidateCourseCache();
     return res.data ? mapCourse(res.data) : null;
   } catch (err) {
     console.error("Failed to create course:", err);
@@ -125,6 +185,7 @@ export const createCourse = async (payload: any): Promise<Course | null> => {
 export const updateCourse = async (courseId: string, payload: any): Promise<Course | null> => {
   try {
     const res = await api.put(`/courses/${courseId}`, payload);
+    invalidateCourseCache();
     return res.data ? mapCourse(res.data) : null;
   } catch (err) {
     console.error("Failed to update course:", err);
@@ -135,6 +196,7 @@ export const updateCourse = async (courseId: string, payload: any): Promise<Cour
 export const deleteCourse = async (courseId: string): Promise<boolean> => {
   try {
     await api.delete(`/courses/${courseId}`);
+    invalidateCourseCache();
     return true;
   } catch (err) {
     console.error("Failed to delete course:", err);

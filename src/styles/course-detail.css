@@ -20,15 +20,16 @@
   align-items: flex-start;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 992px) {
   .cd-container {
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 380px);
+    align-items: start;
   }
 }
 
 /* Main Column */
 .cd-main {
-  flex: 1;
   width: 100%;
 }
 
@@ -330,11 +331,11 @@
   width: 100%;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 992px) {
   .cd-sidebar {
-    width: 380px;
+    width: auto;
     position: sticky;
-    top: 96px;
+    top: 100px;
   }
 }
 

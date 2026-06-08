@@ -17,6 +17,7 @@ export interface CourseData {
   icon: string
   slug: string
   coverImageUrl?: string
+  brochureUrl?: string
 }
 
 export default function Courses() {
@@ -36,7 +37,8 @@ export default function Courses() {
           mode: c?.stats?.format || 'Remote',
           icon: '🎓',
           slug: c?.slug || '',
-          coverImageUrl: c?.coverImageUrl || undefined
+          coverImageUrl: c?.coverImageUrl || undefined,
+          brochureUrl: c?.brochureUrl || undefined
         }))
         setCourses(mappedData)
       } catch (err) {

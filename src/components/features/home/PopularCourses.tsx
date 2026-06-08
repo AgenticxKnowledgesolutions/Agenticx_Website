@@ -6,6 +6,7 @@ import NeuralCanvas from '@/components/ui/NeuralCanvas'
 import analyticsImg from '@/assets/images/courses/analytics.jpg'
 import systemsImg from '@/assets/images/courses/systems.jpg'
 import aiMlImg from '@/assets/images/courses/ai-ml.jpg'
+import CollapsibleDescription from '@/components/ui/CollapsibleDescription'
 import './PopularCourses.css'
 
 // Default static fallback specializations
@@ -59,7 +60,8 @@ export default function PopularCourses() {
             description: c.description,
             coverImageUrl: c.coverImageUrl || null,
             duration: c.stats?.duration || '12 Weeks',
-            icon: c.isAiOptimized ? 'smart_toy' : 'school'
+            icon: c.isAiOptimized ? 'smart_toy' : 'school',
+            brochureUrl: c.brochureUrl || undefined
           }));
           setCourses(formatted);
         } else {
@@ -111,7 +113,7 @@ export default function PopularCourses() {
                     </div>
                     <div className="course-content">
                       <h4 className="course-card-title">{course.title}</h4>
-                      <p className="course-card-desc">{course.description}</p>
+                      <CollapsibleDescription description={course.description} />
                       <div className="course-footer">
                         <span className="course-duration">{course.duration}</span>
                         <span className="material-symbols-outlined course-icon">{course.icon}</span>

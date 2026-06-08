@@ -1,0 +1,209 @@
+/* Body scroll lock helper */
+body.pdf-modal-lock {
+  overflow: hidden !important;
+}
+
+/* Modal Overlay */
+.pdf-viewer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background-color: rgba(5, 12, 22, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: pdfFadeIn 0.25s ease-out;
+}
+
+/* Modal Container */
+.pdf-viewer-container {
+  width: 90vw;
+  max-width: 1000px;
+  height: 85vh;
+  background-color: #0d1e36;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: pdfSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Header styling */
+.pdf-viewer-header {
+  padding: 16px 24px;
+  background-color: #081526;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.pdf-viewer-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0; /* allows text truncation */
+}
+
+.pdf-title-icon {
+  color: #0052fe;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.pdf-viewer-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdf-viewer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Action buttons */
+.pdf-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.pdf-action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(0, 82, 254, 0.3);
+  color: #ffffff;
+}
+
+.pdf-action-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.pdf-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pdf-close-btn:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+/* Viewer Body */
+.pdf-viewer-body {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background-color: #060f1b;
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Fallback state when brochure is missing */
+.pdf-fallback-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 32px;
+  width: 90%;
+  max-width: 450px;
+}
+
+.pdf-fallback-icon {
+  font-size: 48px;
+  color: #60a5fa;
+  margin-bottom: 16px;
+}
+
+.pdf-fallback-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.pdf-fallback-sub {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Animations */
+@keyframes pdfFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pdfSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Mobile drawer behavior (below 768px) */
+@media (max-width: 767px) {
+  .pdf-viewer-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    animation: pdfSlideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .pdf-viewer-header {
+    padding: 12px 16px;
+  }
+  
+  .pdf-action-btn {
+    padding: 8px;
+  }
+  
+  .pdf-action-btn .btn-text {
+    display: none; /* Icon-only on mobile */
+  }
+  
+  @keyframes pdfSlideLeft {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+}

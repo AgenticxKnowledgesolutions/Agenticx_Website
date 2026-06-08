@@ -62,3 +62,89 @@ export function ReviewCardSkeleton() {
     </div>
   );
 }
+
+export function CourseDetailSkeleton() {
+  return (
+    <div className="cd-page" aria-hidden="true" style={{ background: '#f7f9fb' }}>
+      <div className="container cd-container">
+        {/* Main Content Column Skeleton */}
+        <div className="cd-main">
+          {/* Header Area */}
+          <div className="cd-header-meta" style={{ marginBottom: '16px' }}>
+            <div className="badge-skeleton skeleton-pulse" style={{ width: '150px', height: '24px', borderRadius: '6px' }} />
+          </div>
+          <div className="title-skeleton skeleton-pulse" style={{ width: '80%', height: '48px', marginBottom: '24px', borderRadius: '4px' }} />
+          <div className="desc-skeleton skeleton-pulse" style={{ width: '100%', height: '72px', marginBottom: '48px', borderRadius: '4px' }} />
+
+          {/* Stats Grid */}
+          <div className="cd-stats-grid">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="cd-stat-card">
+                <div className="icon-skeleton skeleton-pulse" style={{ width: '24px', height: '24px', marginBottom: '12px', borderRadius: '4px' }} />
+                <div className="label-skeleton skeleton-pulse" style={{ width: '60px', height: '12px', marginBottom: '6px', borderRadius: '2px' }} />
+                <div className="value-skeleton skeleton-pulse" style={{ width: '80px', height: '20px', borderRadius: '3px' }} />
+              </div>
+            ))}
+          </div>
+
+          {/* Tech Stack */}
+          <div className="cd-stack-section" style={{ marginBottom: '48px' }}>
+            <div className="label-skeleton skeleton-pulse" style={{ width: '120px', height: '14px', marginBottom: '20px', borderRadius: '2px' }} />
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="skeleton-pulse" style={{ width: '90px', height: '32px', borderRadius: '999px' }} />
+              ))}
+            </div>
+          </div>
+
+          {/* Curriculum */}
+          <div className="cd-curriculum-section">
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <div className="skeleton-pulse" style={{ width: '200px', height: '32px', borderRadius: '4px' }} />
+              <div className="skeleton-pulse" style={{ width: '100px', height: '20px', borderRadius: '4px' }} />
+            </div>
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: '24px', marginBottom: '24px', borderBottom: '1px solid rgba(197, 198, 208, 0.3)', paddingBottom: '12px' }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="skeleton-pulse" style={{ width: '80px', height: '20px', borderRadius: '3px' }} />
+              ))}
+            </div>
+            {/* Module wrapper */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="cd-module-wrapper" style={{ minHeight: '120px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                      <div className="skeleton-pulse" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
+                      <div className="skeleton-pulse" style={{ width: '180px', height: '24px', borderRadius: '4px' }} />
+                    </div>
+                    <div className="skeleton-pulse" style={{ width: '24px', height: '24px', borderRadius: '4px' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar Column */}
+        <aside className="cd-sidebar">
+          <div className="cd-form-card">
+            <div className="skeleton-pulse" style={{ width: '70%', height: '28px', marginBottom: '12px', borderRadius: '4px' }} />
+            <div className="skeleton-pulse" style={{ width: '90%', height: '14px', marginBottom: '24px', borderRadius: '3px' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i}>
+                  <div className="skeleton-pulse" style={{ width: '60px', height: '12px', marginBottom: '6px', borderRadius: '2px' }} />
+                  <div className="skeleton-pulse" style={{ width: '100%', height: '44px', borderRadius: '8px' }} />
+                </div>
+              ))}
+              <div className="skeleton-pulse" style={{ width: '100%', height: '52px', borderRadius: '8px', marginTop: '10px' }} />
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+

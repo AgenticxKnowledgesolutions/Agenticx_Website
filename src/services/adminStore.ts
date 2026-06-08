@@ -3,7 +3,7 @@ import { getLeads } from "./leadService";
 import type { Lead } from "./leadService";
 import { getDashboardSummary } from "./dashboardService";
 import type { DashboardSummary } from "./dashboardService";
-import { getCourses } from "./courseService";
+import { getCourses, invalidateCourseCache } from "./courseService";
 import type { Course } from "./courseService";
 import { getActivities } from "./activityService";
 import type { Activity } from "./activityService";
@@ -100,7 +100,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     }
     set({ loadingCourses: true });
     try {
-      const data = await getCourses();
+      const data = await getCourses(force);
       set({ courses: data, coursesLoaded: true, loadingCourses: false });
       return data;
     } catch (err) {
@@ -152,6 +152,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
 
   invalidateCourses: () => {
     set({ coursesLoaded: false });
+    invalidateCourseCache();
   },
 
   invalidateActivities: () => {
@@ -170,5 +171,6 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       activitiesLoaded: false, 
       reviewsLoaded: false 
     });
+    invalidateCourseCache();
   }
 }));
