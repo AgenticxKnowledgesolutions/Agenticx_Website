@@ -263,7 +263,7 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="admin-login-form">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="admin-form-row">
           <div className="admin-form-group">
             <label>Course Title</label>
             <input 
@@ -287,7 +287,7 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="admin-form-row">
           <div className="admin-form-group">
             <label>Badge / Track Type</label>
             <input 
@@ -323,7 +323,7 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
         </div>
 
         <h4 style={{ margin: '15px 0 10px', color: '#001943', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>Catalog Statistics & Logistics</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="admin-form-row">
           <div className="admin-form-group">
             <label>Syllabus Duration</label>
             <input 
@@ -346,7 +346,7 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="admin-form-row">
           <div className="admin-form-group">
             <label>Hands-on Projects Count</label>
             <input 
@@ -369,7 +369,7 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'center' }}>
+        <div className="admin-form-row" style={{ alignItems: 'center' }}>
           <div className="admin-form-group">
             <label>Next Cohort Date</label>
             <input 
@@ -392,7 +392,7 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+        <div className="admin-form-row" style={{ marginTop: '16px' }}>
           <FileUploader 
             label="Course Thumbnail Image" 
             folder="courses/thumbnails" 
@@ -490,7 +490,7 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
         <h4 style={{ margin: '20px 0 10px', color: '#001943', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>Curriculum Syllabus Sections</h4>
         {curriculum.map((month, monthIdx) => (
           <div key={monthIdx} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+            <div className="admin-curriculum-row" style={{ marginBottom: '10px' }}>
               <input
                 type="text"
                 placeholder="Month Title (e.g., Month 1: Basics)"
@@ -517,10 +517,10 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
             </div>
 
             {/* Modules list inside this Month */}
-            <div style={{ marginLeft: '20px', marginTop: '10px' }}>
+            <div className="admin-modules-container" style={{ marginTop: '10px' }}>
               <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b' }}>Modules</label>
               {month.modules.map((mod, modIdx) => (
-                <div key={modIdx} style={{ display: 'flex', gap: '10px', margin: '6px 0', alignItems: 'center' }}>
+                <div key={modIdx} className="admin-module-row" style={{ margin: '6px 0' }}>
                   <input
                     type="text"
                     placeholder="Lesson Title"

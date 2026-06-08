@@ -234,7 +234,7 @@ export default function CompanySettingsAdmin() {
             <span className="material-symbols-outlined" style={{ color: '#2563eb' }}>contact_phone</span>
             <h3 style={{ margin: 0, color: '#001943', fontSize: '16px', fontWeight: 600 }}>Contact Information</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="admin-form-row">
             <div className="admin-form-group">
               <label>Primary Phone</label>
               <input 
@@ -256,7 +256,7 @@ export default function CompanySettingsAdmin() {
               />
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="admin-form-row">
             <div className="admin-form-group" style={{ marginBottom: 0 }}>
               <label>Primary Email</label>
               <input 
@@ -296,7 +296,7 @@ export default function CompanySettingsAdmin() {
             <span className="material-symbols-outlined" style={{ color: '#2563eb' }}>home_pin</span>
             <h3 style={{ margin: 0, color: '#001943', fontSize: '16px', fontWeight: 600 }}>Address Information</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="admin-form-row">
             <div className="admin-form-group">
               <label>Address Line 1</label>
               <input 
@@ -318,7 +318,7 @@ export default function CompanySettingsAdmin() {
               />
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px' }}>
+          <div className="admin-form-row-four">
             <div className="admin-form-group" style={{ marginBottom: 0 }}>
               <label>City</label>
               <input 
@@ -379,7 +379,7 @@ export default function CompanySettingsAdmin() {
             <span className="material-symbols-outlined" style={{ color: '#2563eb' }}>equalizer</span>
             <h3 style={{ margin: 0, color: '#001943', fontSize: '16px', fontWeight: 600 }}>Homepage Statistics</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+          <div className="admin-form-row-three" style={{ marginBottom: '16px' }}>
             <div className="admin-form-group" style={{ marginBottom: 0 }}>
               <label>Placement Assistance (%)</label>
               <input 
@@ -414,7 +414,7 @@ export default function CompanySettingsAdmin() {
               />
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="admin-form-row">
             <div className="admin-form-group" style={{ marginBottom: 0 }}>
               <label>Students Trained Count</label>
               <input 
@@ -446,7 +446,7 @@ export default function CompanySettingsAdmin() {
             <span className="material-symbols-outlined" style={{ color: '#2563eb' }}>share</span>
             <h3 style={{ margin: 0, color: '#001943', fontSize: '16px', fontWeight: 600 }}>Social Media & Links</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="admin-form-row">
             <div className="admin-form-group">
               <label>LinkedIn Profile URL</label>
               <input 
@@ -468,7 +468,7 @@ export default function CompanySettingsAdmin() {
               />
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="admin-form-row">
             <div className="admin-form-group" style={{ marginBottom: 0 }}>
               <label>Facebook URL</label>
               <input 
@@ -527,7 +527,7 @@ export default function CompanySettingsAdmin() {
               style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', minHeight: '80px', borderRadius: '8px', padding: '10px', outline: 'none' }}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: 0 }}>
+          <div className="admin-form-row" style={{ marginBottom: 0 }}>
             <div className="admin-form-group" style={{ marginBottom: 0 }}>
               <label>Primary Button (CTA) Text</label>
               <input 

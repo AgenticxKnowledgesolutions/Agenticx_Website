@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createLead } from '@/services/leadService';
+import { getCourses, type Course } from '@/services/courseService';
 import './demoModal.css';
 
 interface DemoModalProps {
@@ -14,6 +15,18 @@ export default function DemoModal({ isOpen, onClose }: DemoModalProps) {
     phone: '',
     course: ''
   });
+  
+  const [courses, setCourses] = useState<Course[]>([]);
+  
+  useEffect(() => {
+    if (isOpen) {
+      const fetchAllCourses = async () => {
+        const data = await getCourses();
+        setCourses(data);
+      };
+      fetchAllCourses();
+    }
+  }, [isOpen]);
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -145,10 +158,12 @@ export default function DemoModal({ isOpen, onClose }: DemoModalProps) {
                   className={errors.course ? 'error-input' : ''}
                 >
                   <option value="" disabled>Select a course</option>
-                  <option value="fullstack">Full Stack Web Development</option>
-                  <option value="ai-ml">AI/ML</option>
-                  <option value="data-science">Data Science</option>
-                  <option value="other">Other</option>
+                  {courses && courses.length > 0 ? (
+                    courses.map(course => (
+                      <option key={course.id} value={course.title}>{course.title}</option>
+                    ))
+                  ) : null}
+                  <option value="General Inquiry">General Enquiry</option>
                 </select>
                 {errors.course && <span className="error-text">{errors.course}</span>}
               </div>

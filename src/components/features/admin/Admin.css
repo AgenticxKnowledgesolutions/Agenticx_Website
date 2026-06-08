@@ -866,3 +866,134 @@
   display: inline-block;
 }
 
+/* Premium Form & Layout Hardening Pass */
+.admin-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.admin-form-row-three {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.admin-form-row-four {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.admin-curriculum-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+}
+
+.admin-module-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.admin-details-grid {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px 16px;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.admin-modal-card {
+  width: 100%;
+  max-width: 550px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  display: block;
+}
+
+.dashboard-table-container {
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+
+/* Force flex/grid containers to contract correctly */
+.analytics-panel,
+.admin-kpi-card,
+.glass-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .admin-form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .admin-form-row-three {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .admin-form-row-four {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .admin-curriculum-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .admin-module-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .admin-module-row .form-group {
+    width: 100% !important;
+  }
+
+  .admin-module-row button {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 500px) {
+  .admin-modal-card {
+    padding: 16px;
+  }
+  
+  .admin-form-row-four {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-details-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .admin-details-grid span:nth-child(odd) {
+    font-weight: 700;
+    color: #64748b;
+    margin-top: 8px;
+  }
+}
+
+

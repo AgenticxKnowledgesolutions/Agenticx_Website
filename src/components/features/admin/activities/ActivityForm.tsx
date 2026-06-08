@@ -184,7 +184,7 @@ export default function ActivityForm({ mode, activityId }: ActivityFormProps) {
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'center' }}>
+        <div className="admin-form-row" style={{ alignItems: 'center' }}>
           <div className="admin-form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
             <input 
               type="checkbox" 

@@ -203,6 +203,8 @@
   margin-top: 4px;
   flex-grow: 1;
   transition: all 0.3s ease;
+  word-break: break-word;
+  overflow-wrap: break-word;
   
   /* Clamp to 4 lines by default */
   display: -webkit-box;
@@ -217,6 +219,26 @@
   overflow: visible;
   -webkit-line-clamp: none;
   line-clamp: none;
+}
+
+@media (max-width: 768px) {
+  .review-text.expanded {
+    max-height: 180px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 82, 254, 0.3) transparent;
+    padding-right: 4px;
+  }
+  .review-text.expanded::-webkit-scrollbar {
+    width: 4px;
+  }
+  .review-text.expanded::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .review-text.expanded::-webkit-scrollbar-thumb {
+    background: rgba(0, 82, 254, 0.3);
+    border-radius: 2px;
+  }
 }
 
 .read-more-btn {

@@ -17,7 +17,7 @@ import { useAdminStore } from '@/services/adminStore';
 import './Admin.css';
 
 export default function LeadsAdmin() {
-  const { leads, loadingLeads, fetchLeads, invalidateAll } = useAdminStore();
+  const { leads, loadingLeads, fetchLeads, invalidateAll, courses, fetchCourses } = useAdminStore();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   
   // Selected IDs for bulk operations
@@ -44,7 +44,7 @@ export default function LeadsAdmin() {
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
-  const [newCourse, setNewCourse] = useState('MERN Stack');
+  const [newCourse, setNewCourse] = useState('General Inquiry');
   const [newSource, setNewSource] = useState('Manual Entry');
   const [newStatus, setNewStatus] = useState('Pending');
   const [newPriority, setNewPriority] = useState('Cold');
@@ -75,6 +75,7 @@ export default function LeadsAdmin() {
 
   useEffect(() => {
     loadLeads();
+    fetchCourses();
   }, []);
 
   const handleRowClick = async (lead: Lead) => {
@@ -212,7 +213,7 @@ export default function LeadsAdmin() {
     setNewName('');
     setNewEmail('');
     setNewPhone('');
-    setNewCourse('MERN Stack');
+    setNewCourse('General Inquiry');
     setNewSource('Manual Entry');
     setNewStatus('Pending');
     setNewPriority('Cold');
@@ -571,7 +572,7 @@ export default function LeadsAdmin() {
       {/* Manual Add Lead Modal */}
       {showAddModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 25, 67, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '20px' }}>
-          <div className="admin-kpi-card glass-panel" style={{ width: '100%', maxWidth: '550px', maxHeight: '90vh', overflowY: 'auto', background: '#ffffff', padding: '24px', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', display: 'block' }}>
+          <div className="admin-modal-card glass-panel" style={{ maxWidth: '550px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, color: '#001943' }}>Create New Lead Entry</h3>
               <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
@@ -592,7 +593,7 @@ export default function LeadsAdmin() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '14px' }}>
+              <div className="admin-form-row" style={{ marginTop: '14px' }}>
                 <div className="admin-form-group">
                   <label>Email Address *</label>
                   <input 
@@ -617,7 +618,7 @@ export default function LeadsAdmin() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '14px' }}>
+              <div className="admin-form-row" style={{ marginTop: '14px' }}>
                 <div className="admin-form-group">
                   <label>Interested Course</label>
                   <select 
@@ -625,10 +626,12 @@ export default function LeadsAdmin() {
                     onChange={e => setNewCourse(e.target.value)}
                     style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
                   >
-                    <option value="MERN Stack">MERN Stack</option>
-                    <option value="ai-ml">AI & ML</option>
-                    <option value="Data Science">Data Science</option>
-                    <option value="General Inquiry">General Enquiry</option>
+                    {courses && courses.length > 0 ? (
+                      courses.map(c => (
+                        <option key={c.id} value={c.title}>{c.title}</option>
+                      ))
+                    ) : null}
+                    <option value="General Inquiry">General Inquiry</option>
                   </select>
                 </div>
 
@@ -644,7 +647,7 @@ export default function LeadsAdmin() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '14px' }}>
+              <div className="admin-form-row" style={{ marginTop: '14px' }}>
                 <div className="admin-form-group">
                   <label>Initial Status</label>
                   <select 
@@ -834,7 +837,7 @@ export default function LeadsAdmin() {
       {/* Leads Detail & CRM Modal */}
       {selectedLead && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 25, 67, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '20px' }}>
-          <div className="admin-kpi-card glass-panel" style={{ width: '100%', maxWidth: '650px', maxHeight: '90vh', overflowY: 'auto', background: '#ffffff', padding: '24px', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', display: 'block' }}>
+          <div className="admin-modal-card glass-panel" style={{ maxWidth: '650px' }}>
             
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px' }}>
@@ -879,7 +882,7 @@ export default function LeadsAdmin() {
             {/* TAB 1: Lead Details Form */}
             {detailTab === 'details' && (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '10px 16px', fontSize: '14px', marginBottom: '20px' }}>
+                <div className="admin-details-grid">
                   <span style={{ fontWeight: 600, color: '#64748b' }}>Email:</span>
                   <a href={`mailto:${selectedLead.email}`} style={{ color: '#2563eb', textDecoration: 'underline' }}>{selectedLead.email}</a>
 
@@ -903,7 +906,7 @@ export default function LeadsAdmin() {
                 </div>
 
                 <form onSubmit={handleSaveChanges} className="admin-login-form" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div className="admin-form-row">
                     <div className="admin-form-group">
                       <label>Followup Action Status</label>
                       <select 
@@ -931,7 +934,7 @@ export default function LeadsAdmin() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '14px' }}>
+                  <div className="admin-form-row" style={{ marginTop: '14px' }}>
                     <div className="admin-form-group">
                       <label>Lead Priority</label>
                       <select 
@@ -960,7 +963,7 @@ export default function LeadsAdmin() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '14px' }}>
+                  <div className="admin-form-row" style={{ marginTop: '14px' }}>
                     <div className="admin-form-group">
                       <label>Next Follow-up Date</label>
                       <input
