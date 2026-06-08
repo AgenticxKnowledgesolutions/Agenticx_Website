@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import { AdminSkeleton } from '../ui/Skeletons';
 import '../features/admin/Admin.css';
 
 export default function AdminLayout() {
@@ -18,7 +19,9 @@ export default function AdminLayout() {
         <Navbar onMenuClick={() => setIsSidebarOpen(true)} />
 
         <div className="admin-content-area">
-          <Outlet />
+          <Suspense fallback={<AdminSkeleton />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
     </div>

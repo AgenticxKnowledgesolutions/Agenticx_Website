@@ -43,6 +43,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             to="/admin/dashboard" 
             onClick={onClose} 
             className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}
+            onMouseEnter={() => import('@/components/features/admin/Dashboard')}
           >
             <span className="material-symbols-outlined">dashboard</span> Dashboard
           </NavLink>
@@ -61,6 +62,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onClick={onClose} 
                 end 
                 className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/courses/CourseList')}
               >
                 View Courses
               </NavLink>
@@ -68,6 +70,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 to="/admin/courses/add" 
                 onClick={onClose} 
                 className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/courses/CourseAdd')}
               >
                 Add Course
               </NavLink>
@@ -88,6 +91,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onClick={onClose} 
                 end 
                 className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/activities/ActivityList')}
               >
                 View Activities
               </NavLink>
@@ -95,6 +99,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 to="/admin/activities/add" 
                 onClick={onClose} 
                 className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/activities/ActivityAdd')}
               >
                 Add Activity
               </NavLink>
@@ -115,6 +120,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onClick={onClose} 
                 end 
                 className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/reviews/ReviewList')}
               >
                 View Reviews
               </NavLink>
@@ -122,6 +128,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 to="/admin/reviews/add" 
                 onClick={onClose} 
                 className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/reviews/ReviewAdd')}
               >
                 Add Review
               </NavLink>
@@ -132,6 +139,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             to="/admin/leads" 
             onClick={onClose} 
             className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}
+            onMouseEnter={() => import('@/components/features/admin/LeadsAdmin')}
           >
             <span className="material-symbols-outlined">leaderboard</span> Leads
           </NavLink>
@@ -140,6 +148,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             to="/admin/settings" 
             onClick={onClose} 
             className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}
+            onMouseEnter={() => import('@/components/features/admin/settings/CompanySettingsAdmin')}
           >
             <span className="material-symbols-outlined">settings</span> Company Settings
           </NavLink>

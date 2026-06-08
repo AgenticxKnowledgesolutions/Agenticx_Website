@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { type CourseData } from '../../../pages/Courses'
 import { formatCurrency } from '@/lib/utils'
 import CollapsibleDescription from '../../ui/CollapsibleDescription'
-import PdfViewerModal from '../../ui/PdfViewerModal'
+
+const PdfViewerModal = lazy(() => import('../../ui/PdfViewerModal'))
 
 interface CourseCardProps {
   course: CourseData;
@@ -60,18 +61,26 @@ export default function CourseCard({ course }: CourseCardProps) {
               >
                 Syllabus
               </button>
-              <Link to={`/courses/${course.slug}`} className="btn-primary-small">View Details</Link>
+              <Link 
+                to={`/courses/${course.slug}`} 
+                className="btn-primary-small"
+                onMouseEnter={() => import('@/pages/CourseDetail')}
+              >
+                View Details
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      <PdfViewerModal
-        isOpen={showPdf}
-        onClose={() => setShowPdf(false)}
-        pdfUrl={course.brochureUrl}
-        title={course.title}
-      />
+      <Suspense fallback={null}>
+        <PdfViewerModal
+          isOpen={showPdf}
+          onClose={() => setShowPdf(false)}
+          pdfUrl={course.brochureUrl}
+          title={course.title}
+        />
+      </Suspense>
     </>
   )
 }

@@ -1,30 +1,35 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useSettingsStore } from './store/useSettingsStore'
 import AppLoader from './components/ui/AppLoader'
 import RootLayout from './components/layout/RootLayout'
-import Home from './pages/Home'
-import Courses from './pages/Courses'
-import CourseDetail from './pages/CourseDetail'
-import Services from './pages/Services'
-import About from './pages/About'
-import Contact from './pages/contact/Contact'
 import ProtectedRoute from './routes/ProtectedRoute'
-import Login from './components/features/admin/Login'
-import AdminLayout from './components/layout/AdminLayout'
-import Dashboard from './components/features/admin/Dashboard'
-import CourseList from './components/features/admin/courses/CourseList'
-import CourseAdd from './components/features/admin/courses/CourseAdd'
-import CourseEdit from './components/features/admin/courses/CourseEdit'
-import ActivityList from './components/features/admin/activities/ActivityList'
-import ActivityAdd from './components/features/admin/activities/ActivityAdd'
-import ActivityEdit from './components/features/admin/activities/ActivityEdit'
-import ReviewList from './components/features/admin/reviews/ReviewList'
-import ReviewAdd from './components/features/admin/reviews/ReviewAdd'
-import ReviewEdit from './components/features/admin/reviews/ReviewEdit'
-import LeadsAdmin from './components/features/admin/LeadsAdmin'
-import CompanySettingsAdmin from './components/features/admin/settings/CompanySettingsAdmin'
 import ErrorBoundary from './components/ui/ErrorBoundary'
+import { PageSkeleton, AdminSkeleton, CourseDetailSkeleton } from './components/ui/Skeletons'
+
+// Lazy Page Imports
+const Home = lazy(() => import('./pages/Home'))
+const Courses = lazy(() => import('./pages/Courses'))
+const CourseDetail = lazy(() => import('./pages/CourseDetail'))
+const Services = lazy(() => import('./pages/Services'))
+const About = lazy(() => import('./pages/About'))
+const Contact = lazy(() => import('./pages/contact/Contact'))
+
+// Lazy Admin Imports
+const Login = lazy(() => import('./components/features/admin/Login'))
+const AdminLayout = lazy(() => import('./components/layout/AdminLayout'))
+const Dashboard = lazy(() => import('./components/features/admin/Dashboard'))
+const CourseList = lazy(() => import('./components/features/admin/courses/CourseList'))
+const CourseAdd = lazy(() => import('./components/features/admin/courses/CourseAdd'))
+const CourseEdit = lazy(() => import('./components/features/admin/courses/CourseEdit'))
+const ActivityList = lazy(() => import('./components/features/admin/activities/ActivityList'))
+const ActivityAdd = lazy(() => import('./components/features/admin/activities/ActivityAdd'))
+const ActivityEdit = lazy(() => import('./components/features/admin/activities/ActivityEdit'))
+const ReviewList = lazy(() => import('./components/features/admin/reviews/ReviewList'))
+const ReviewAdd = lazy(() => import('./components/features/admin/reviews/ReviewAdd'))
+const ReviewEdit = lazy(() => import('./components/features/admin/reviews/ReviewEdit'))
+const LeadsAdmin = lazy(() => import('./components/features/admin/LeadsAdmin'))
+const CompanySettingsAdmin = lazy(() => import('./components/features/admin/settings/CompanySettingsAdmin'))
 
 function App() {
   const fetchSettings = useSettingsStore(state => state.fetchSettings)
@@ -78,32 +83,32 @@ function App() {
         <Routes>
           {/* Main Public Website */}
           <Route path="/" element={<RootLayout />}>
-            <Route index element={<ErrorBoundary><Home /></ErrorBoundary>} />
-            <Route path="courses" element={<ErrorBoundary><Courses /></ErrorBoundary>} />
-            <Route path="courses/:slug" element={<ErrorBoundary><CourseDetail /></ErrorBoundary>} />
-            <Route path="services" element={<ErrorBoundary><Services /></ErrorBoundary>} />
-            <Route path="about" element={<ErrorBoundary><About /></ErrorBoundary>} />
-            <Route path="contact" element={<ErrorBoundary><Contact /></ErrorBoundary>} />
+            <Route index element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><Home /></Suspense></ErrorBoundary>} />
+            <Route path="courses" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><Courses /></Suspense></ErrorBoundary>} />
+            <Route path="courses/:slug" element={<ErrorBoundary><Suspense fallback={<CourseDetailSkeleton />}><CourseDetail /></Suspense></ErrorBoundary>} />
+            <Route path="services" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><Services /></Suspense></ErrorBoundary>} />
+            <Route path="about" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><About /></Suspense></ErrorBoundary>} />
+            <Route path="contact" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><Contact /></Suspense></ErrorBoundary>} />
           </Route>
 
           {/* Admin Login */}
-          <Route path="/admin/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+          <Route path="/admin/login" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><Login /></Suspense></ErrorBoundary>} />
 
           {/* Protected Admin Routes */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/admin" element={<ErrorBoundary><AdminLayout /></ErrorBoundary>}>
-              <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
-              <Route path="courses" element={<ErrorBoundary><CourseList /></ErrorBoundary>} />
-              <Route path="courses/add" element={<ErrorBoundary><CourseAdd /></ErrorBoundary>} />
-              <Route path="courses/edit/:id" element={<ErrorBoundary><CourseEdit /></ErrorBoundary>} />
-              <Route path="activities" element={<ErrorBoundary><ActivityList /></ErrorBoundary>} />
-              <Route path="activities/add" element={<ErrorBoundary><ActivityAdd /></ErrorBoundary>} />
-              <Route path="activities/edit/:id" element={<ErrorBoundary><ActivityEdit /></ErrorBoundary>} />
-              <Route path="reviews" element={<ErrorBoundary><ReviewList /></ErrorBoundary>} />
-              <Route path="reviews/add" element={<ErrorBoundary><ReviewAdd /></ErrorBoundary>} />
-              <Route path="reviews/edit/:id" element={<ErrorBoundary><ReviewEdit /></ErrorBoundary>} />
-              <Route path="leads" element={<ErrorBoundary><LeadsAdmin /></ErrorBoundary>} />
-              <Route path="settings" element={<ErrorBoundary><CompanySettingsAdmin /></ErrorBoundary>} />
+            <Route path="/admin" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><AdminLayout /></Suspense></ErrorBoundary>}>
+              <Route path="dashboard" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><Dashboard /></Suspense></ErrorBoundary>} />
+              <Route path="courses" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CourseList /></Suspense></ErrorBoundary>} />
+              <Route path="courses/add" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CourseAdd /></Suspense></ErrorBoundary>} />
+              <Route path="courses/edit/:id" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CourseEdit /></Suspense></ErrorBoundary>} />
+              <Route path="activities" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ActivityList /></Suspense></ErrorBoundary>} />
+              <Route path="activities/add" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ActivityAdd /></Suspense></ErrorBoundary>} />
+              <Route path="activities/edit/:id" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ActivityEdit /></Suspense></ErrorBoundary>} />
+              <Route path="reviews" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ReviewList /></Suspense></ErrorBoundary>} />
+              <Route path="reviews/add" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ReviewAdd /></Suspense></ErrorBoundary>} />
+              <Route path="reviews/edit/:id" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ReviewEdit /></Suspense></ErrorBoundary>} />
+              <Route path="leads" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><LeadsAdmin /></Suspense></ErrorBoundary>} />
+              <Route path="settings" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CompanySettingsAdmin /></Suspense></ErrorBoundary>} />
             </Route>
           </Route>
         </Routes>

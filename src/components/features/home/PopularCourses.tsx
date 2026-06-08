@@ -87,7 +87,13 @@ export default function PopularCourses() {
         <div className="container">
           <div className="courses-header">
             <h2 className="courses-title">Our Specializations</h2>
-            <Link to="/courses" className="courses-view-all">View All Courses</Link>
+            <Link 
+              to="/courses" 
+              className="courses-view-all"
+              onMouseEnter={() => import('@/pages/Courses')}
+            >
+              View All Courses
+            </Link>
           </div>
           <div className="courses-grid">
             {loading ? (

@@ -23,6 +23,8 @@ export default function PdfViewerModal({ isOpen, onClose, pdfUrl, title }: PdfVi
 
   if (!isOpen) return null;
 
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   return (
     <div className="pdf-viewer-overlay" onClick={onClose}>
       <div className="pdf-viewer-container" onClick={(e) => e.stopPropagation()}>
@@ -52,11 +54,29 @@ export default function PdfViewerModal({ isOpen, onClose, pdfUrl, title }: PdfVi
 
         <div className="pdf-viewer-body">
           {pdfUrl ? (
-            <iframe
-              src={`${pdfUrl}#toolbar=1`}
-              title={`${title} Syllabus`}
-              className="pdf-iframe"
-            />
+            isMobile ? (
+              <div className="pdf-mobile-preview-container">
+                <span className="material-symbols-outlined pdf-mobile-icon">picture_as_pdf</span>
+                <p className="pdf-mobile-text">{title} Syllabus</p>
+                <p className="pdf-mobile-sub">To view the syllabus on your mobile device, please open it in a new tab or download it directly.</p>
+                <div className="pdf-mobile-actions">
+                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="pdf-mobile-btn btn-primary">
+                    <span className="material-symbols-outlined">open_in_new</span>
+                    Open Syllabus
+                  </a>
+                  <a href={pdfUrl} download className="pdf-mobile-btn btn-outline">
+                    <span className="material-symbols-outlined">download</span>
+                    Download PDF
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <iframe
+                src={`${pdfUrl}#toolbar=1`}
+                title={`${title} Syllabus`}
+                className="pdf-iframe"
+              />
+            )
           ) : (
             <div className="pdf-fallback-container">
               <span className="material-symbols-outlined pdf-fallback-icon">info</span>

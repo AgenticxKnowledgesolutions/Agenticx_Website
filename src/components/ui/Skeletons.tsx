@@ -148,3 +148,40 @@ export function CourseDetailSkeleton() {
   );
 }
 
+export function PageSkeleton() {
+  return (
+    <div className="container" style={{ padding: '80px 24px', minHeight: '80vh' }} aria-hidden="true">
+      <div className="skeleton-pulse" style={{ width: '200px', height: '16px', borderRadius: '4px', marginBottom: '24px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+      <div className="skeleton-pulse" style={{ width: '60%', height: '48px', borderRadius: '8px', marginBottom: '40px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="skeleton-pulse" style={{ width: '100%', height: '120px', borderRadius: '12px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+        <div className="skeleton-pulse" style={{ width: '100%', height: '120px', borderRadius: '12px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+        <div className="skeleton-pulse" style={{ width: '100%', height: '120px', borderRadius: '12px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+      </div>
+    </div>
+  );
+}
+
+export function AdminSkeleton() {
+  return (
+    <div style={{ padding: '24px', minHeight: '80vh' }} aria-hidden="true">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <div className="skeleton-pulse" style={{ width: '180px', height: '32px', borderRadius: '6px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+        <div className="skeleton-pulse" style={{ width: '120px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+      </div>
+      <div className="skeleton-pulse" style={{ width: '100%', height: '160px', borderRadius: '16px', marginBottom: '32px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+        <div className="skeleton-pulse" style={{ height: '260px', borderRadius: '16px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+        <div className="skeleton-pulse" style={{ height: '260px', borderRadius: '16px', backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+      </div>
+    </div>
+  );
+}
+
+export function ChartSkeleton() {
+  return (
+    <div className="skeleton-pulse" style={{ width: '100%', height: '150px', borderRadius: '12px', backgroundColor: 'rgba(255, 255, 255, 0.05)' }} aria-hidden="true" />
+  );
+}
+
+

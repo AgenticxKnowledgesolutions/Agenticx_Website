@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { type DashboardLead } from '@/services/dashboardService';
@@ -6,7 +6,14 @@ import { updateLead } from '@/services/leadService';
 import { api } from '@/services/apiService';
 import { useToast } from '@/components/ui/Toast';
 import { useAdminStore } from '@/services/adminStore';
+import { ChartSkeleton } from '@/components/ui/Skeletons';
 import './Admin.css';
+
+// Lazy load SVG chart sub-components
+const LeadsGrowthChart = lazy(() => import('./charts/LeadsGrowthChart'));
+const LeadStatusPieChart = lazy(() => import('./charts/LeadStatusPieChart'));
+const InterestAnalyticsChart = lazy(() => import('./charts/InterestAnalyticsChart'));
+
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -182,147 +189,7 @@ export default function Dashboard() {
     }
   };
 
-  // Render SVG Leads growth trend
-  const renderTrendChart = () => {
-    if (!summary || !summary.monthlyLeads || summary.monthlyLeads.length === 0) {
-      return <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>No data available</div>;
-    }
 
-    const data = summary.monthlyLeads;
-    const maxVal = Math.max(...data.map(d => d.count), 5);
-    
-    const width = 500;
-    const height = 150;
-    const paddingLeft = 35;
-    const paddingRight = 15;
-    const paddingTop = 15;
-    const paddingBottom = 25;
-
-    const chartWidth = width - paddingLeft - paddingRight;
-    const chartHeight = height - paddingTop - paddingBottom;
-
-    const points = data.map((d, i) => {
-      const x = paddingLeft + (i * (chartWidth / (data.length - 1 || 1)));
-      const y = height - paddingBottom - ((d.count / maxVal) * chartHeight);
-      return { x, y, label: d.month, value: d.count };
-    });
-
-    let pathD = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-      pathD += ` L ${points[i].x} ${points[i].y}`;
-    }
-
-    const areaD = `${pathD} L ${points[points.length - 1].x} ${height - paddingBottom} L ${points[0].x} ${height - paddingBottom} Z`;
-
-    return (
-      <svg viewBox={`0 0 ${width} ${height}`} className="chart-svg" style={{ width: '100%', height: '100%' }}>
-        <defs>
-          <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
-          </linearGradient>
-        </defs>
-        {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
-          const y = height - paddingBottom - (ratio * chartHeight);
-          const gridVal = Math.round(ratio * maxVal);
-          return (
-            <g key={index}>
-              <line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y} className="chart-grid-line" />
-              <text x={paddingLeft - 8} y={y + 3} textAnchor="end" className="chart-label">{gridVal}</text>
-            </g>
-          );
-        })}
-        <path d={areaD} className="chart-area" />
-        <path d={pathD} className="chart-line" />
-        {points.map((p, i) => (
-          <g key={i}>
-            <circle cx={p.x} cy={p.y} r="4" className="chart-dot" />
-            <text x={p.x} y={p.y - 8} textAnchor="middle" className="chart-value-label">{p.value}</text>
-            <text x={p.x} y={height - 8} textAnchor="middle" className="chart-label">{p.label}</text>
-          </g>
-        ))}
-        <line x1={paddingLeft} y1={height - paddingBottom} x2={width - paddingRight} y2={height - paddingBottom} className="chart-axis-line" />
-      </svg>
-    );
-  };
-
-  // Render status doughnut
-  const renderStatusDoughnut = () => {
-    if (!summary || !summary.leadStatusBreakdown || summary.leadStatusBreakdown.length === 0) {
-      return <div style={{ color: '#64748b' }}>No status logs found.</div>;
-    }
-
-    const data = summary.leadStatusBreakdown;
-    const totalCount = data.reduce((acc, curr) => acc + curr.count, 0);
-
-    const colorsMap: Record<string, string> = {
-      pending: '#ef4444',
-      contacted: '#3b82f6',
-      'demo booked': '#f59e0b',
-      enrolled: '#10b981',
-      rejected: '#64748b',
-    };
-
-    let accumulatedPercentage = 0;
-
-    return (
-      <div className="doughnut-layout">
-        <div style={{ position: 'relative', width: '110px', height: '110px' }}>
-          <svg viewBox="0 0 42 42" className="doughnut-chart-svg">
-            <circle cx="21" cy="21" r="15.915" className="doughnut-circle-bg" />
-            
-            {data.map((item, index) => {
-              if (item.count === 0 || totalCount === 0) return null;
-              const pct = (item.count / totalCount) * 100;
-              const dasharray = `${pct} ${100 - pct}`;
-              const dashoffset = 100 - accumulatedPercentage;
-              accumulatedPercentage += pct;
-
-              const statusLower = item.status.toLowerCase();
-              const color = colorsMap[statusLower] || '#8b5cf6';
-
-              return (
-                <circle
-                  key={index}
-                  cx="21"
-                  cy="21"
-                  r="15.915"
-                  className="doughnut-circle-val"
-                  stroke={color}
-                  strokeDasharray={dasharray}
-                  strokeDashoffset={dashoffset}
-                />
-              );
-            })}
-          </svg>
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-            <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#001943' }}>{totalCount}</h4>
-            <span style={{ fontSize: '9px', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Total</span>
-          </div>
-        </div>
-
-        <div className="doughnut-legend" style={{ gap: '6px' }}>
-          {data.map((item, index) => {
-            const statusLower = item.status.toLowerCase();
-            const color = colorsMap[statusLower] || '#8b5cf6';
-            const pct = totalCount > 0 ? Math.round((item.count / totalCount) * 100) : 0;
-            return (
-              <div className="legend-item" key={index} style={{ fontSize: '11px' }}>
-                <div className="legend-color-label">
-                  <span className="legend-color-dot" style={{ backgroundColor: color, width: '8px', height: '8px' }} />
-                  <span style={{ textTransform: 'capitalize' }}>{item.status}</span>
-                </div>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <span className="legend-count" style={{ fontWeight: 600 }}>{item.count}</span>
-                  <span style={{ color: '#94a3b8' }}>({pct}%)</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
 
   // Skeleton loading screen
   if (loadingSummary && !summary) {
@@ -603,7 +470,9 @@ export default function Dashboard() {
                 <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>6 Months</span>
               </div>
               <div className="chart-container" style={{ height: '150px' }}>
-                {renderTrendChart()}
+                <Suspense fallback={<ChartSkeleton />}>
+                  <LeadsGrowthChart summary={summary} />
+                </Suspense>
               </div>
             </div>
 
@@ -616,7 +485,9 @@ export default function Dashboard() {
                 </h3>
               </div>
               <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {renderStatusDoughnut()}
+                <Suspense fallback={<ChartSkeleton />}>
+                  <LeadStatusPieChart summary={summary} />
+                </Suspense>
               </div>
             </div>
 
@@ -628,33 +499,10 @@ export default function Dashboard() {
                   Admissions Funnel
                 </h3>
               </div>
-              
-              <div className="funnel-container" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {[
-                  { label: 'Total Leads', count: summary?.leadFunnel?.totalLeads ?? 0, color: '#3b82f6', icon: 'groups' },
-                  { label: 'Contacted', count: summary?.leadFunnel?.contacted ?? 0, color: '#6366f1', icon: 'contact_phone' },
-                  { label: 'Demo Booked', count: summary?.leadFunnel?.demoBooked ?? 0, color: '#f59e0b', icon: 'co_present' },
-                  { label: 'Enrolled Students', count: summary?.leadFunnel?.enrolled ?? 0, color: '#10b981', icon: 'verified_user' }
-                ].map((stage, idx, arr) => {
-                  const maxCount = arr[0].count || 1;
-                  const pct = Math.round((stage.count / maxCount) * 100);
-                  return (
-                    <div key={idx} className="funnel-stage-row" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div className="funnel-stage-icon" style={{ backgroundColor: `${stage.color}15`, color: stage.color, padding: '6px', borderRadius: '6px', display: 'flex' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{stage.icon}</span>
-                      </div>
-                      <div style={{ flexGrow: 1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: '#1e293b', marginBottom: '2px' }}>
-                          <span>{stage.label}</span>
-                          <span>{stage.count} <span style={{ color: '#94a3b8', fontSize: '10px' }}>({pct}%)</span></span>
-                        </div>
-                        <div className="bar-chart-track" style={{ height: '8px' }}>
-                          <div className="bar-chart-fill" style={{ width: `${pct}%`, backgroundColor: stage.color }} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div style={{ minHeight: '150px' }}>
+                <Suspense fallback={<ChartSkeleton />}>
+                  <InterestAnalyticsChart summary={summary} />
+                </Suspense>
               </div>
             </div>
 
