@@ -1,12 +1,14 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
 import "./Header.css";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const isStickyPage = ["/courses", "/about", "/services"].includes(location.pathname);
 
   return (
-    <header className="header">
+    <header className={isStickyPage ? "header header-sticky" : "header"}>
       <div className="container header-inner">
 
         {/* Logo */}
