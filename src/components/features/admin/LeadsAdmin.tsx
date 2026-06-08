@@ -78,6 +78,21 @@ export default function LeadsAdmin() {
     fetchCourses();
   }, []);
 
+  // Lock background scroll when modal is open
+  useEffect(() => {
+    const isModalOpen = showAddModal || !!selectedLead || showDuplicateWarning || showDeleteConfirm || showBulkDeleteConfirm;
+    if (isModalOpen) {
+      document.body.classList.add('modal-open-lock');
+    } else {
+      document.body.classList.remove('modal-open-lock');
+    }
+    return () => {
+      document.body.classList.remove('modal-open-lock');
+    };
+  }, [showAddModal, selectedLead, showDuplicateWarning, showDeleteConfirm, showBulkDeleteConfirm]);
+
+
+
   const handleRowClick = async (lead: Lead) => {
     // Fetch full lead including notes and timeline events
     const fullLead = await getLeadById(lead.id);
@@ -573,134 +588,136 @@ export default function LeadsAdmin() {
       {showAddModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 25, 67, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '20px' }}>
           <div className="admin-modal-card glass-panel" style={{ maxWidth: '550px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '20px', flexShrink: 0 }}>
               <h3 style={{ margin: 0, color: '#001943' }}>Create New Lead Entry</h3>
               <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
 
-            <form onSubmit={e => handleCreateLeadSubmit(e)} className="admin-login-form">
-              <div className="admin-form-group">
-                <label>Student Name *</label>
-                <input 
-                  type="text" 
-                  value={newName} 
-                  onChange={e => setNewName(e.target.value)} 
-                  required
-                  placeholder="Student's Full Name"
-                  style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                />
-              </div>
-
-              <div className="admin-form-row" style={{ marginTop: '14px' }}>
+            <form onSubmit={e => handleCreateLeadSubmit(e)} className="admin-login-form" style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0, overflow: 'hidden' }}>
+              <div className="admin-modal-body">
                 <div className="admin-form-group">
-                  <label>Email Address *</label>
+                  <label>Student Name *</label>
                   <input 
-                    type="email" 
-                    value={newEmail} 
-                    onChange={e => setNewEmail(e.target.value)} 
+                    type="text" 
+                    value={newName} 
+                    onChange={e => setNewName(e.target.value)} 
                     required
-                    placeholder="student@gmail.com"
+                    placeholder="Student's Full Name"
                     style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
                   />
                 </div>
 
-                <div className="admin-form-group">
-                  <label>Phone Number</label>
-                  <input 
-                    type="tel" 
-                    value={newPhone} 
-                    onChange={e => setNewPhone(e.target.value)} 
-                    placeholder="Phone/WhatsApp number"
+                <div className="admin-form-row" style={{ marginTop: '14px' }}>
+                  <div className="admin-form-group">
+                    <label>Email Address *</label>
+                    <input 
+                      type="email" 
+                      value={newEmail} 
+                      onChange={e => setNewEmail(e.target.value)} 
+                      required
+                      placeholder="student@gmail.com"
+                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div className="admin-form-group">
+                    <label>Phone Number</label>
+                    <input 
+                      type="tel" 
+                      value={newPhone} 
+                      onChange={e => setNewPhone(e.target.value)} 
+                      placeholder="Phone/WhatsApp number"
+                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="admin-form-row" style={{ marginTop: '14px' }}>
+                  <div className="admin-form-group">
+                    <label>Interested Course</label>
+                    <select 
+                      value={newCourse} 
+                      onChange={e => setNewCourse(e.target.value)}
+                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                    >
+                      {courses && courses.length > 0 ? (
+                        courses.map(c => (
+                          <option key={c.id} value={c.title}>{c.title}</option>
+                        ))
+                      ) : null}
+                      <option value="General Inquiry">General Inquiry</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-form-group">
+                    <label>Lead Source</label>
+                    <select 
+                      value={newSource} 
+                      onChange={e => setNewSource(e.target.value)}
+                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                    >
+                      {sourcesList.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="admin-form-row" style={{ marginTop: '14px' }}>
+                  <div className="admin-form-group">
+                    <label>Initial Status</label>
+                    <select 
+                      value={newStatus} 
+                      onChange={e => setNewStatus(e.target.value)}
+                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Contacted">Contacted</option>
+                      <option value="Demo Booked">Demo Booked</option>
+                      <option value="Enrolled">Enrolled</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-form-group">
+                    <label>Lead Priority</label>
+                    <select 
+                      value={newPriority} 
+                      onChange={e => setNewPriority(e.target.value)}
+                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                    >
+                      <option value="Cold">⚪ Cold</option>
+                      <option value="Warm">🟡 Warm</option>
+                      <option value="Hot">🔥 Hot</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="admin-form-group" style={{ marginTop: '14px' }}>
+                  <label>Assigned Staff Owner</label>
+                  <select 
+                    value={newAssignedTo} 
+                    onChange={e => setNewAssignedTo(e.target.value)}
                     style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                  >
+                    <option value="">Unassigned</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Counselor">Counselor</option>
+                    <option value="Trainer">Trainer</option>
+                  </select>
+                </div>
+
+                <div className="admin-form-group" style={{ marginTop: '14px' }}>
+                  <label>Initial Profile Message / Notes</label>
+                  <textarea 
+                    value={newNotes} 
+                    onChange={e => setNewNotes(e.target.value)}
+                    placeholder="Record call summary or comments..."
+                    style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', minHeight: '80px', borderRadius: '8px', padding: '10px', outline: 'none' }}
                   />
                 </div>
               </div>
 
-              <div className="admin-form-row" style={{ marginTop: '14px' }}>
-                <div className="admin-form-group">
-                  <label>Interested Course</label>
-                  <select 
-                    value={newCourse} 
-                    onChange={e => setNewCourse(e.target.value)}
-                    style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                  >
-                    {courses && courses.length > 0 ? (
-                      courses.map(c => (
-                        <option key={c.id} value={c.title}>{c.title}</option>
-                      ))
-                    ) : null}
-                    <option value="General Inquiry">General Inquiry</option>
-                  </select>
-                </div>
-
-                <div className="admin-form-group">
-                  <label>Lead Source</label>
-                  <select 
-                    value={newSource} 
-                    onChange={e => setNewSource(e.target.value)}
-                    style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                  >
-                    {sourcesList.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="admin-form-row" style={{ marginTop: '14px' }}>
-                <div className="admin-form-group">
-                  <label>Initial Status</label>
-                  <select 
-                    value={newStatus} 
-                    onChange={e => setNewStatus(e.target.value)}
-                    style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Contacted">Contacted</option>
-                    <option value="Demo Booked">Demo Booked</option>
-                    <option value="Enrolled">Enrolled</option>
-                  </select>
-                </div>
-
-                <div className="admin-form-group">
-                  <label>Lead Priority</label>
-                  <select 
-                    value={newPriority} 
-                    onChange={e => setNewPriority(e.target.value)}
-                    style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                  >
-                    <option value="Cold">⚪ Cold</option>
-                    <option value="Warm">🟡 Warm</option>
-                    <option value="Hot">🔥 Hot</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="admin-form-group" style={{ marginTop: '14px' }}>
-                <label>Assigned Staff Owner</label>
-                <select 
-                  value={newAssignedTo} 
-                  onChange={e => setNewAssignedTo(e.target.value)}
-                  style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                >
-                  <option value="">Unassigned</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Counselor">Counselor</option>
-                  <option value="Trainer">Trainer</option>
-                </select>
-              </div>
-
-              <div className="admin-form-group" style={{ marginTop: '14px' }}>
-                <label>Initial Profile Message / Notes</label>
-                <textarea 
-                  value={newNotes} 
-                  onChange={e => setNewNotes(e.target.value)}
-                  placeholder="Record call summary or comments..."
-                  style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', minHeight: '80px', borderRadius: '8px', padding: '10px', outline: 'none' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '16px', flexShrink: 0 }}>
                 <button 
                   type="button" 
                   onClick={() => setShowAddModal(false)}
@@ -837,10 +854,10 @@ export default function LeadsAdmin() {
       {/* Leads Detail & CRM Modal */}
       {selectedLead && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 25, 67, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '20px' }}>
-          <div className="admin-modal-card glass-panel" style={{ maxWidth: '650px' }}>
+          <div className="admin-modal-card glass-panel" style={{ maxWidth: '650px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
             
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px', flexShrink: 0 }}>
               <div>
                 <h3 style={{ margin: 0, color: '#001943', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span>{selectedLead.name}</span>
@@ -856,7 +873,7 @@ export default function LeadsAdmin() {
             </div>
 
             {/* Modal Tabs */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: '20px', gap: '16px' }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: '20px', gap: '16px', flexShrink: 0 }}>
               <button 
                 onClick={() => setDetailTab('details')}
                 style={{ background: 'none', border: 'none', borderBottom: detailTab === 'details' ? '2px solid #2563eb' : '2px solid transparent', padding: '8px 4px', fontWeight: 600, color: detailTab === 'details' ? '#2563eb' : '#64748b', cursor: 'pointer' }}
@@ -881,166 +898,168 @@ export default function LeadsAdmin() {
 
             {/* TAB 1: Lead Details Form */}
             {detailTab === 'details' && (
-              <>
-                <div className="admin-details-grid">
-                  <span style={{ fontWeight: 600, color: '#64748b' }}>Email:</span>
-                  <a href={`mailto:${selectedLead.email}`} style={{ color: '#2563eb', textDecoration: 'underline' }}>{selectedLead.email}</a>
+              <form onSubmit={handleSaveChanges} className="admin-login-form" style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0, overflow: 'hidden' }}>
+                <div className="admin-modal-body">
+                  <div className="admin-details-grid">
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Email:</span>
+                    <a href={`mailto:${selectedLead.email}`} style={{ color: '#2563eb', textDecoration: 'underline' }}>{selectedLead.email}</a>
 
-                  <span style={{ fontWeight: 600, color: '#64748b' }}>Phone Number:</span>
-                  <span style={{ color: '#001943' }}>{selectedLead.phone || 'N/A'}</span>
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Phone Number:</span>
+                    <span style={{ color: '#001943' }}>{selectedLead.phone || 'N/A'}</span>
 
-                  <span style={{ fontWeight: 600, color: '#64748b' }}>Course Interest:</span>
-                  <span style={{ color: '#001943', fontWeight: 500 }}>{selectedLead.interestedCourse || 'General Inquiry'}</span>
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Course Interest:</span>
+                    <span style={{ color: '#001943', fontWeight: 500 }}>{selectedLead.interestedCourse || 'General Inquiry'}</span>
 
-                  <span style={{ fontWeight: 600, color: '#64748b' }}>Lead Source:</span>
-                  <span style={{ color: '#001943', fontWeight: 500 }}>{selectedLead.source || 'Website'}</span>
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Lead Source:</span>
+                    <span style={{ color: '#001943', fontWeight: 500 }}>{selectedLead.source || 'Website'}</span>
 
-                  <span style={{ fontWeight: 600, color: '#64748b' }}>Source Page:</span>
-                  <span style={{ color: '#64748b', fontSize: '13px' }}>{selectedLead.sourcePage || 'Unknown'}</span>
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Source Page:</span>
+                    <span style={{ color: '#64748b', fontSize: '13px' }}>{selectedLead.sourcePage || 'Unknown'}</span>
 
-                  <span style={{ fontWeight: 600, color: '#64748b' }}>Original Message:</span>
-                  <span style={{ color: '#475569', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>{selectedLead.message || 'No initial message.'}</span>
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Original Message:</span>
+                    <span style={{ color: '#475569', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>{selectedLead.message || 'No initial message.'}</span>
 
-                  <span style={{ fontWeight: 600, color: '#64748b' }}>Received Date:</span>
-                  <span style={{ color: '#64748b' }}>{new Date(selectedLead.createdAt).toLocaleString()}</span>
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Received Date:</span>
+                    <span style={{ color: '#64748b' }}>{new Date(selectedLead.createdAt).toLocaleString()}</span>
+                  </div>
+
+                  <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+                    <div className="admin-form-row">
+                      <div className="admin-form-group">
+                        <label>Followup Action Status</label>
+                        <select 
+                          value={status} 
+                          onChange={e => setStatus(e.target.value)}
+                          style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                        >
+                          <option value="Pending">Pending</option>
+                          <option value="Contacted">Contacted</option>
+                          <option value="Demo Booked">Demo Booked</option>
+                          <option value="Enrolled">Enrolled</option>
+                          <option value="Rejected">Rejected</option>
+                        </select>
+                      </div>
+
+                      <div className="admin-form-group">
+                        <label>Lead Origin Source</label>
+                        <select 
+                          value={leadSource} 
+                          onChange={e => setLeadSource(e.target.value)}
+                          style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                        >
+                          {sourcesList.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="admin-form-row" style={{ marginTop: '14px' }}>
+                      <div className="admin-form-group">
+                        <label>Lead Priority</label>
+                        <select 
+                          value={priority} 
+                          onChange={e => setPriority(e.target.value)}
+                          style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                        >
+                          <option value="Cold">⚪ Cold</option>
+                          <option value="Warm">🟡 Warm</option>
+                          <option value="Hot">🔥 Hot</option>
+                        </select>
+                      </div>
+
+                      <div className="admin-form-group">
+                        <label>Assigned Staff Owner</label>
+                        <select 
+                          value={assignedTo} 
+                          onChange={e => setAssignedTo(e.target.value)}
+                          style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                        >
+                          <option value="">Unassigned</option>
+                          <option value="Admin">Admin</option>
+                          <option value="Counselor">Counselor</option>
+                          <option value="Trainer">Trainer</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="admin-form-row" style={{ marginTop: '14px' }}>
+                      <div className="admin-form-group">
+                        <label>Next Follow-up Date</label>
+                        <input
+                          type="datetime-local"
+                          value={nextFollowupDate}
+                          onChange={e => setNextFollowupDate(e.target.value)}
+                          style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                        />
+                      </div>
+
+                      <div className="admin-form-group">
+                        <label>Last Contacted Date</label>
+                        <input
+                          type="datetime-local"
+                          value={lastContactedAt}
+                          onChange={e => setLastContactedAt(e.target.value)}
+                          style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="admin-form-group" style={{ marginTop: '14px' }}>
+                      <label>Admin Background/Permanent Profile Summary</label>
+                      <textarea
+                        value={adminNotes}
+                        onChange={e => setAdminNotes(e.target.value)}
+                        placeholder="Record details (education, works in Bangalore, etc.)..."
+                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', minHeight: '60px', borderRadius: '8px', padding: '10px', outline: 'none' }}
+                      />
+                    </div>
+
+                    <div className="admin-form-group" style={{ marginTop: '14px' }}>
+                      <label>Follow-up Action Notes</label>
+                      <textarea
+                        value={followupNotes}
+                        onChange={e => setFollowupNotes(e.target.value)}
+                        placeholder="Response notes, callback instructions..."
+                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', minHeight: '60px', borderRadius: '8px', padding: '10px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <form onSubmit={handleSaveChanges} className="admin-login-form" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
-                  <div className="admin-form-row">
-                    <div className="admin-form-group">
-                      <label>Followup Action Status</label>
-                      <select 
-                        value={status} 
-                        onChange={e => setStatus(e.target.value)}
-                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="Contacted">Contacted</option>
-                        <option value="Demo Booked">Demo Booked</option>
-                        <option value="Enrolled">Enrolled</option>
-                        <option value="Rejected">Rejected</option>
-                      </select>
-                    </div>
-
-                    <div className="admin-form-group">
-                      <label>Lead Origin Source</label>
-                      <select 
-                        value={leadSource} 
-                        onChange={e => setLeadSource(e.target.value)}
-                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                      >
-                        {sourcesList.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="admin-form-row" style={{ marginTop: '14px' }}>
-                    <div className="admin-form-group">
-                      <label>Lead Priority</label>
-                      <select 
-                        value={priority} 
-                        onChange={e => setPriority(e.target.value)}
-                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                      >
-                        <option value="Cold">⚪ Cold</option>
-                        <option value="Warm">🟡 Warm</option>
-                        <option value="Hot">🔥 Hot</option>
-                      </select>
-                    </div>
-
-                    <div className="admin-form-group">
-                      <label>Assigned Staff Owner</label>
-                      <select 
-                        value={assignedTo} 
-                        onChange={e => setAssignedTo(e.target.value)}
-                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                      >
-                        <option value="">Unassigned</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Counselor">Counselor</option>
-                        <option value="Trainer">Trainer</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="admin-form-row" style={{ marginTop: '14px' }}>
-                    <div className="admin-form-group">
-                      <label>Next Follow-up Date</label>
-                      <input
-                        type="datetime-local"
-                        value={nextFollowupDate}
-                        onChange={e => setNextFollowupDate(e.target.value)}
-                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                      />
-                    </div>
-
-                    <div className="admin-form-group">
-                      <label>Last Contacted Date</label>
-                      <input
-                        type="datetime-local"
-                        value={lastContactedAt}
-                        onChange={e => setLastContactedAt(e.target.value)}
-                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="admin-form-group" style={{ marginTop: '14px' }}>
-                    <label>Admin Background/Permanent Profile Summary</label>
-                    <textarea
-                      value={adminNotes}
-                      onChange={e => setAdminNotes(e.target.value)}
-                      placeholder="Record details (education, works in Bangalore, etc.)..."
-                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', minHeight: '60px', borderRadius: '8px', padding: '10px', outline: 'none' }}
-                    />
-                  </div>
-
-                  <div className="admin-form-group" style={{ marginTop: '14px' }}>
-                    <label>Follow-up Action Notes</label>
-                    <textarea
-                      value={followupNotes}
-                      onChange={e => setFollowupNotes(e.target.value)}
-                      placeholder="Response notes, callback instructions..."
-                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', minHeight: '60px', borderRadius: '8px', padding: '10px', outline: 'none' }}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '16px', flexShrink: 0 }}>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowDeleteConfirm(true)}
+                    style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                    Delete Lead
+                  </button>
+                  
+                  <div style={{ display: 'flex', gap: '10px' }}>
                     <button 
                       type="button" 
-                      onClick={() => setShowDeleteConfirm(true)}
-                      style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+                      onClick={() => setSelectedLead(null)}
+                      style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
-                      Delete Lead
+                      Cancel
                     </button>
-                    
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button 
-                        type="button" 
-                        onClick={() => setSelectedLead(null)}
-                        style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        type="submit" 
-                        disabled={saving}
-                        className="activity-book-btn"
-                        style={{ padding: '8px 16px', borderRadius: '6px', fontWeight: 600, opacity: saving ? 0.7 : 1 }}
-                      >
-                        Save Details
-                      </button>
-                    </div>
+                    <button 
+                      type="submit" 
+                      disabled={saving}
+                      className="activity-book-btn"
+                      style={{ padding: '8px 16px', borderRadius: '6px', fontWeight: 600, opacity: saving ? 0.7 : 1 }}
+                    >
+                      Save Details
+                    </button>
                   </div>
-                </form>
-              </>
+                </div>
+              </form>
             )}
 
             {/* TAB 2: Notes History */}
             {detailTab === 'notes' && (
-              <div>
-                <form onSubmit={handleAddNote} style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0, overflow: 'hidden' }}>
+                <form onSubmit={handleAddNote} style={{ marginBottom: '20px', flexShrink: 0 }}>
                   <div className="admin-form-group">
                     <label style={{ fontWeight: 600, color: '#001943' }}>Add CRM Note</label>
                     <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
@@ -1061,7 +1080,7 @@ export default function LeadsAdmin() {
                   </div>
                 </form>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '300px', overflowY: 'auto' }}>
+                <div className="admin-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {notesList.length === 0 ? (
                     <p style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No CRM notes recorded yet.</p>
                   ) : (
@@ -1081,7 +1100,7 @@ export default function LeadsAdmin() {
 
             {/* TAB 3: Chronological History Timeline */}
             {detailTab === 'timeline' && (
-              <div style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '6px' }}>
+              <div className="admin-modal-body">
                 {timelineEvents.length === 0 ? (
                   <p style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No history events available.</p>
                 ) : (
