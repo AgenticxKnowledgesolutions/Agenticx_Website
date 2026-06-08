@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import './AppLoader.css';
 
 const LOADING_MESSAGES = [
-  "Preparing your learning experience...",
+  "Building Your Future.",
   "Loading courses...",
   "Syncing opportunities...",
   "Connecting to AgenticX services..."
@@ -29,7 +29,7 @@ export default function AppLoader({ isFadeOut }: AppLoaderProps) {
   }, []);
 
   return (
-    <div 
+    <div
       className={`app-loader-overlay ${isFadeOut ? 'fade-out' : ''}`}
       role="progressbar"
       aria-busy={!isFadeOut}

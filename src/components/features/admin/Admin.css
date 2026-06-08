@@ -299,6 +299,7 @@
     left: 0;
     height: 100vh;
     transform: translateX(-100%);
+    z-index: 1000;
   }
 
   .admin-sidebar.open {
@@ -315,8 +316,17 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 90;
+    background: rgba(15, 23, 42, 0.4);
+    z-index: 999;
+  }
+
+  /* Accessibility Touch Target Sizes */
+  .admin-nav-link,
+  .admin-sub-link,
+  .admin-logout-btn {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 
   .admin-topbar {

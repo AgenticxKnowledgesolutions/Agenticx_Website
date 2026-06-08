@@ -26,12 +26,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div 
           className="admin-sidebar-overlay" 
           onClick={onClose}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.4)',
-            zIndex: 999
-          }}
         />
       )}
 
