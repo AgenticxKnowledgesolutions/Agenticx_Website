@@ -137,28 +137,26 @@
 }
 
 .cd-stack-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  filter: grayscale(100%);
-  transition: filter 0.3s ease;
+  background-color: rgba(0, 82, 254, 0.08);
+  border: 1px solid rgba(0, 82, 254, 0.15);
+  color: #0052fe;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14px;
   cursor: default;
+  transition: all 0.2s ease;
 }
 
 .cd-stack-item:hover {
-  filter: grayscale(0%);
-}
-
-.cd-stack-icon {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
+  background-color: rgba(0, 82, 254, 0.15);
+  transform: translateY(-1px);
 }
 
 .cd-stack-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #191c1e;
+  color: #0052fe;
 }
 
 /* Curriculum Section */

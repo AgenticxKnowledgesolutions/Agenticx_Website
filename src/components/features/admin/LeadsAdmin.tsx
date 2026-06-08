@@ -1,66 +1,1139 @@
+import { useState, useEffect } from 'react';
+import { 
+  type Lead, 
+  type LeadNote, 
+  type LeadTimelineEvent, 
+  updateLead, 
+  createLead, 
+  deleteLead, 
+  checkDuplicate, 
+  bulkUpdate, 
+  bulkDelete, 
+  addNote, 
+  getLeadById
+} from '@/services/leadService';
+import { useToast } from '@/components/ui/Toast';
+import { useAdminStore } from '@/services/adminStore';
 import './Admin.css';
 
 export default function LeadsAdmin() {
-  const mockLeads = [
-    { id: '1', name: 'John Doe', email: 'john@example.com', course: 'Advanced AI Development', date: '2026-05-30', status: 'Pending' },
-    { id: '2', name: 'Alice Smith', email: 'alice@example.com', course: 'Full Stack Next.js & React', date: '2026-05-29', status: 'Contacted' },
-    { id: '3', name: 'Bob Johnson', email: 'bob@example.com', course: 'Data Engineering Fundamentals', date: '2026-05-28', status: 'Enrolled' },
+  const { leads, loadingLeads, fetchLeads, invalidateAll } = useAdminStore();
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  
+  // Selected IDs for bulk operations
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  
+  // Detail Modal Edit Form States
+  const [status, setStatus] = useState('Pending');
+  const [adminNotes, setAdminNotes] = useState('');
+  const [nextFollowupDate, setNextFollowupDate] = useState('');
+  const [followupNotes, setFollowupNotes] = useState('');
+  const [lastContactedAt, setLastContactedAt] = useState('');
+  const [leadSource, setLeadSource] = useState('Website');
+  const [priority, setPriority] = useState('Cold');
+  const [assignedTo, setAssignedTo] = useState('');
+  const [notesList, setNotesList] = useState<LeadNote[]>([]);
+  const [timelineEvents, setTimelineEvents] = useState<LeadTimelineEvent[]>([]);
+  
+  // Detail modal sub-panels/tabs
+  const [detailTab, setDetailTab] = useState<'details' | 'notes' | 'timeline'>('details');
+  const [newNoteText, setNewNoteText] = useState('');
+  
+  // Creation Form Modal States
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newCourse, setNewCourse] = useState('MERN Stack');
+  const [newSource, setNewSource] = useState('Manual Entry');
+  const [newStatus, setNewStatus] = useState('Pending');
+  const [newPriority, setNewPriority] = useState('Cold');
+  const [newNotes, setNewNotes] = useState('');
+  const [newAssignedTo, setNewAssignedTo] = useState('');
+  
+  // Confirmation & Warning states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [duplicateLead, setDuplicateLead] = useState<Lead | null>(null);
+  
+  // Bulk controls
+  const [bulkActionType, setBulkActionType] = useState<'status' | 'source' | 'priority' | 'assign' | ''>('');
+  const [bulkActionValue, setBulkActionValue] = useState('');
+
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  const loadLeads = async (force = false) => {
+    try {
+      await fetchLeads(force);
+    } catch (err) {
+      console.error(err);
+      toast('Failed to load leads.', 'error');
+    }
+  };
+
+  useEffect(() => {
+    loadLeads();
+  }, []);
+
+  const handleRowClick = async (lead: Lead) => {
+    // Fetch full lead including notes and timeline events
+    const fullLead = await getLeadById(lead.id);
+    const targetLead = fullLead || lead;
+    
+    setSelectedLead(targetLead);
+    setStatus(targetLead.status);
+    setAdminNotes(targetLead.adminNotes || '');
+    setNextFollowupDate(targetLead.nextFollowupDate ? targetLead.nextFollowupDate.substring(0, 16) : '');
+    setFollowupNotes(targetLead.followupNotes || '');
+    setLastContactedAt(targetLead.lastContactedAt ? targetLead.lastContactedAt.substring(0, 16) : '');
+    setLeadSource(targetLead.source || 'Website');
+    setPriority(targetLead.priority || 'Cold');
+    setAssignedTo(targetLead.assignedTo || '');
+    setNotesList(targetLead.notes || []);
+    setTimelineEvents(targetLead.timelineEvents || []);
+    setDetailTab('details');
+  };
+
+  const refreshSelectedLead = async () => {
+    if (!selectedLead) return;
+    const updatedLead = await getLeadById(selectedLead.id);
+    if (updatedLead) {
+      setSelectedLead(updatedLead);
+      setNotesList(updatedLead.notes || []);
+      setTimelineEvents(updatedLead.timelineEvents || []);
+    }
+  };
+
+  const handleSaveChanges = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLead) return;
+    setSaving(true);
+    try {
+      const nowIso = new Date().toISOString();
+      const updated = await updateLead(
+        selectedLead.id,
+        status,
+        adminNotes,
+        lastContactedAt ? new Date(lastContactedAt).toISOString() : nowIso,
+        nextFollowupDate ? new Date(nextFollowupDate).toISOString() : null,
+        followupNotes || null,
+        leadSource || null,
+        priority,
+        assignedTo || null
+      );
+      if (updated) {
+        toast('Lead updates saved successfully', 'success');
+        setSelectedLead(null);
+        invalidateAll();
+        loadLeads(true);
+      } else {
+        toast('Failed to save lead updates', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      toast('Failed to save lead updates', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLead || !newNoteText.trim()) return;
+    try {
+      const added = await addNote(selectedLead.id, newNoteText.trim());
+      if (added) {
+        setNewNoteText('');
+        toast('Note added to timeline', 'success');
+        await refreshSelectedLead();
+      } else {
+        toast('Failed to add note', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      toast('Error adding note', 'error');
+    }
+  };
+
+  // Manual Lead Creation Check & Commit
+  const handleCreateLeadSubmit = async (e: React.FormEvent, bypassDuplicateCheck = false) => {
+    e.preventDefault();
+    if (!newName.trim() || !newEmail.trim()) {
+      toast('Name and Email are required fields', 'error');
+      return;
+    }
+
+    if (!bypassDuplicateCheck) {
+      // Run duplicate check first
+      setSaving(true);
+      const dup = await checkDuplicate(newPhone || null, newEmail, newCourse || null);
+      setSaving(false);
+      if (dup) {
+        setDuplicateLead(dup);
+        setShowDuplicateWarning(true);
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      const created = await createLead({
+        name: newName.trim(),
+        email: newEmail.trim(),
+        phone: newPhone.trim() || undefined,
+        message: newNotes.trim() || undefined,
+        interestedCourse: newCourse,
+        source: newSource,
+        status: newStatus,
+        priority: newPriority,
+        assignedTo: newAssignedTo || undefined,
+      });
+
+      if (created) {
+        toast('New lead created successfully', 'success');
+        setShowAddModal(false);
+        resetCreateForm();
+        invalidateAll();
+        loadLeads(true);
+      } else {
+        toast('Failed to create new lead', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      toast('Error creating new lead', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const resetCreateForm = () => {
+    setNewName('');
+    setNewEmail('');
+    setNewPhone('');
+    setNewCourse('MERN Stack');
+    setNewSource('Manual Entry');
+    setNewStatus('Pending');
+    setNewPriority('Cold');
+    setNewNotes('');
+    setNewAssignedTo('');
+    setDuplicateLead(null);
+    setShowDuplicateWarning(false);
+  };
+
+  const handleSingleDelete = async () => {
+    if (!selectedLead) return;
+    setSaving(true);
+    const success = await deleteLead(selectedLead.id);
+    setSaving(false);
+    if (success) {
+      toast('Lead deleted successfully', 'success');
+      setSelectedLead(null);
+      setShowDeleteConfirm(false);
+      invalidateAll();
+      loadLeads(true);
+    } else {
+      toast('Failed to delete lead', 'error');
+    }
+  };
+
+  // Bulk Operations
+  const handleSelectRow = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === leads.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(leads.map(l => l.id));
+    }
+  };
+
+  const handleApplyBulkAction = async () => {
+    if (selectedIds.length === 0 || !bulkActionType || !bulkActionValue) return;
+    
+    setSaving(true);
+    let success = false;
+    
+    if (bulkActionType === 'status') {
+      success = await bulkUpdate(selectedIds, { status: bulkActionValue });
+    } else if (bulkActionType === 'source') {
+      success = await bulkUpdate(selectedIds, { source: bulkActionValue });
+    } else if (bulkActionType === 'priority') {
+      success = await bulkUpdate(selectedIds, { priority: bulkActionValue });
+    } else if (bulkActionType === 'assign') {
+      success = await bulkUpdate(selectedIds, { assignedTo: bulkActionValue });
+    }
+
+    setSaving(false);
+    if (success) {
+      toast(`Successfully updated ${selectedIds.length} leads`, 'success');
+      setSelectedIds([]);
+      setBulkActionType('');
+      setBulkActionValue('');
+      invalidateAll();
+      loadLeads(true);
+    } else {
+      toast('Failed to apply bulk update', 'error');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setSaving(true);
+    const success = await bulkDelete(selectedIds);
+    setSaving(false);
+    if (success) {
+      toast(`Deleted ${selectedIds.length} leads successfully`, 'success');
+      setSelectedIds([]);
+      setShowBulkDeleteConfirm(false);
+      invalidateAll();
+      loadLeads(true);
+    } else {
+      toast('Failed to delete leads', 'error');
+    }
+  };
+
+  const handleBulkExport = () => {
+    if (selectedIds.length === 0) return;
+    
+    const selectedLeads = leads.filter(l => selectedIds.includes(l.id));
+    
+    // Build CSV Content
+    const headers = ["Name", "Email", "Phone", "Course Interest", "Source", "Status", "Priority", "Assigned To", "Created Date"];
+    const rows = selectedLeads.map(l => [
+      l.name,
+      l.email,
+      l.phone || '',
+      l.interestedCourse || 'General Inquiry',
+      l.source || 'Website',
+      l.status,
+      l.priority,
+      l.assignedTo || 'Unassigned',
+      new Date(l.createdAt).toLocaleDateString()
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(",")].concat(rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))).join("\n");
+      
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `bulk_selected_leads_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast(`Exported ${selectedIds.length} selected leads to CSV`, 'success');
+  };
+
+  const renderPriorityEmoji = (p: string) => {
+    if (p === 'Hot') return '🔥 Hot';
+    if (p === 'Warm') return '🟡 Warm';
+    return '⚪ Cold';
+  };
+
+  const sourcesList = [
+    "Website", "Contact Form", "Course Enquiry", "Free Demo", "Consultation",
+    "WhatsApp", "Phone Call", "Office Visit", "Referral", "Workshop", "Seminar",
+    "College Drive", "Instagram", "Facebook", "Google Search", "Google Business",
+    "AI Assistant", "Manual Entry"
   ];
 
   return (
     <div className="admin-page">
-      <div className="admin-dashboard-header">
-        <h1 className="admin-page-title">Student Leads Manager</h1>
-        <p className="admin-page-subtitle">Track and follow up on contact forms, callback requests, and course inquiries.</p>
+      <div className="admin-dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 className="admin-page-title">Student Leads Manager</h1>
+          <p className="admin-page-subtitle">Track and follow up on contact forms, callback requests, and manual enquiries.</p>
+        </div>
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="activity-book-btn"
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '14px', borderRadius: '8px', cursor: 'pointer' }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
+          Add Lead
+        </button>
       </div>
 
-      <div className="admin-kpi-card glass-panel" style={{ display: 'block', padding: '24px', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: '#001943' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '28px', color: '#3b82f6' }}>info</span>
-          <h3 style={{ margin: 0 }}>System Note: Client Form Integration</h3>
+      {/* KPI Info box */}
+      <div className="admin-kpi-card glass-panel" style={{ display: 'block', padding: '20px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', color: '#001943' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#3b82f6' }}>info</span>
+          <h3 style={{ margin: 0, fontSize: '16px' }}>Lead Operations Control</h3>
         </div>
-        <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
-          This page acts as a staging queue. Student inquiries submitted through public forms (like the Course Enquiry sidebar or the Contact Us form) are automatically captured. In the future, this queue will connect directly to your CRM platform or email notification service.
+        <p style={{ color: '#475569', fontSize: '13px', lineHeight: '1.6', margin: 0 }}>
+          Manage inbound leads, log history, and execute bulk tasks. Select multiple rows to perform bulk status, source, priority, or deletion operations.
         </p>
       </div>
 
+      {/* Bulk Operations Toolbar */}
+      {selectedIds.length > 0 && (
+        <div className="glass-panel" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '16px 24px', marginBottom: '24px', background: '#eff6ff', borderColor: '#bfdbfe', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className="material-symbols-outlined" style={{ color: '#1d4ed8' }}>check_box</span>
+            <span style={{ fontWeight: 600, color: '#1e3a8a', fontSize: '14px' }}>{selectedIds.length} leads selected</span>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <select
+              value={bulkActionType}
+              onChange={e => {
+                setBulkActionType(e.target.value as any);
+                setBulkActionValue('');
+              }}
+              style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+            >
+              <option value="">Choose Bulk Action...</option>
+              <option value="status">Update Status</option>
+              <option value="priority">Update Priority</option>
+              <option value="source">Update Source</option>
+              <option value="assign">Update Assignment</option>
+            </select>
+
+            {bulkActionType === 'status' && (
+              <select
+                value={bulkActionValue}
+                onChange={e => setBulkActionValue(e.target.value)}
+                style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+              >
+                <option value="">Select Status...</option>
+                <option value="Pending">Pending</option>
+                <option value="Contacted">Contacted</option>
+                <option value="Demo Booked">Demo Booked</option>
+                <option value="Enrolled">Enrolled</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            )}
+
+            {bulkActionType === 'priority' && (
+              <select
+                value={bulkActionValue}
+                onChange={e => setBulkActionValue(e.target.value)}
+                style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+              >
+                <option value="">Select Priority...</option>
+                <option value="Hot">🔥 Hot</option>
+                <option value="Warm">🟡 Warm</option>
+                <option value="Cold">⚪ Cold</option>
+              </select>
+            )}
+
+            {bulkActionType === 'source' && (
+              <select
+                value={bulkActionValue}
+                onChange={e => setBulkActionValue(e.target.value)}
+                style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+              >
+                <option value="">Select Source...</option>
+                {sourcesList.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            )}
+
+            {bulkActionType === 'assign' && (
+              <select
+                value={bulkActionValue}
+                onChange={e => setBulkActionValue(e.target.value)}
+                style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+              >
+                <option value="">Select Assignment...</option>
+                <option value="Admin">Admin</option>
+                <option value="Counselor">Counselor</option>
+                <option value="Trainer">Trainer</option>
+              </select>
+            )}
+
+            {bulkActionType && bulkActionValue && (
+              <button
+                onClick={handleApplyBulkAction}
+                style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Apply
+              </button>
+            )}
+
+            <button
+              onClick={handleBulkExport}
+              style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span>
+              Export
+            </button>
+
+            <button
+              onClick={() => setShowBulkDeleteConfirm(true)}
+              style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+              Delete
+            </button>
+
+            <button
+              onClick={() => setSelectedIds([])}
+              style={{ background: '#e2e8f0', color: '#475569', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Table Panel */}
       <div className="admin-kpi-card glass-panel" style={{ display: 'block', padding: '24px' }}>
-        <h3 style={{ marginBottom: '20px', color: '#001943' }}>Inbound Enquiries</h3>
+        <h3 style={{ marginBottom: '20px', color: '#001943' }}>Lead Listings</h3>
         
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left', color: '#64748b' }}>
-              <th style={{ padding: '12px 8px' }}>Student Name</th>
-              <th style={{ padding: '12px 8px' }}>Email</th>
-              <th style={{ padding: '12px 8px' }}>Course Interest</th>
-              <th style={{ padding: '12px 8px' }}>Date</th>
-              <th style={{ padding: '12px 8px' }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockLeads.map(lead => (
-              <tr key={lead.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '16px 8px', fontWeight: 500, color: '#001943' }}>{lead.name}</td>
-                <td style={{ padding: '16px 8px', color: '#475569' }}>{lead.email}</td>
-                <td style={{ padding: '16px 8px', color: '#001943', fontWeight: 500 }}>{lead.course}</td>
-                <td style={{ padding: '16px 8px', color: '#64748b' }}>{lead.date}</td>
-                <td style={{ padding: '16px 8px' }}>
-                  <span style={{ 
-                    background: lead.status === 'Pending' ? '#fef3c7' : lead.status === 'Contacted' ? '#dbeafe' : '#dcfce7', 
-                    color: lead.status === 'Pending' ? '#92400e' : lead.status === 'Contacted' ? '#1e40af' : '#166534', 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '12px', 
-                    fontWeight: 'bold' 
-                  }}>
-                    {lead.status}
-                  </span>
-                </td>
+        <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch', marginBottom: '16px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
+            <thead>
+              <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left', color: '#64748b' }}>
+                <th style={{ padding: '12px 8px', width: '40px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={leads.length > 0 && selectedIds.length === leads.length}
+                    onChange={handleSelectAll}
+                    style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                  />
+                </th>
+                <th style={{ padding: '12px 8px' }}>Student Name</th>
+                <th style={{ padding: '12px 8px' }}>Email</th>
+                <th style={{ padding: '12px 8px' }}>Course Interest</th>
+                <th style={{ padding: '12px 8px' }}>Source</th>
+                <th style={{ padding: '12px 8px' }}>Priority</th>
+                <th style={{ padding: '12px 8px' }}>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loadingLeads ? (
+                [1, 2, 3].map((item) => (
+                  <tr key={item} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '20px' }} /></td>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '60%' }} /></td>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '50%' }} /></td>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '40%' }} /></td>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '30%' }} /></td>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '20%' }} /></td>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '20%' }} /></td>
+                  </tr>
+                ))
+              ) : leads.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>No student inquiries found.</td>
+                </tr>
+              ) : (
+                leads.map(lead => (
+                  <tr 
+                    key={lead.id} 
+                    style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
+                    className={`lead-row-hover ${selectedIds.includes(lead.id) ? 'admin-selected-row' : ''}`}
+                  >
+                    <td style={{ padding: '16px 8px' }} onClick={e => e.stopPropagation()}>
+                      <input 
+                        type="checkbox"
+                        checked={selectedIds.includes(lead.id)}
+                        onChange={() => handleSelectRow(lead.id)}
+                        style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                      />
+                    </td>
+                    <td style={{ padding: '16px 8px', fontWeight: 500, color: '#001943' }} onClick={() => handleRowClick(lead)}>{lead.name}</td>
+                    <td style={{ padding: '16px 8px', color: '#475569' }} onClick={() => handleRowClick(lead)}>{lead.email}</td>
+                    <td style={{ padding: '16px 8px', color: '#001943', fontWeight: 500 }} onClick={() => handleRowClick(lead)}>{lead.interestedCourse || 'General Inquiry'}</td>
+                    <td style={{ padding: '16px 8px', color: '#64748b' }} onClick={() => handleRowClick(lead)}>{lead.source || 'Website'}</td>
+                    <td style={{ padding: '16px 8px' }} onClick={() => handleRowClick(lead)}>
+                      <span style={{ fontWeight: 600, fontSize: '13px', color: lead.priority === 'Hot' ? '#dc2626' : lead.priority === 'Warm' ? '#d97706' : '#64748b' }}>
+                        {renderPriorityEmoji(lead.priority)}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px 8px' }} onClick={() => handleRowClick(lead)}>
+                      <span style={{ 
+                        background: lead.status === 'Pending' ? '#fef3c7' : lead.status === 'Contacted' ? '#dbeafe' : lead.status === 'Enrolled' ? '#dcfce7' : '#f1f5f9', 
+                        color: lead.status === 'Pending' ? '#92400e' : lead.status === 'Contacted' ? '#1e40af' : lead.status === 'Enrolled' ? '#166534' : '#475569', 
+                        padding: '4px 8px', 
+                        borderRadius: '4px', 
+                        fontSize: '12px', 
+                        fontWeight: 'bold' 
+                      }}>
+                        {lead.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* Manual Add Lead Modal */}
+      {showAddModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 25, 67, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '20px' }}>
+          <div className="admin-kpi-card glass-panel" style={{ width: '100%', maxWidth: '550px', maxHeight: '90vh', overflowY: 'auto', background: '#ffffff', padding: '24px', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', display: 'block' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, color: '#001943' }}>Create New Lead Entry</h3>
+              <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={e => handleCreateLeadSubmit(e)} className="admin-login-form">
+              <div className="admin-form-group">
+                <label>Student Name *</label>
+                <input 
+                  type="text" 
+                  value={newName} 
+                  onChange={e => setNewName(e.target.value)} 
+                  required
+                  placeholder="Student's Full Name"
+                  style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '14px' }}>
+                <div className="admin-form-group">
+                  <label>Email Address *</label>
+                  <input 
+                    type="email" 
+                    value={newEmail} 
+                    onChange={e => setNewEmail(e.target.value)} 
+                    required
+                    placeholder="student@gmail.com"
+                    style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                  />
+                </div>
+
+                <div className="admin-form-group">
+                  <label>Phone Number</label>
+                  <input 
+                    type="tel" 
+                    value={newPhone} 
+                    onChange={e => setNewPhone(e.target.value)} 
+                    placeholder="Phone/WhatsApp number"
+                    style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '14px' }}>
+                <div className="admin-form-group">
+                  <label>Interested Course</label>
+                  <select 
+                    value={newCourse} 
+                    onChange={e => setNewCourse(e.target.value)}
+                    style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                  >
+                    <option value="MERN Stack">MERN Stack</option>
+                    <option value="ai-ml">AI & ML</option>
+                    <option value="Data Science">Data Science</option>
+                    <option value="General Inquiry">General Enquiry</option>
+                  </select>
+                </div>
+
+                <div className="admin-form-group">
+                  <label>Lead Source</label>
+                  <select 
+                    value={newSource} 
+                    onChange={e => setNewSource(e.target.value)}
+                    style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                  >
+                    {sourcesList.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '14px' }}>
+                <div className="admin-form-group">
+                  <label>Initial Status</label>
+                  <select 
+                    value={newStatus} 
+                    onChange={e => setNewStatus(e.target.value)}
+                    style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Contacted">Contacted</option>
+                    <option value="Demo Booked">Demo Booked</option>
+                    <option value="Enrolled">Enrolled</option>
+                  </select>
+                </div>
+
+                <div className="admin-form-group">
+                  <label>Lead Priority</label>
+                  <select 
+                    value={newPriority} 
+                    onChange={e => setNewPriority(e.target.value)}
+                    style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                  >
+                    <option value="Cold">⚪ Cold</option>
+                    <option value="Warm">🟡 Warm</option>
+                    <option value="Hot">🔥 Hot</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="admin-form-group" style={{ marginTop: '14px' }}>
+                <label>Assigned Staff Owner</label>
+                <select 
+                  value={newAssignedTo} 
+                  onChange={e => setNewAssignedTo(e.target.value)}
+                  style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                >
+                  <option value="">Unassigned</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Counselor">Counselor</option>
+                  <option value="Trainer">Trainer</option>
+                </select>
+              </div>
+
+              <div className="admin-form-group" style={{ marginTop: '14px' }}>
+                <label>Initial Profile Message / Notes</label>
+                <textarea 
+                  value={newNotes} 
+                  onChange={e => setNewNotes(e.target.value)}
+                  placeholder="Record call summary or comments..."
+                  style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', minHeight: '80px', borderRadius: '8px', padding: '10px', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddModal(false)}
+                  style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={saving}
+                  className="activity-book-btn"
+                  style={{ padding: '8px 16px', borderRadius: '6px', fontWeight: 600, opacity: saving ? 0.7 : 1 }}
+                >
+                  Create Lead
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Duplicate Warning Dialog */}
+      {showDuplicateWarning && duplicateLead && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 25, 67, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div className="admin-kpi-card glass-panel" style={{ width: '100%', maxWidth: '450px', background: '#ffffff', padding: '24px', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', display: 'block', border: '1px solid #fbd38d' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#dd6b20', marginBottom: '16px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '30px' }}>warning</span>
+              <h3 style={{ margin: 0 }}>Potential Duplicate Found</h3>
+            </div>
+            
+            <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.6', marginBottom: '16px' }}>
+              An active lead is already registered with identical info for this course:
+            </p>
+
+            <div style={{ background: '#fffaf0', border: '1px solid #feebc8', borderRadius: '8px', padding: '16px', fontSize: '13px', marginBottom: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '6px' }}>
+                <span style={{ fontWeight: 600, color: '#7b341e' }}>Name:</span>
+                <span style={{ color: '#2d3748' }}>{duplicateLead.name}</span>
+                
+                <span style={{ fontWeight: 600, color: '#7b341e' }}>Course:</span>
+                <span style={{ color: '#2d3748', fontWeight: 600 }}>{duplicateLead.interestedCourse || 'General Inquiry'}</span>
+                
+                <span style={{ fontWeight: 600, color: '#7b341e' }}>Created:</span>
+                <span style={{ color: '#2d3748' }}>{new Date(duplicateLead.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button 
+                onClick={() => {
+                  setShowDuplicateWarning(false);
+                  setDuplicateLead(null);
+                }}
+                style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
+              >
+                Cancel
+              </button>
+              
+              <button 
+                onClick={() => {
+                  setShowDuplicateWarning(false);
+                  setShowAddModal(false);
+                  handleRowClick(duplicateLead);
+                  setDuplicateLead(null);
+                }}
+                style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
+              >
+                View Existing
+              </button>
+              
+              <button 
+                onClick={(e) => handleCreateLeadSubmit(e, true)}
+                style={{ background: '#dd6b20', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
+              >
+                Create Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Single Lead Confirm */}
+      {showDeleteConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 25, 67, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div className="admin-kpi-card glass-panel" style={{ width: '100%', maxWidth: '400px', background: '#ffffff', padding: '24px', borderRadius: '12px', display: 'block' }}>
+            <h3 style={{ margin: 0, color: '#001943', marginBottom: '12px' }}>Delete Lead?</h3>
+            <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.5', marginBottom: '20px' }}>
+              Are you sure you want to delete this lead? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button 
+                onClick={() => setShowDeleteConfirm(false)}
+                style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSingleDelete}
+                style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirm */}
+      {showBulkDeleteConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 25, 67, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div className="admin-kpi-card glass-panel" style={{ width: '100%', maxWidth: '400px', background: '#ffffff', padding: '24px', borderRadius: '12px', display: 'block' }}>
+            <h3 style={{ margin: 0, color: '#001943', marginBottom: '12px' }}>Delete {selectedIds.length} Leads?</h3>
+            <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.5', marginBottom: '20px' }}>
+              Are you sure you want to bulk-delete these {selectedIds.length} leads? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button 
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleBulkDelete}
+                style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Delete Selected
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Leads Detail & CRM Modal */}
+      {selectedLead && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 25, 67, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: '20px' }}>
+          <div className="admin-kpi-card glass-panel" style={{ width: '100%', maxWidth: '650px', maxHeight: '90vh', overflowY: 'auto', background: '#ffffff', padding: '24px', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', display: 'block' }}>
+            
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '16px' }}>
+              <div>
+                <h3 style={{ margin: 0, color: '#001943', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>{selectedLead.name}</span>
+                  <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px', background: selectedLead.priority === 'Hot' ? '#fee2e2' : selectedLead.priority === 'Warm' ? '#fef3c7' : '#f1f5f9', color: selectedLead.priority === 'Hot' ? '#991b1b' : selectedLead.priority === 'Warm' ? '#92400e' : '#475569' }}>
+                    {renderPriorityEmoji(selectedLead.priority)}
+                  </span>
+                </h3>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Assigned: {selectedLead.assignedTo || 'Unassigned'}</span>
+              </div>
+              <button onClick={() => setSelectedLead(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {/* Modal Tabs */}
+            <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: '20px', gap: '16px' }}>
+              <button 
+                onClick={() => setDetailTab('details')}
+                style={{ background: 'none', border: 'none', borderBottom: detailTab === 'details' ? '2px solid #2563eb' : '2px solid transparent', padding: '8px 4px', fontWeight: 600, color: detailTab === 'details' ? '#2563eb' : '#64748b', cursor: 'pointer' }}
+              >
+                Lead Details
+              </button>
+              
+              <button 
+                onClick={() => setDetailTab('notes')}
+                style={{ background: 'none', border: 'none', borderBottom: detailTab === 'notes' ? '2px solid #2563eb' : '2px solid transparent', padding: '8px 4px', fontWeight: 600, color: detailTab === 'notes' ? '#2563eb' : '#64748b', cursor: 'pointer' }}
+              >
+                CRM Notes ({notesList.length})
+              </button>
+              
+              <button 
+                onClick={() => setDetailTab('timeline')}
+                style={{ background: 'none', border: 'none', borderBottom: detailTab === 'timeline' ? '2px solid #2563eb' : '2px solid transparent', padding: '8px 4px', fontWeight: 600, color: detailTab === 'timeline' ? '#2563eb' : '#64748b', cursor: 'pointer' }}
+              >
+                Lead Timeline
+              </button>
+            </div>
+
+            {/* TAB 1: Lead Details Form */}
+            {detailTab === 'details' && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '10px 16px', fontSize: '14px', marginBottom: '20px' }}>
+                  <span style={{ fontWeight: 600, color: '#64748b' }}>Email:</span>
+                  <a href={`mailto:${selectedLead.email}`} style={{ color: '#2563eb', textDecoration: 'underline' }}>{selectedLead.email}</a>
+
+                  <span style={{ fontWeight: 600, color: '#64748b' }}>Phone Number:</span>
+                  <span style={{ color: '#001943' }}>{selectedLead.phone || 'N/A'}</span>
+
+                  <span style={{ fontWeight: 600, color: '#64748b' }}>Course Interest:</span>
+                  <span style={{ color: '#001943', fontWeight: 500 }}>{selectedLead.interestedCourse || 'General Inquiry'}</span>
+
+                  <span style={{ fontWeight: 600, color: '#64748b' }}>Lead Source:</span>
+                  <span style={{ color: '#001943', fontWeight: 500 }}>{selectedLead.source || 'Website'}</span>
+
+                  <span style={{ fontWeight: 600, color: '#64748b' }}>Source Page:</span>
+                  <span style={{ color: '#64748b', fontSize: '13px' }}>{selectedLead.sourcePage || 'Unknown'}</span>
+
+                  <span style={{ fontWeight: 600, color: '#64748b' }}>Original Message:</span>
+                  <span style={{ color: '#475569', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>{selectedLead.message || 'No initial message.'}</span>
+
+                  <span style={{ fontWeight: 600, color: '#64748b' }}>Received Date:</span>
+                  <span style={{ color: '#64748b' }}>{new Date(selectedLead.createdAt).toLocaleString()}</span>
+                </div>
+
+                <form onSubmit={handleSaveChanges} className="admin-login-form" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <div className="admin-form-group">
+                      <label>Followup Action Status</label>
+                      <select 
+                        value={status} 
+                        onChange={e => setStatus(e.target.value)}
+                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Contacted">Contacted</option>
+                        <option value="Demo Booked">Demo Booked</option>
+                        <option value="Enrolled">Enrolled</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
+                    </div>
+
+                    <div className="admin-form-group">
+                      <label>Lead Origin Source</label>
+                      <select 
+                        value={leadSource} 
+                        onChange={e => setLeadSource(e.target.value)}
+                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                      >
+                        {sourcesList.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '14px' }}>
+                    <div className="admin-form-group">
+                      <label>Lead Priority</label>
+                      <select 
+                        value={priority} 
+                        onChange={e => setPriority(e.target.value)}
+                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                      >
+                        <option value="Cold">⚪ Cold</option>
+                        <option value="Warm">🟡 Warm</option>
+                        <option value="Hot">🔥 Hot</option>
+                      </select>
+                    </div>
+
+                    <div className="admin-form-group">
+                      <label>Assigned Staff Owner</label>
+                      <select 
+                        value={assignedTo} 
+                        onChange={e => setAssignedTo(e.target.value)}
+                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                      >
+                        <option value="">Unassigned</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Counselor">Counselor</option>
+                        <option value="Trainer">Trainer</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '14px' }}>
+                    <div className="admin-form-group">
+                      <label>Next Follow-up Date</label>
+                      <input
+                        type="datetime-local"
+                        value={nextFollowupDate}
+                        onChange={e => setNextFollowupDate(e.target.value)}
+                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                      />
+                    </div>
+
+                    <div className="admin-form-group">
+                      <label>Last Contacted Date</label>
+                      <input
+                        type="datetime-local"
+                        value={lastContactedAt}
+                        onChange={e => setLastContactedAt(e.target.value)}
+                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="admin-form-group" style={{ marginTop: '14px' }}>
+                    <label>Admin Background/Permanent Profile Summary</label>
+                    <textarea
+                      value={adminNotes}
+                      onChange={e => setAdminNotes(e.target.value)}
+                      placeholder="Record details (education, works in Bangalore, etc.)..."
+                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', minHeight: '60px', borderRadius: '8px', padding: '10px', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div className="admin-form-group" style={{ marginTop: '14px' }}>
+                    <label>Follow-up Action Notes</label>
+                    <textarea
+                      value={followupNotes}
+                      onChange={e => setFollowupNotes(e.target.value)}
+                      placeholder="Response notes, callback instructions..."
+                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', minHeight: '60px', borderRadius: '8px', padding: '10px', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowDeleteConfirm(true)}
+                      style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                      Delete Lead
+                    </button>
+                    
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button 
+                        type="button" 
+                        onClick={() => setSelectedLead(null)}
+                        style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="submit" 
+                        disabled={saving}
+                        className="activity-book-btn"
+                        style={{ padding: '8px 16px', borderRadius: '6px', fontWeight: 600, opacity: saving ? 0.7 : 1 }}
+                      >
+                        Save Details
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </>
+            )}
+
+            {/* TAB 2: Notes History */}
+            {detailTab === 'notes' && (
+              <div>
+                <form onSubmit={handleAddNote} style={{ marginBottom: '20px' }}>
+                  <div className="admin-form-group">
+                    <label style={{ fontWeight: 600, color: '#001943' }}>Add CRM Note</label>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                      <textarea
+                        value={newNoteText}
+                        onChange={e => setNewNoteText(e.target.value)}
+                        placeholder="Add a new timeline note for this student..."
+                        required
+                        style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', flex: 1, minHeight: '50px', borderRadius: '6px', padding: '8px', outline: 'none', resize: 'vertical' }}
+                      />
+                      <button 
+                        type="submit"
+                        style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '0 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </form>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '300px', overflowY: 'auto' }}>
+                  {notesList.length === 0 ? (
+                    <p style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No CRM notes recorded yet.</p>
+                  ) : (
+                    notesList.map(note => (
+                      <div key={note.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', fontSize: '13px' }}>
+                        <p style={{ margin: 0, color: '#334155', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{note.content}</p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', color: '#94a3b8', fontSize: '11px' }}>
+                          <span>By: {note.createdBy || 'System'}</span>
+                          <span>{new Date(note.createdAt).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: Chronological History Timeline */}
+            {detailTab === 'timeline' && (
+              <div style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '6px' }}>
+                {timelineEvents.length === 0 ? (
+                  <p style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No history events available.</p>
+                ) : (
+                  <div style={{ position: 'relative', paddingLeft: '20px', borderLeft: '2px solid #e2e8f0', marginLeft: '8px' }}>
+                    {timelineEvents.map((evt) => (
+                      <div key={evt.id} style={{ position: 'relative', marginBottom: '20px' }}>
+                        {/* Timeline node marker */}
+                        <div style={{
+                          position: 'absolute',
+                          left: '-27px',
+                          top: '2px',
+                          width: '12px',
+                          height: '12px',
+                          borderRadius: '50%',
+                          background: evt.eventType === 'Converted' ? '#10b981' : evt.eventType === 'Deleted' ? '#ef4444' : '#3b82f6',
+                          border: '2px solid #fff'
+                        }} />
+                        
+                        <div style={{ fontSize: '13px' }}>
+                          <span style={{ fontWeight: 600, color: '#001943' }}>{evt.eventType}</span>
+                          <span style={{ color: '#64748b', fontSize: '11px', marginLeft: '10px' }}>
+                            {new Date(evt.createdAt).toLocaleString()}
+                          </span>
+                          <p style={{ margin: '4px 0 0 0', color: '#475569', lineHeight: '1.4' }}>{evt.description}</p>
+                          <span style={{ fontSize: '11px', color: '#94a3b8' }}>By: {evt.createdBy || 'System'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        .lead-row-hover:hover {
+          background: #f8fafc !important;
+        }
+        .admin-selected-row {
+          background: #eff6ff !important;
+        }
+        @keyframes modal-zoom {
+          from {
+            transform: scale(0.95);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }

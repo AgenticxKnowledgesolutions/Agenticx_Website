@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { createLead } from '@/services/leadService';
 import './Contact.css';
+import { useSettingsStore } from '@/store/useSettingsStore';
 
 const COURSE_OPTIONS = {
   Corporate: ['HTD Model', 'Corporate Training', 'Leadership Program'],
@@ -8,7 +10,10 @@ const COURSE_OPTIONS = {
 };
 
 export default function Contact() {
+  const settings = useSettingsStore(state => state.settings);
+
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -21,10 +26,29 @@ export default function Contact() {
     window.scrollTo(0, 0);
   }, [isSubmitted]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate submission
-    setIsSubmitted(true);
+    setSubmitting(true);
+    try {
+      const response = await createLead({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: `Course Type: ${formData.courseType}. Requested free demo session.`,
+        interestedCourse: formData.specificCourse || `${formData.courseType} Inquiry`,
+        sourcePage: 'Contact Us Page'
+      });
+      if (response) {
+        setIsSubmitted(true);
+      } else {
+        alert('Failed to submit inquiry. Please try again.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred. Please try again later.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (isSubmitted) {
@@ -74,9 +98,9 @@ export default function Contact() {
               <div className="card-content">
                 <h3 className="card-title">Our Location</h3>
                 <p className="card-text">
-                  AgenticX Knowledge Solutions<br/>
-                  3rd Floor, Raj Plaza,<br/>
-                  Town Limit, Kollam
+                  {settings?.companyName || "AgenticX Knowledge Solutions"}<br/>
+                  {settings?.addressLine1 || "3rd Floor, Raj Plaza"}<br/>
+                  {[settings?.addressLine2, settings?.city, settings?.state, settings?.postalCode].filter(Boolean).join(", ") || "Town Limit, Kollam"}
                 </p>
               </div>
             </div>
@@ -91,8 +115,14 @@ export default function Contact() {
               <div className="card-content">
                 <h3 className="card-title">Call Us</h3>
                 <p className="card-text">
-                  +91 9496552094<br/>
-                  +91 9496852094
+                  {settings?.primaryPhone && <>{settings.primaryPhone}<br/></>}
+                  {settings?.secondaryPhone && <>{settings.secondaryPhone}</>}
+                  {!settings && (
+                    <>
+                      +91 9496552094<br/>
+                      +91 9496852094
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -107,9 +137,14 @@ export default function Contact() {
               <div className="card-content">
                 <h3 className="card-title">Send Email</h3>
                 <p className="card-text">
-                  anju.muraleedharan@agenticx.co.in<br/>
-                  agenticxknowledgesolutions@gmail.com
-                  
+                  {settings?.primaryEmail && <>{settings.primaryEmail}<br/></>}
+                  {settings?.secondaryEmail && <>{settings.secondaryEmail}</>}
+                  {!settings && (
+                    <>
+                      anju.muraleedharan@agenticx.co.in<br/>
+                      agenticxknowledgesolutions@gmail.com
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -188,8 +223,8 @@ export default function Contact() {
                 </div>
               )}
 
-              <button type="submit" className="btn-primary form-submit-btn">
-                Submit
+              <button type="submit" disabled={submitting} className="btn-primary form-submit-btn" style={{ opacity: submitting ? 0.7 : 1 }}>
+                {submitting ? 'Submitting Inquiry...' : 'Submit'}
               </button>
 
             </form>
@@ -202,7 +237,7 @@ export default function Contact() {
         <div className="container map-container">
           <div className="map-wrapper contact-shadow">
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d246.36208069536437!2d76.61254242851638!3d8.898800762722871!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3b05fd109874a36b%3A0x26d35fe01fea3245!2sAgenticX%20Knowledge%20Solutions%20LLP!5e0!3m2!1sen!2sin!4v1779083931591!5m2!1sen!2sin" 
+              src={settings?.googleMapsUrl || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d246.36208069536437!2d76.61254242851638!3d8.898800762722871!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3b05fd109874a36b%3A0x26d35fe01fea3245!2sAgenticX%20Knowledge%20Solutions%20LLP!5e0!3m2!1sen!2sin!4v1779083931591!5m2!1sen!2sin"} 
               width="100%" 
               height="450" 
               style={{ border: 0 }} 

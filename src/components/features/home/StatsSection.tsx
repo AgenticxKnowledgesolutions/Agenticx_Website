@@ -1,23 +1,25 @@
 import "./StatsSection.css";
+import { useSettingsStore } from "@/store/useSettingsStore";
 
 export default function StatsSection() {
+  const settings = useSettingsStore(state => state.settings);
 
   const stats = [
     {
-      value: "100%",
+      value: settings ? `${settings.placementAssistancePercentage}%` : "100%",
       label: "Placement Assistance",
     },
     {
-      value: "20+",
+      value: settings ? `${settings.collegePartnersCount}+` : "20+",
       label: "College Partners",
     },
     {
-      value: "250+",
+      value: settings ? `${settings.graduatesTrainedCount}+` : "250+",
       label: "Graduates Trained",
     },
     {
-      value: "24/7",
-      label: "Mentor Access",
+      value: settings ? `${settings.studentsTrainedCount}+` : "100+",
+      label: "Students Trained",
     },
   ];
 

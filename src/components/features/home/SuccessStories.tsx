@@ -59,23 +59,22 @@ export default function SuccessStories() {
       <div className="carousel-container">
         <div className="carousel-track">
           {carouselItems.map((item, index) => {
-            const isExpanded = !!expandedReviews[item.id];
-            const isLongReview = item.review.length > 120;
+            if (!item) return null;
+            const reviewId = item.id || `review-${index}`;
+            const isExpanded = !!expandedReviews[reviewId];
+            const reviewText = item.review || "";
+            const isLongReview = reviewText.length > 120;
+            const authorName = item.name || "Verified Learner";
+            const rating = typeof item.rating === 'number' && item.rating >= 0 && item.rating <= 5 ? Math.floor(item.rating) : 5;
 
             return (
-              <div className="review-card" key={`${item.id}-${index}`}>
+              <div className="review-card" key={`${reviewId}-${index}`}>
                 <div className="review-header">
-                  {item.image ? (
-                    <div className="review-avatar-wrapper">
-                      <img src={item.image} alt={item.name} className="review-avatar-img" loading="lazy" />
-                    </div>
-                  ) : (
-                    <div className="review-avatar-fallback">
-                      {getInitials(item.name)}
-                    </div>
-                  )}
+                  <div className="review-avatar-fallback">
+                    {getInitials(authorName)}
+                  </div>
                   <div className="review-author-info">
-                    <div className="review-name">{item.name}</div>
+                    <div className="review-name">{authorName}</div>
                     {item.role && <div className="review-role">{item.role}</div>}
                   </div>
                   {/* Google Icon SVG (Conditionally rendered) */}
@@ -92,19 +91,19 @@ export default function SuccessStories() {
                 </div>
 
                 <div className="review-stars">
-                  {[...Array(item.rating)].map((_, i) => (
+                  {[...Array(rating)].map((_, i) => (
                     <span key={i} className="material-symbols-outlined star-icon">star</span>
                   ))}
                 </div>
 
                 <p className={`review-text ${isExpanded ? 'expanded' : ''}`}>
-                  "{item.review}"
+                  "{reviewText}"
                 </p>
 
                 {isLongReview && (
                   <button
                     className="read-more-btn"
-                    onClick={() => toggleExpand(item.id)}
+                    onClick={() => toggleExpand(reviewId)}
                     aria-label={isExpanded ? "Show less review" : "Read full review"}
                   >
                     {isExpanded ? "Show less" : "Read more"}

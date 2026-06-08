@@ -15,6 +15,7 @@ export interface CourseData {
   mode: string
   icon: string
   slug: string
+  coverImageUrl?: string
 }
 
 export default function Courses() {
@@ -26,14 +27,15 @@ export default function Courses() {
       try {
         const data = await getCourses()
         const mappedData = data.map(c => ({
-          id: c.id,
-          title: c.title,
-          description: c.description,
-          price: c.price,
-          duration: c.stats.duration,
-          mode: c.stats.format,
+          id: c?.id || '',
+          title: c?.title || 'Untitled Course',
+          description: c?.description || '',
+          price: typeof c?.price === 'number' ? c?.price : Number(c?.price) || 0,
+          duration: c?.stats?.duration || '12 Weeks',
+          mode: c?.stats?.format || 'Remote',
           icon: '🎓',
-          slug: c.slug
+          slug: c?.slug || '',
+          coverImageUrl: c?.coverImageUrl || undefined
         }))
         setCourses(mappedData)
       } catch (err) {

@@ -1,7 +1,19 @@
 import axios from "axios";
 
+// Dynamically resolve base URL and append /api/v1 if not present
+const getBaseURL = (): string => {
+  const envUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+  const cleanUrl = envUrl.endsWith("/") ? envUrl.slice(0, -1) : envUrl;
+  
+  if (cleanUrl.includes("/api/v1")) {
+    return cleanUrl;
+  }
+  return `${cleanUrl}/api/v1`;
+};
+
 export const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/v1",
+  baseURL: getBaseURL(),
+  timeout: 15000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -17,6 +29,31 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for global error handling
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    const status = error.response?.status;
+    const url = error.config?.url || "";
+
+    // Clear tokens and redirect to login if unauthorized or forbidden (session expired/invalid)
+    // Avoid redirecting if the failed request was the login attempt itself
+    if ((status === 401 || status === 403) && !url.includes("/auth/login")) {
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_refresh_token");
+      localStorage.removeItem("isAdmin");
+      
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/admin/login")) {
+        window.location.href = "/admin/login?expired=true";
+      }
+    }
+
     return Promise.reject(error);
   }
 );

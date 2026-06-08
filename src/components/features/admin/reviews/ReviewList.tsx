@@ -1,37 +1,48 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type Review } from '@/types/review';
-import { getReviews, saveReviews } from '@/services/reviewsService';
+import { deleteReview } from '@/services/reviewsService';
+import { useToast } from '@/components/ui/Toast';
+import { useAdminStore } from '@/services/adminStore';
 import '../Admin.css';
 
+const getInitials = (name: string): string => {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    const first = parts[0].charAt(0).toUpperCase();
+    const last = parts[parts.length - 1].charAt(0).toUpperCase();
+    return `${first}${last}`;
+  }
+  return parts[0] ? parts[0].charAt(0).toUpperCase() : "";
+};
+
 export default function ReviewList() {
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const { reviews, loadingReviews: loading, fetchReviews, invalidateReviews } = useAdminStore();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const loadReviews = async (force = false) => {
+    try {
+      await fetchReviews(force);
+    } catch (err) {
+      console.error(err);
+      toast('Failed to load reviews.', 'error');
+    }
+  };
 
   useEffect(() => {
-    const loadReviews = async () => {
-      const data = await getReviews();
-      setReviews(data);
-    };
     loadReviews();
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this review?')) {
-      const stored = localStorage.getItem('reviews');
-      let fullReviews: Review[] = [];
-      if (stored) {
-        try {
-          fullReviews = JSON.parse(stored);
-        } catch (err) {
-          fullReviews = [];
-        }
+    if (window.confirm('Are you sure you want to delete this student review from the database permanently?')) {
+      const success = await deleteReview(id);
+      if (success) {
+        toast('Review deleted successfully', 'success');
+        invalidateReviews();
+        loadReviews(true);
+      } else {
+        toast('Failed to delete review', 'error');
       }
-      const updatedFull = fullReviews.filter(r => r.id !== id);
-      await saveReviews(updatedFull);
-
-      const sortedFiltered = await getReviews();
-      setReviews(sortedFiltered);
     }
   };
 
@@ -63,7 +74,17 @@ export default function ReviewList() {
               </tr>
             </thead>
             <tbody>
-              {reviews.length === 0 ? (
+              {loading ? (
+                [1, 2, 3].map((item) => (
+                  <tr key={item} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '50%' }} /></td>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '20%' }} /></td>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '20%' }} /></td>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '35%' }} /></td>
+                    <td style={{ padding: '16px 8px', textAlign: 'right' }}><div className="skeleton-line" style={{ width: '50%', float: 'right' }} /></td>
+                  </tr>
+                ))
+              ) : reviews.length === 0 ? (
                 <tr>
                   <td colSpan={5} style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>No reviews found matching quality pipeline filters.</td>
                 </tr>
@@ -71,7 +92,20 @@ export default function ReviewList() {
                 reviews.map(rev => (
                   <tr key={rev.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: '16px 8px', fontWeight: 500, color: '#001943', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <img src={rev.image || `https://i.pravatar.cc/150?img=${rev.name.length}`} alt={rev.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: '#e2e8f0',
+                        color: '#475569',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 600,
+                        fontSize: '12px'
+                      }}>
+                        {getInitials(rev.name)}
+                      </div>
                       {rev.name}
                     </td>
                     <td style={{ padding: '16px 8px' }}>
@@ -86,12 +120,20 @@ export default function ReviewList() {
                     </td>
                     <td style={{ padding: '16px 8px', color: '#64748b', fontSize: '13px' }}>{rev.role || 'Student'}</td>
                     <td style={{ padding: '16px 8px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleDelete(rev.id)}
-                        style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
-                      >
-                        Delete
-                      </button>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                        <button
+                          onClick={() => navigate(`/admin/reviews/edit/${rev.id}`)}
+                          style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(rev.id)}
+                          style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

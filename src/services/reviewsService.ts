@@ -1,60 +1,68 @@
+import { api } from "./apiService";
 import type { Review } from "@/types/review";
 
-const defaultReviews: Review[] = [
-  {
-    id: "1",
-    name: "Aarav Mehta",
-    rating: 5,
-    review: "The Full Stack AI Mastery program is unmatched. The curriculum on vector databases and multi-agent workflows is hands-on and immediately applicable. Strongly recommended!",
-    role: "Senior AI Engineer at TechCorp",
-    source: "internal"
-  },
-  {
-    id: "2",
-    name: "Sanjana Roy",
-    rating: 5,
-    review: "Incredible mentors! I got placed at an enterprise partner right after the Hire-Train-Deploy training. It was life-changing.",
-    role: "Full Stack Engineer at NextGen",
-    source: "internal"
-  },
-  {
-    id: "3",
-    name: "Vikram Malhotra",
-    rating: 4,
-    review: "Very solid training. The Next.js modules were extremely thorough, and we built production-grade apps.",
-    role: "Frontend Developer",
-    source: "google"
-  }
-];
+// Map FastAPI response fields to frontend Review interface
+function mapReview(r: Record<string, unknown>): Review {
+  return {
+    id: r.id as string,
+    name: r.name as string,
+    rating: r.rating as number,
+    review: r.review as string,
+    role: r.role as string | undefined,
+    image: (r.image_url as string | undefined) ?? undefined,
+    source: r.source as "google" | "internal",
+  };
+}
 
 export const getReviews = async (): Promise<Review[]> => {
-  let reviews: Review[] = [];
-  const stored = localStorage.getItem("reviews");
-  
-  if (stored) {
-    try {
-      reviews = JSON.parse(stored) as Review[];
-    } catch (e) {
-      console.error("Failed to parse reviews from localStorage", e);
-      reviews = defaultReviews;
-    }
-  } else {
-    reviews = defaultReviews;
-    localStorage.setItem("reviews", JSON.stringify(defaultReviews));
+  try {
+    const res = await api.get("/reviews/");
+    return (res.data as Record<string, unknown>[]).map(mapReview);
+  } catch (err) {
+    console.error("Failed to fetch reviews from API:", err);
+    return [];
   }
+};
 
-  // 1. Filter out low-quality submissions (removes items below 4 stars)
-  const filtered = reviews.filter(r => r.rating >= 4);
+export const getReviewById = async (id: string): Promise<Review | null> => {
+  try {
+    const res = await api.get("/reviews/");
+    const all = (res.data as Record<string, unknown>[]).map(mapReview);
+    return all.find(rev => rev.id === id) || null;
+  } catch (err) {
+    console.error("Failed to fetch review by ID:", err);
+    return null;
+  }
+};
 
-  // 2. Sort high-quality testimonials by rating (highest first), then by review length (longest first)
-  const sorted = filtered.sort((a, b) => {
-    if (b.rating !== a.rating) {
-      return b.rating - a.rating;
-    }
-    return b.review.length - a.review.length;
-  });
+export const createReview = async (payload: any): Promise<Review | null> => {
+  try {
+    const res = await api.post("/reviews/", payload);
+    return mapReview(res.data as Record<string, unknown>);
+  } catch (err) {
+    console.error("Failed to create review:", err);
+    return null;
+  }
+};
 
-  return sorted;
+export const updateReview = async (id: string, payload: any): Promise<Review | null> => {
+  try {
+    const res = await api.put(`/reviews/${id}`, payload);
+    return mapReview(res.data as Record<string, unknown>);
+  } catch (err) {
+    console.error("Failed to update review:", err);
+    return null;
+  }
+};
+
+export const deleteReview = async (id: string): Promise<boolean> => {
+  try {
+    await api.delete(`/reviews/${id}`);
+    return true;
+  } catch (err) {
+    console.error("Failed to delete review:", err);
+    return false;
+  }
 };
 
 export const saveReviews = async (reviews: Review[]): Promise<void> => {

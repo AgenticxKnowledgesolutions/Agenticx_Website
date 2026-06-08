@@ -2,8 +2,11 @@ import { useEffect } from 'react'
 import NeuralCanvas from '@/components/ui/NeuralCanvas'
 import '../styles/about.css'
 import WhyAgenticX from '../components/features/about/WhyAgenticX'
+import { useSettingsStore } from '@/store/useSettingsStore'
 
 export default function About() {
+  const settings = useSettingsStore(state => state.settings);
+
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
@@ -30,15 +33,15 @@ export default function About() {
 
               <div className="abt-hero-stats">
                 <div className="abt-stat-card ambient-shadow">
-                  <div className="abt-stat-value">5000+</div>
-                  <div className="abt-stat-label">Students (Target)</div>
+                  <div className="abt-stat-value">{settings ? `${settings.studentsTrainedCount}+` : "5000+"}</div>
+                  <div className="abt-stat-label">Students Trained</div>
                 </div>
                 <div className="abt-stat-card ambient-shadow">
-                  <div className="abt-stat-value">100+</div>
+                  <div className="abt-stat-value">{settings ? `${settings.collegePartnersCount}+` : "100+"}</div>
                   <div className="abt-stat-label">Hiring Partners</div>
                 </div>
                 <div className="abt-stat-card ambient-shadow">
-                  <div className="abt-stat-value">80%</div>
+                  <div className="abt-stat-value">{settings ? `${settings.placementAssistancePercentage}%` : "80%"}</div>
                   <div className="abt-stat-label">Placement Goal</div>
                 </div>
               </div>

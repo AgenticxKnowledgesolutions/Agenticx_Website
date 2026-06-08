@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getCourseBySlug, type Course } from '@/services/courseService'
+import { createLead } from '@/services/leadService'
 import '../styles/course-detail.css'
 
 export default function CourseDetail() {
@@ -9,6 +10,14 @@ export default function CourseDetail() {
   const [loading, setLoading] = useState(true)
   const [prevSlug, setPrevSlug] = useState(slug)
   const [activeTab, setActiveTab] = useState(0)
+
+  // Enquiry Form State
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [experience, setExperience] = useState('Select experience level')
+  const [goal, setGoal] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [enquirySuccess, setEnquirySuccess] = useState(false)
 
   if (slug !== prevSlug) {
     setPrevSlug(slug)
@@ -46,6 +55,37 @@ export default function CourseDetail() {
     )
   }
 
+  const handleEnquirySubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim() || !email.trim()) return
+    setSubmitting(true)
+    try {
+      const payload = {
+        name,
+        email,
+        phone: experience !== 'Select experience level' ? `Exp: ${experience}` : undefined,
+        message: `Goal: ${goal || 'Not specified'}`,
+        interestedCourse: course.title,
+        sourcePage: `Course Detail Page: ${course.slug}`
+      }
+      const success = await createLead(payload)
+      if (success) {
+        setEnquirySuccess(true)
+        setName('')
+        setEmail('')
+        setExperience('Select experience level')
+        setGoal('')
+      } else {
+        alert('Failed to submit inquiry. Please try again.')
+      }
+    } catch (err) {
+      console.error(err)
+      alert('An error occurred. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const activeCurriculum = course.curriculum[activeTab]
 
   return (
@@ -67,43 +107,53 @@ export default function CourseDetail() {
             <div className="cd-stat-card">
               <span className="material-symbols-outlined cd-stat-icon">schedule</span>
               <p className="cd-stat-label">Duration</p>
-              <p className="cd-stat-value">{course.stats.duration}</p>
+              <p className="cd-stat-value">{course.stats?.duration || 'N/A'}</p>
             </div>
             <div className="cd-stat-card">
               <span className="material-symbols-outlined cd-stat-icon">devices</span>
               <p className="cd-stat-label">Format</p>
-              <p className="cd-stat-value">{course.stats.format}</p>
+              <p className="cd-stat-value">{course.stats?.format || 'N/A'}</p>
             </div>
             <div className="cd-stat-card">
               <span className="material-symbols-outlined cd-stat-icon">terminal</span>
               <p className="cd-stat-label">Projects</p>
-              <p className="cd-stat-value">{course.stats.projects}</p>
+              <p className="cd-stat-value">{course.stats?.projects || 'N/A'}</p>
             </div>
             <div className="cd-stat-card">
               <span className="material-symbols-outlined cd-stat-icon">work_outline</span>
               <p className="cd-stat-label">Career Support</p>
-              <p className="cd-stat-value">{course.stats.careerSupport}</p>
+              <p className="cd-stat-value">{course.stats?.careerSupport || 'N/A'}</p>
             </div>
           </div>
 
           {/* Tech Stack */}
-          <div className="cd-stack-section">
-            <h4 className="cd-section-label">STACK COVERED</h4>
-            <div className="cd-stack-list">
-              {course.stack.map((tech, i) => (
-                <div key={i} className="cd-stack-item">
-                  <img src={tech.iconUrl} alt={tech.name} className="cd-stack-icon" />
-                  <span className="cd-stack-name">{tech.name}</span>
-                </div>
-              ))}
+          {course.stack && course.stack.length > 0 && (
+            <div className="cd-stack-section">
+              <h4 className="cd-section-label">STACK COVERED</h4>
+              <div className="cd-stack-list">
+                {course.stack.map((tech, i) => (
+                  <div key={i} className="cd-stack-item">
+                    <span className="cd-stack-name">{tech.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Curriculum Syllabus */}
           <div className="cd-curriculum-section">
             <div className="cd-curriculum-header">
               <h2 className="cd-section-title">Curriculum</h2>
-              <button className="cd-download-btn">
+              <button 
+                className="cd-download-btn"
+                onClick={() => {
+                  if (course.brochureUrl) {
+                    window.open(course.brochureUrl, '_blank')
+                  } else {
+                    alert('Official brochure not available yet for this program.')
+                  }
+                }}
+              >
                 DOWNLOAD PDF <span className="material-symbols-outlined">download</span>
               </button>
             </div>
@@ -155,34 +205,65 @@ export default function CourseDetail() {
             <h3 className="cd-form-title">Enquire About This Course</h3>
             <p className="cd-form-desc">Talk to an advisor about admissions, scholarship opportunities, and career placement.</p>
 
-            <form className="cd-form" onSubmit={(e) => e.preventDefault()}>
-              <div className="cd-input-group">
-                <label>FULL NAME</label>
-                <input type="text" placeholder="Enter your full name" />
+            {enquirySuccess ? (
+              <div style={{ padding: '20px 0', textAlign: 'center', color: '#166534', fontWeight: 600 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#10b981', marginBottom: '10px' }}>check_circle</span>
+                <p style={{ margin: 0 }}>Inquiry submitted successfully!</p>
+                <p style={{ fontSize: '13px', color: '#475569', fontWeight: 'normal', marginTop: '6px' }}>Our academic advisor will email you shortly.</p>
+                <button 
+                  onClick={() => setEnquirySuccess(false)}
+                  style={{ background: '#f1f5f9', border: 'none', color: '#475569', padding: '6px 12px', borderRadius: '6px', marginTop: '12px', cursor: 'pointer', fontWeight: 600, fontSize: '12px' }}
+                >
+                  Submit Another Inquiry
+                </button>
               </div>
-              <div className="cd-input-group">
-                <label>EMAIL ADDRESS</label>
-                <input type="email" placeholder="email@company.com" />
-              </div>
-              <div className="cd-input-group">
-                <label>YEARS OF EXPERIENCE</label>
-                <select>
-                  <option>Select experience level</option>
-                  <option>2-5 Years</option>
-                  <option>5-10 Years</option>
-                  <option>10+ Years</option>
-                </select>
-              </div>
-              <div className="cd-input-group">
-                <label>PRIMARY GOAL</label>
-                <textarea placeholder="What are you looking to achieve?"></textarea>
-              </div>
+            ) : (
+              <form className="cd-form" onSubmit={handleEnquirySubmit}>
+                <div className="cd-input-group">
+                  <label>FULL NAME</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="Enter your full name" 
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                  />
+                </div>
+                <div className="cd-input-group">
+                  <label>EMAIL ADDRESS</label>
+                  <input 
+                    type="email" 
+                    required 
+                    placeholder="email@company.com" 
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="cd-input-group">
+                  <label>YEARS OF EXPERIENCE</label>
+                  <select value={experience} onChange={e => setExperience(e.target.value)}>
+                    <option>Select experience level</option>
+                    <option>0-2 Years (Graduate)</option>
+                    <option>2-5 Years</option>
+                    <option>5-10 Years</option>
+                    <option>10+ Years</option>
+                  </select>
+                </div>
+                <div className="cd-input-group">
+                  <label>PRIMARY GOAL</label>
+                  <textarea 
+                    placeholder="What are you looking to achieve?" 
+                    value={goal}
+                    onChange={e => setGoal(e.target.value)}
+                  ></textarea>
+                </div>
 
-              <button type="submit" className="cd-submit-btn">
-                Send Inquiry
-                <span className="material-symbols-outlined">send</span>
-              </button>
-            </form>
+                <button type="submit" disabled={submitting} className="cd-submit-btn" style={{ opacity: submitting ? 0.7 : 1 }}>
+                  {submitting ? 'Sending...' : 'Send Inquiry'}
+                  <span className="material-symbols-outlined">send</span>
+                </button>
+              </form>
+            )}
 
             <div className="cd-form-footer">
               <p>Next cohort starts: <strong>{course.nextCohort}</strong></p>

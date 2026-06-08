@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '@/services/apiService';
 import './Admin.css';
 
@@ -9,40 +9,37 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('expired') === 'true') {
+      setError('Your session has expired. Please log in again.');
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Local Storage based auth fallback check
-    if (email === 'admin@agenticx.com' && password === '1234') {
-      localStorage.setItem('admin_token', 'mock_admin_token');
-      localStorage.setItem('isAdmin', 'true');
-      navigate('/admin/dashboard');
-      setLoading(false);
-      return;
-    }
-
     try {
-      const response = await api.post('/auth/login/', {
-        username: email,
-        password: password,
+      const response = await api.post('/auth/login', {
+        email,
+        password,
       });
 
-      const { access, refresh } = response.data;
+      const { access_token, refresh_token } = response.data;
 
       // Store tokens and admin state in browser
-      localStorage.setItem('admin_token', access);
-      localStorage.setItem('admin_refresh_token', refresh);
+      localStorage.setItem('admin_token', access_token);
+      localStorage.setItem('admin_refresh_token', refresh_token);
       localStorage.setItem('isAdmin', 'true');
 
-      // Navigate to admin dashboard on success
       navigate('/admin/dashboard');
     } catch (err) {
       console.error('Login error:', err);
       const axiosError = err as { response?: { status: number } };
-      if (axiosError.response && axiosError.response.status === 401) {
+      if (axiosError.response?.status === 401) {
         setError('Invalid email or password. Please try again.');
       } else {
         setError('Failed to connect to the server. Please try again later.');
@@ -90,6 +87,26 @@ export default function Login() {
             {loading ? 'Logging in...' : 'Login to Admin'}
           </button>
         </form>
+
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <a 
+            href="/" 
+            style={{ 
+              color: '#64748b', 
+              textDecoration: 'none', 
+              fontSize: '14px', 
+              fontWeight: 500,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'color 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#0f172a'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}
+          >
+            ← Go to Website
+          </a>
+        </div>
       </div>
     </div>
   );

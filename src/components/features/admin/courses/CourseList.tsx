@@ -1,25 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type Course, getCourses, saveCourses } from '@/services/courseService';
+import { deleteCourse } from '@/services/courseService';
+import { useToast } from '@/components/ui/Toast';
+import { formatCurrency } from '@/lib/utils';
+import { useAdminStore } from '@/services/adminStore';
 import '../Admin.css';
 
 export default function CourseList() {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const { courses, loadingCourses: loading, fetchCourses, invalidateCourses } = useAdminStore();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const loadCourses = async (force = false) => {
+    try {
+      await fetchCourses(force);
+    } catch (err) {
+      console.error(err);
+      toast('Failed to load courses.', 'error');
+    }
+  };
 
   useEffect(() => {
-    const loadCourses = async () => {
-      const data = await getCourses();
-      setCourses(data);
-    };
     loadCourses();
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this course?')) {
-      const updated = courses.filter(c => c.id !== id);
-      setCourses(updated);
-      await saveCourses(updated);
+    if (window.confirm('Are you sure you want to delete this course specialization from the database permanently?')) {
+      const success = await deleteCourse(id);
+      if (success) {
+        toast('Course deleted successfully', 'success');
+        invalidateCourses();
+        loadCourses(true);
+      } else {
+        toast('Failed to delete course', 'error');
+      }
     }
   };
 
@@ -50,7 +64,16 @@ export default function CourseList() {
               </tr>
             </thead>
             <tbody>
-              {courses.length === 0 ? (
+              {loading ? (
+                [1, 2, 3].map((item) => (
+                  <tr key={item} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '60%' }} /></td>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '30%' }} /></td>
+                    <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '20%' }} /></td>
+                    <td style={{ padding: '16px 8px', textAlign: 'right' }}><div className="skeleton-line" style={{ width: '40%', float: 'right' }} /></td>
+                  </tr>
+                ))
+              ) : courses.length === 0 ? (
                 <tr>
                   <td colSpan={4} style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>No courses found in database.</td>
                 </tr>
@@ -58,15 +81,23 @@ export default function CourseList() {
                 courses.map(c => (
                   <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: '16px 8px', fontWeight: 500, color: '#001943' }}>{c.title}</td>
-                    <td style={{ padding: '16px 8px', color: '#64748b' }}>{c.stats.duration}</td>
-                    <td style={{ padding: '16px 8px', color: '#001943', fontWeight: 600 }}>${c.price}</td>
+                    <td style={{ padding: '16px 8px', color: '#64748b' }}>{c.stats?.duration || 'N/A'}</td>
+                    <td style={{ padding: '16px 8px', color: '#001943', fontWeight: 600 }}>{formatCurrency(c.price)}</td>
                     <td style={{ padding: '16px 8px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleDelete(c.id)}
-                        style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
-                      >
-                        Delete
-                      </button>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                        <button
+                          onClick={() => navigate(`/admin/courses/edit/${c.id}`)}
+                          style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(c.id)}
+                          style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

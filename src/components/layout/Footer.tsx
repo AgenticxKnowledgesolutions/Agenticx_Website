@@ -1,8 +1,16 @@
 import { Link } from "react-router-dom";
 import "./Footer.css";
 import logo from "../../assets/images/logo/AgenticX.png";
+import { useSettingsStore } from "@/store/useSettingsStore";
 
 export default function Footer() {
+  const settings = useSettingsStore(state => state.settings);
+
+  // Format address dynamically
+  const addressText = settings
+    ? [settings.addressLine1, settings.addressLine2, settings.city].filter(Boolean).join(", ")
+    : "3rd Floor, Raj Plaza, Town Limit, Kollam";
+
   return (
     <footer className="footer-section">
       <div className="container footer-container">
@@ -37,11 +45,17 @@ export default function Footer() {
 
         {/* Right Section */}
         <div className="footer-column">
-          <h3 className="footer-title">AgenticX Knowledge Solutions</h3>
+          <h3 className="footer-title">{settings?.companyName || "AgenticX Knowledge Solutions"}</h3>
           <div className="footer-contact-info">
-            <p>3rd Floor, Raj Plaza, Town Limit, Kollam</p>
-            <p>+91 9496552094</p>
-            <p>+91 9496852094</p>
+            <p>{addressText}</p>
+            {settings?.primaryPhone && <p>{settings.primaryPhone}</p>}
+            {settings?.secondaryPhone && <p>{settings.secondaryPhone}</p>}
+            {!settings && (
+              <>
+                <p>+91 9496552094</p>
+                <p>+91 9496852094</p>
+              </>
+            )}
           </div>
         </div>
       </div>

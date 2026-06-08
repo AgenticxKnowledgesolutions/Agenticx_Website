@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createLead } from '@/services/leadService';
 import './demoModal.css';
 
 interface DemoModalProps {
@@ -16,6 +17,7 @@ export default function DemoModal({ isOpen, onClose }: DemoModalProps) {
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Close on escape key
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function DemoModal({ isOpen, onClose }: DemoModalProps) {
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
@@ -51,16 +53,33 @@ export default function DemoModal({ isOpen, onClose }: DemoModalProps) {
       return;
     }
     
-    // Simulate submission
     setErrors({});
-    setIsSubmitted(true);
-    
-    // Reset after showing toast/success
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setFormData({ name: '', email: '', phone: '', course: '' });
-      onClose();
-    }, 2500);
+    setSubmitting(true);
+    try {
+      const response = await createLead({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: 'Requested a free demo session via the home page popup.',
+        interestedCourse: formData.course,
+        sourcePage: 'Home Page Free Demo Popup'
+      });
+      if (response) {
+        setIsSubmitted(true);
+        setTimeout(() => {
+          setIsSubmitted(false);
+          setFormData({ name: '', email: '', phone: '', course: '' });
+          onClose();
+        }, 2500);
+      } else {
+        alert('Failed to book demo. Please try again.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred. Please try again later.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -134,8 +153,8 @@ export default function DemoModal({ isOpen, onClose }: DemoModalProps) {
                 {errors.course && <span className="error-text">{errors.course}</span>}
               </div>
               
-              <button type="submit" className="demo-modal-submit glow-button">
-                Request Demo
+              <button type="submit" disabled={submitting} className="demo-modal-submit glow-button" style={{ opacity: submitting ? 0.7 : 1 }}>
+                {submitting ? 'Booking Demo...' : 'Request Demo'}
               </button>
             </form>
           </div>

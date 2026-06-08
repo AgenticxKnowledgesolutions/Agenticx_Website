@@ -1,55 +1,77 @@
+import { api } from "./apiService";
+
 export interface Activity {
   id: string;
   title: string;
   description?: string;
-  image: string;
-  duration: string; // "2 hrs"
-  price?: number;   // optional
-  isFree: boolean;
+  image: string;       // frontend field name (mapped from image_url)
+  duration: string;
+  price?: number;
+  isFree: boolean;     // frontend field name (mapped from is_free)
 }
 
-const defaultActivities: Activity[] = [
-  {
-    id: "1",
-    title: "AI Webinar: Future of GenAI",
-    description: "Learn how Generative AI is reshaping the industry.",
-    image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&q=80",
-    duration: "2 hrs",
-    isFree: true
-  },
-  {
-    id: "2",
-    title: "Data Science Weekend Bootcamp",
-    description: "An intensive bootcamp covering Pandas, Numpy, and basic ML.",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80",
-    duration: "5 hrs",
-    price: 499,
-    isFree: false
-  },
-  {
-    id: "3",
-    title: "Cloud Architecture Workshop",
-    description: "Master AWS and Azure fundamentals in this hands-on workshop.",
-    image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80",
-    duration: "3 hrs",
-    price: 299,
-    isFree: false
-  }
-];
+// Map FastAPI snake_case → frontend camelCase
+function mapActivity(r: Record<string, unknown>): Activity {
+  return {
+    id: r.id as string,
+    title: r.title as string,
+    description: r.description as string | undefined,
+    image: (r.image_url as string | undefined) ?? "",
+    duration: r.duration as string,
+    price: r.price !== null ? Number(r.price) : undefined,
+    isFree: r.is_free as boolean,
+  };
+}
 
 export const getActivities = async (): Promise<Activity[]> => {
-  const stored = localStorage.getItem("activities");
-  if (stored) {
-    try {
-      return JSON.parse(stored) as Activity[];
-    } catch (e) {
-      console.error("Failed to parse activities from localStorage", e);
-    }
+  try {
+    const res = await api.get("/activities/");
+    return (res.data as Record<string, unknown>[]).map(mapActivity);
+  } catch (err) {
+    console.error("Failed to fetch activities from API:", err);
+    return [];
   }
-  
-  // Fallback to default, and initialize localStorage
-  localStorage.setItem("activities", JSON.stringify(defaultActivities));
-  return defaultActivities;
+};
+
+export const getActivityById = async (id: string): Promise<Activity | null> => {
+  try {
+    const res = await api.get("/activities/");
+    const all = (res.data as Record<string, unknown>[]).map(mapActivity);
+    return all.find(act => act.id === id) || null;
+  } catch (err) {
+    console.error("Failed to get activity by ID:", err);
+    return null;
+  }
+};
+
+export const createActivity = async (payload: any): Promise<Activity | null> => {
+  try {
+    const res = await api.post("/activities/", payload);
+    return mapActivity(res.data as Record<string, unknown>);
+  } catch (err) {
+    console.error("Failed to create activity:", err);
+    return null;
+  }
+};
+
+export const updateActivity = async (id: string, payload: any): Promise<Activity | null> => {
+  try {
+    const res = await api.put(`/activities/${id}`, payload);
+    return mapActivity(res.data as Record<string, unknown>);
+  } catch (err) {
+    console.error("Failed to update activity:", err);
+    return null;
+  }
+};
+
+export const deleteActivity = async (id: string): Promise<boolean> => {
+  try {
+    await api.delete(`/activities/${id}`);
+    return true;
+  } catch (err) {
+    console.error("Failed to delete activity:", err);
+    return false;
+  }
 };
 
 export const saveActivities = async (activities: Activity[]): Promise<void> => {

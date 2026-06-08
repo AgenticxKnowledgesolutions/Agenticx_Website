@@ -80,7 +80,6 @@
 
   display: flex;
   flex-direction: column;
-  padding: 28px 24px;
   border-radius: 20px;
 
   background-color: rgba(255, 255, 255, 0.03);
@@ -92,6 +91,31 @@
               inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.course-card-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.course-img-wrapper {
+  height: 192px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.course-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.course-card:hover .course-img {
+  transform: scale(1.05);
 }
 
 .course-card:hover {
