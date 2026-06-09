@@ -153,10 +153,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span className="material-symbols-outlined">settings</span> Company Settings
           </NavLink>
 
-          <button className="admin-logout-btn" onClick={handleLogout} style={{ marginTop: '16px' }}>
+        </nav>
+
+        <div className="admin-sidebar-footer">
+          <button className="admin-logout-btn" onClick={handleLogout}>
             <span className="material-symbols-outlined">logout</span> Logout
           </button>
-        </nav>
+        </div>
       </aside>
     </>
   );
