@@ -118,6 +118,29 @@
   background: #f8fafc;
 }
 
+.activity-book-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #001943 0%, #3b82f6 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-book-btn:hover {
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+}
+
+
 /* ADMIN LAYOUT */
 .admin-layout {
   display: flex;
