@@ -21,6 +21,26 @@ export default function PdfViewerModal({ isOpen, onClose, pdfUrl, title }: PdfVi
     };
   }, [isOpen]);
 
+  // Intercept back navigation to close modal instead of navigating away
+  useEffect(() => {
+    if (!isOpen) return;
+
+    window.history.pushState({ pdfModalOpen: true }, '');
+
+    const handlePopState = () => {
+      onClose();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      if (window.history.state?.pdfModalOpen) {
+        window.history.back();
+      }
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -68,6 +88,10 @@ export default function PdfViewerModal({ isOpen, onClose, pdfUrl, title }: PdfVi
                     <span className="material-symbols-outlined">download</span>
                     Download PDF
                   </a>
+                  <button onClick={onClose} className="pdf-mobile-btn btn-close-mobile">
+                    <span className="material-symbols-outlined">arrow_back</span>
+                    Back to Courses
+                  </button>
                 </div>
               </div>
             ) : (
