@@ -92,61 +92,61 @@ export default function Contact() {
           <div className="contact-card contact-shadow">
             <div className="card-header-strip"></div>
             <div className="card-body">
-              <div className="card-icon-wrapper">
-                <span className="material-symbols-outlined card-icon">location_on</span>
-              </div>
-              <div className="card-content">
+              <div className="card-header-row">
+                <div className="card-icon-wrapper">
+                  <span className="material-symbols-outlined card-icon">location_on</span>
+                </div>
                 <h3 className="card-title">Our Location</h3>
-                <p className="card-text">
-                  {settings?.companyName || "AgenticX Knowledge Solutions"}<br/>
-                  {settings?.addressLine1 || "3rd Floor, Raj Plaza"}<br/>
-                  {[settings?.addressLine2, settings?.city, settings?.state, settings?.postalCode].filter(Boolean).join(", ") || "Town Limit, Kollam"}
-                </p>
               </div>
+              <p className="card-text">
+                {settings?.companyName || "AgenticX Knowledge Solutions"}<br/>
+                {settings?.addressLine1 || "3rd Floor, Raj Plaza"}<br/>
+                {[settings?.addressLine2, settings?.city, settings?.state, settings?.postalCode].filter(Boolean).join(", ") || "Town Limit, Kollam"}
+              </p>
             </div>
           </div>
 
           <div className="contact-card contact-shadow">
             <div className="card-header-strip"></div>
             <div className="card-body">
-              <div className="card-icon-wrapper">
-                <span className="material-symbols-outlined card-icon">call</span>
-              </div>
-              <div className="card-content">
+              <div className="card-header-row">
+                <div className="card-icon-wrapper">
+                  <span className="material-symbols-outlined card-icon">call</span>
+                </div>
                 <h3 className="card-title">Call Us</h3>
-                <p className="card-text">
-                  {settings?.primaryPhone && <>{settings.primaryPhone}<br/></>}
-                  {settings?.secondaryPhone && <>{settings.secondaryPhone}</>}
-                  {!settings && (
-                    <>
-                      +91 9496552094<br/>
-                      +91 9496852094
-                    </>
-                  )}
-                </p>
               </div>
+              <p className="card-text">
+                {settings?.primaryPhone && <>{settings.primaryPhone}<br/></>}
+                {settings?.secondaryPhone && <>{settings.secondaryPhone}</>}
+                {!settings && (
+                  <>
+                    +91 9496552094<br/>
+                    +91 9496852094
+                  </>
+                )}
+              </p>
             </div>
           </div>
 
           <div className="contact-card contact-shadow">
             <div className="card-header-strip"></div>
             <div className="card-body">
-              <div className="card-icon-wrapper">
-                <span className="material-symbols-outlined card-icon">mail</span>
-              </div>
-              <div className="card-content">
+              <div className="card-header-row">
+                <div className="card-icon-wrapper">
+                  <span className="material-symbols-outlined card-icon">mail</span>
+                </div>
                 <h3 className="card-title">Send Email</h3>
-                <p className="card-text">
-                  {settings?.primaryEmail && <>{settings.primaryEmail}<br/></>}
-                  {settings?.secondaryEmail && <>{settings.secondaryEmail}</>}
-                  {!settings && (
-                    <>
-                      anju.muraleedharan@agenticx.co.in<br/>
-                      agenticxknowledgesolutions@gmail.com
-                    </>
-                  )}
-                </p>
               </div>
+              <p className="card-text">
+                {settings?.primaryEmail && <>{settings.primaryEmail}<br/></>}
+                {settings?.secondaryEmail && <>{settings.secondaryEmail}</>}
+                {!settings && (
+                  <>
+                    anju.muraleedharan@agenticx.co.in<br/>
+                    agenticxknowledgesolutions@gmail.com
+                  </>
+                )}
+              </p>
             </div>
           </div>
 

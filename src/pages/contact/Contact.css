@@ -110,9 +110,9 @@
   gap: 32px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 600px) {
   .contact-cards-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
 }
 
@@ -137,10 +137,17 @@
 
 .card-body {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   padding: 32px 24px;
-  align-items: flex-start;
-  gap: 20px;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.card-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
 }
 
 .card-icon-wrapper {
@@ -159,21 +166,30 @@
   color: #001943;
 }
 
-.card-content {
-  text-align: left;
-}
-
 .card-title {
   font-size: 20px;
   font-weight: 700;
   color: #001943;
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .card-text {
   font-size: 15px;
   color: #495057;
   line-height: 1.6;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+.card-text::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome, Safari, Opera */
+}
+
+@media (max-width: 480px) {
+  .card-text {
+    font-size: clamp(11px, 3.8vw, 13px);
+  }
 }
 
 /* FORM SECTION */
