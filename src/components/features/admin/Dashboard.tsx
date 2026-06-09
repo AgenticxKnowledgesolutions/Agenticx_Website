@@ -256,12 +256,12 @@ export default function Dashboard() {
 
       {/* Duplicate warning bar */}
       {summary?.potentialDuplicatesCount && summary.potentialDuplicatesCount > 0 ? (
-        <div className="glass-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', background: '#fffbeb', borderColor: '#fde047', borderRadius: '8px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#b45309' }}>
-            <span className="material-symbols-outlined">warning_amber</span>
-            <span style={{ fontSize: '13px', fontWeight: 600 }}>Attention: {summary.potentialDuplicatesCount} duplicate lead records detected in CRM system.</span>
+        <div className="duplicate-warning-bar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#b45309', minWidth: 0 }}>
+            <span className="material-symbols-outlined" style={{ flexShrink: 0 }}>warning_amber</span>
+            <span style={{ fontSize: '13px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis' }}>Attention: {summary.potentialDuplicatesCount} duplicate lead records detected in CRM system.</span>
           </div>
-          <Link to="/admin/leads" style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: 700, textDecoration: 'underline' }}>
+          <Link to="/admin/leads" style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: 700, textDecoration: 'underline', flexShrink: 0 }}>
             Resolve & Check Duplicates
           </Link>
         </div>
@@ -385,13 +385,13 @@ export default function Dashboard() {
               </h3>
             </div>
             
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div className="reporting-filters-container">
+              <div className="filter-group">
                 <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>REPORT TIMEFRAME</span>
                 <select 
                   value={reportFilter}
                   onChange={e => setReportFilter(e.target.value)}
-                  style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', height: '38px', borderRadius: '6px', padding: '0 8px', fontSize: '13px', outline: 'none' }}
+                  className="filter-select"
                 >
                   <option value="today">Today</option>
                   <option value="yesterday">Yesterday</option>
@@ -405,22 +405,22 @@ export default function Dashboard() {
 
               {reportFilter === 'custom' && (
                 <>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div className="filter-group">
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>FROM DATE</span>
                     <input 
                       type="date"
                       value={customFrom}
                       onChange={e => setCustomFrom(e.target.value)}
-                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', height: '38px', borderRadius: '6px', padding: '0 8px', fontSize: '13px', outline: 'none' }}
+                      className="filter-input"
                     />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div className="filter-group">
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>TO DATE</span>
                     <input 
                       type="date"
                       value={customTo}
                       onChange={e => setCustomTo(e.target.value)}
-                      style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', height: '38px', borderRadius: '6px', padding: '0 8px', fontSize: '13px', outline: 'none' }}
+                      className="filter-input"
                     />
                   </div>
                 </>
@@ -484,7 +484,7 @@ export default function Dashboard() {
                   Lead Status Share
                 </h3>
               </div>
-              <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="status-pie-container">
                 <Suspense fallback={<ChartSkeleton />}>
                   <LeadStatusPieChart summary={summary} />
                 </Suspense>
@@ -499,7 +499,7 @@ export default function Dashboard() {
                   Admissions Funnel
                 </h3>
               </div>
-              <div style={{ minHeight: '150px' }}>
+              <div className="funnel-chart-container">
                 <Suspense fallback={<ChartSkeleton />}>
                   <InterestAnalyticsChart summary={summary} />
                 </Suspense>
