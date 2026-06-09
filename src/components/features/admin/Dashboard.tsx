@@ -426,7 +426,7 @@ export default function Dashboard() {
                 </>
               )}
 
-              <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', alignSelf: 'flex-end', marginTop: '10px' }}>
+              <div className="export-buttons-group">
                 <button 
                   onClick={() => handleExport('csv')}
                   disabled={exporting !== null}
@@ -526,10 +526,10 @@ export default function Dashboard() {
                 ) : (
                   summary.coursePerformance.slice(0, 4).map((item, idx) => {
                     return (
-                      <div key={idx} style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontWeight: 600, color: '#0f172a', fontSize: '13px' }}>{item.courseName}</span>
-                          <span style={{ fontSize: '11px', color: '#64748b' }}>
+                      <div key={idx} style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: 0, gap: '10px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                          <span style={{ fontWeight: 600, color: '#0f172a', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.courseName}>{item.courseName}</span>
+                          <span style={{ fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {item.leadCount} leads • {item.enrollmentCount} enrollments
                           </span>
                         </div>
@@ -725,16 +725,16 @@ export default function Dashboard() {
                         });
                       }
                     }}
-                    style={{ background: '#ffffff', border: '1px solid #fcd34d', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    style={{ background: '#ffffff', border: '1px solid #fcd34d', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0, gap: '10px' }}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontWeight: 600, color: '#78350f', fontSize: '13px' }}>{item.name}</span>
-                        <span style={{ fontSize: '10px' }} title={`${item.priority} Priority`}>
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                        <span style={{ fontWeight: 600, color: '#78350f', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.name}>{item.name}</span>
+                        <span style={{ fontSize: '10px', flexShrink: 0 }} title={`${item.priority} Priority`}>
                           {item.priority === 'Hot' ? '🔥' : item.priority === 'Warm' ? '🟡' : '⚪'}
                         </span>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#b45309' }}>{item.course} • {item.phone}</span>
+                      <span style={{ fontSize: '11px', color: '#b45309', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={`${item.course} • ${item.phone}`}>{item.course} • {item.phone}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#fef3c7', color: '#b45309', padding: '3px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 600 }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>alarm</span>
@@ -792,12 +792,12 @@ export default function Dashboard() {
                 <div style={{ padding: '20px 0', textAlign: 'center', color: '#64748b' }}>No recent enrollments.</div>
               ) : (
                 summary.recentEnrollments.map((enr) => (
-                  <div key={enr.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: 600, color: '#0f172a', fontSize: '12px' }}>{enr.name}</span>
-                      <span style={{ fontSize: '11px', color: '#64748b' }}>{enr.course}</span>
+                  <div key={enr.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0, gap: '10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                      <span style={{ fontWeight: 600, color: '#0f172a', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={enr.name}>{enr.name}</span>
+                      <span style={{ fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={enr.course}>{enr.course}</span>
                     </div>
-                    <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                    <span style={{ fontSize: '10px', color: '#94a3b8', flexShrink: 0 }}>
                       {formatDate(enr.enrollmentDate)}
                     </span>
                   </div>
