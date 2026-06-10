@@ -143,6 +143,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           >
             <span className="material-symbols-outlined">leaderboard</span> Leads
           </NavLink>
+
+          <NavLink 
+            to="/admin/trash" 
+            onClick={onClose} 
+            className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}
+            onMouseEnter={() => import('@/components/features/admin/trash/TrashAdmin')}
+          >
+            <span className="material-symbols-outlined">delete</span> Trash
+          </NavLink>
           
           <NavLink 
             to="/admin/settings" 

@@ -6,4 +6,7 @@ export interface Review {
   role?: string;
   image?: string;
   source: 'google' | 'internal';
+  isDeleted?: boolean;
+  deletedAt?: string;
+  deletedBy?: string;
 }

@@ -29,6 +29,7 @@ const ReviewList = lazy(() => import('./components/features/admin/reviews/Review
 const ReviewAdd = lazy(() => import('./components/features/admin/reviews/ReviewAdd'))
 const ReviewEdit = lazy(() => import('./components/features/admin/reviews/ReviewEdit'))
 const LeadsAdmin = lazy(() => import('./components/features/admin/LeadsAdmin'))
+const TrashAdmin = lazy(() => import('./components/features/admin/trash/TrashAdmin'))
 const CompanySettingsAdmin = lazy(() => import('./components/features/admin/settings/CompanySettingsAdmin'))
 
 function App() {
@@ -108,6 +109,7 @@ function App() {
               <Route path="reviews/add" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ReviewAdd /></Suspense></ErrorBoundary>} />
               <Route path="reviews/edit/:id" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ReviewEdit /></Suspense></ErrorBoundary>} />
               <Route path="leads" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><LeadsAdmin /></Suspense></ErrorBoundary>} />
+              <Route path="trash" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><TrashAdmin /></Suspense></ErrorBoundary>} />
               <Route path="settings" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CompanySettingsAdmin /></Suspense></ErrorBoundary>} />
             </Route>
           </Route>

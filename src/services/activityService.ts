@@ -8,6 +8,9 @@ export interface Activity {
   duration: string;
   price?: number;
   isFree: boolean;     // frontend field name (mapped from is_free)
+  isDeleted?: boolean;
+  deletedAt?: string;
+  deletedBy?: string;
 }
 
 // Map FastAPI snake_case → frontend camelCase
@@ -20,6 +23,9 @@ function mapActivity(r: Record<string, unknown>): Activity {
     duration: r.duration as string,
     price: r.price !== null ? Number(r.price) : undefined,
     isFree: r.is_free as boolean,
+    isDeleted: r.is_deleted as boolean | undefined,
+    deletedAt: r.deleted_at as string | undefined,
+    deletedBy: r.deleted_by as string | undefined,
   };
 }
 
@@ -70,6 +76,36 @@ export const deleteActivity = async (id: string): Promise<boolean> => {
     return true;
   } catch (err) {
     console.error("Failed to delete activity:", err);
+    return false;
+  }
+};
+
+export const getTrashActivities = async (): Promise<Activity[]> => {
+  try {
+    const res = await api.get("/activities/trash");
+    return Array.isArray(res.data) ? res.data.map(mapActivity) : [];
+  } catch (err) {
+    console.error("Failed to fetch trash activities:", err);
+    return [];
+  }
+};
+
+export const restoreActivity = async (id: string): Promise<Activity | null> => {
+  try {
+    const res = await api.post(`/activities/${id}/restore`);
+    return res.data ? mapActivity(res.data as Record<string, unknown>) : null;
+  } catch (err) {
+    console.error("Failed to restore activity:", err);
+    return null;
+  }
+};
+
+export const hardDeleteActivity = async (id: string): Promise<boolean> => {
+  try {
+    await api.delete(`/activities/${id}/hard-delete`);
+    return true;
+  } catch (err) {
+    console.error("Failed to hard delete activity:", err);
     return false;
   }
 };

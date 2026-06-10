@@ -633,8 +633,8 @@ export default function Dashboard() {
                   <thead>
                     <tr>
                       <th>Name</th>
-                      <th>Course Inquiry</th>
-                      <th>Source</th>
+                      <th>Phone</th>
+                      <th>Course</th>
                       <th>Status</th>
                       <th style={{ textAlign: 'center' }}>Quick Connect</th>
                     </tr>
@@ -647,8 +647,8 @@ export default function Dashboard() {
                           <td style={{ fontWeight: 600, color: '#0f172a' }} onClick={() => handleOpenLead(lead)}>
                             {lead.name}
                           </td>
+                          <td onClick={() => handleOpenLead(lead)}>{lead.phone || 'N/A'}</td>
                           <td onClick={() => handleOpenLead(lead)}>{lead.interestedCourse || 'General Info'}</td>
-                          <td onClick={() => handleOpenLead(lead)}>{lead.source || 'Website'}</td>
                           <td onClick={() => handleOpenLead(lead)}>
                             <span className={`status-pill ${statusClass}`}>{lead.status}</span>
                           </td>

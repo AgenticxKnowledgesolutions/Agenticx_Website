@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { deleteReview } from '@/services/reviewsService';
 import { useToast } from '@/components/ui/Toast';
@@ -20,6 +20,9 @@ export default function ReviewList() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState<string>('');
+
   const loadReviews = async (force = false) => {
     try {
       await fetchReviews(force);
@@ -33,17 +36,22 @@ export default function ReviewList() {
     loadReviews();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this student review from the database permanently?')) {
-      const success = await deleteReview(id);
-      if (success) {
-        toast('Review deleted successfully', 'success');
-        invalidateReviews();
-        loadReviews(true);
-      } else {
-        toast('Failed to delete review', 'error');
-      }
+  const handleDeleteClick = (id: string, name: string) => {
+    setDeleteConfirmId(id);
+    setDeleteConfirmName(name);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    const success = await deleteReview(deleteConfirmId);
+    if (success) {
+      toast('Review moved to trash successfully', 'success');
+      invalidateReviews();
+      loadReviews(true);
+    } else {
+      toast('Failed to move review to trash', 'error');
     }
+    setDeleteConfirmId(null);
   };
 
   return (
@@ -129,7 +137,7 @@ export default function ReviewList() {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDelete(rev.id)}
+                            onClick={() => handleDeleteClick(rev.id, rev.name)}
                             style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
                           >
                             Delete
@@ -144,6 +152,31 @@ export default function ReviewList() {
           </div>
         </div>
       </div>
+
+      {deleteConfirmId && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 25, 67, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div className="admin-kpi-card glass-panel" style={{ width: '100%', maxWidth: '400px', background: '#ffffff', padding: '24px', borderRadius: '12px', display: 'block' }}>
+            <h3 style={{ margin: 0, color: '#001943', marginBottom: '12px' }}>Move Testimonial to Trash?</h3>
+            <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.5', marginBottom: '20px' }}>
+              Are you sure you want to move the testimonial from "{deleteConfirmName}" to the Trash? You can restore it later from the Trash management section.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button 
+                onClick={() => setDeleteConfirmId(null)}
+                style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleConfirmDelete}
+                style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Move to Trash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -36,6 +36,9 @@ export interface Lead {
   assignedTo?: string;
   notes?: LeadNote[];
   timelineEvents?: LeadTimelineEvent[];
+  isDeleted?: boolean;
+  deletedAt?: string;
+  deletedBy?: string;
 }
 
 // Map FastAPI snake_case response to frontend camelCase interfaces
@@ -80,6 +83,9 @@ function mapLead(r: Record<string, unknown>): Lead {
     assignedTo: (r.assigned_to as string | undefined) ?? undefined,
     notes: Array.isArray(r.notes) ? r.notes.map(mapNote) : [],
     timelineEvents: Array.isArray(r.timeline_events) ? r.timeline_events.map(mapTimelineEvent) : [],
+    isDeleted: r.is_deleted as boolean | undefined,
+    deletedAt: r.deleted_at as string | undefined,
+    deletedBy: r.deleted_by as string | undefined,
   };
 }
 
@@ -103,7 +109,9 @@ export const getLeadById = async (leadId: string): Promise<Lead | null> => {
   }
 };
 
-export const createLead = async (lead: Partial<Lead>): Promise<Lead | null> => {
+export const createLead = async (
+  lead: Partial<Lead> & { course_interest?: string; course_slug?: string; goal?: string }
+): Promise<Lead | null> => {
   try {
     const payload = {
       name: lead.name,
@@ -117,6 +125,9 @@ export const createLead = async (lead: Partial<Lead>): Promise<Lead | null> => {
       admin_notes: lead.adminNotes || null,
       priority: lead.priority || "Cold",
       assigned_to: lead.assignedTo || null,
+      course_interest: lead.course_interest || null,
+      course_slug: lead.course_slug || null,
+      goal: lead.goal || null,
     };
     const res = await api.post("/leads/", payload);
     return mapLead(res.data as Record<string, unknown>);
@@ -234,5 +245,35 @@ export const getTimeline = async (leadId: string): Promise<LeadTimelineEvent[]> 
   } catch (err) {
     console.error(`Failed to get timeline for lead ${leadId}:`, err);
     return [];
+  }
+};
+
+export const getTrashLeads = async (): Promise<Lead[]> => {
+  try {
+    const res = await api.get("/leads/trash");
+    return (res.data as Record<string, unknown>[]).map(mapLead);
+  } catch (err) {
+    console.error("Failed to fetch trash leads:", err);
+    return [];
+  }
+};
+
+export const restoreLead = async (id: string): Promise<Lead | null> => {
+  try {
+    const res = await api.post(`/leads/${id}/restore`);
+    return mapLead(res.data as Record<string, unknown>);
+  } catch (err) {
+    console.error("Failed to restore lead:", err);
+    return null;
+  }
+};
+
+export const hardDeleteLead = async (id: string): Promise<boolean> => {
+  try {
+    await api.delete(`/leads/${id}/hard-delete`);
+    return true;
+  } catch (err) {
+    console.error("Failed to hard delete lead:", err);
+    return false;
   }
 };

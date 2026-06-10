@@ -15,7 +15,8 @@ export default function CourseDetail() {
   // Enquiry Form State
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [experience, setExperience] = useState('Select experience level')
+  const [phone, setPhone] = useState('')
+  const [phoneError, setPhoneError] = useState('')
   const [goal, setGoal] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [enquirySuccess, setEnquirySuccess] = useState(false)
@@ -23,6 +24,8 @@ export default function CourseDetail() {
   if (slug !== prevSlug) {
     setPrevSlug(slug)
     setActiveTab(0)
+    setPhone('')
+    setPhoneError('')
   }
 
   useEffect(() => {
@@ -55,22 +58,36 @@ export default function CourseDetail() {
   const handleEnquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim() || !email.trim()) return
+
+    // Mobile number validation: accept only numbers, between 10 and 15 digits
+    const cleanedPhone = phone.trim()
+    if (!cleanedPhone) {
+      setPhoneError('Please enter a valid mobile number')
+      return
+    }
+    const phoneRegex = /^[0-9]{10,15}$/
+    if (!phoneRegex.test(cleanedPhone)) {
+      setPhoneError('Please enter a valid mobile number')
+      return
+    }
+    setPhoneError('')
+
     setSubmitting(true)
     try {
       const payload = {
         name,
         email,
-        phone: experience !== 'Select experience level' ? `Exp: ${experience}` : undefined,
-        message: `Goal: ${goal || 'Not specified'}`,
-        interestedCourse: course.title,
-        sourcePage: `Course Detail Page: ${course.slug}`
+        phone: cleanedPhone,
+        course_interest: course.title,
+        course_slug: course.slug,
+        goal: goal || 'Not specified'
       }
       const success = await createLead(payload)
       if (success) {
         setEnquirySuccess(true)
         setName('')
         setEmail('')
-        setExperience('Select experience level')
+        setPhone('')
         setGoal('')
       } else {
         alert('Failed to submit inquiry. Please try again.')
@@ -237,14 +254,19 @@ export default function CourseDetail() {
                   />
                 </div>
                 <div className="cd-input-group">
-                  <label>YEARS OF EXPERIENCE</label>
-                  <select value={experience} onChange={e => setExperience(e.target.value)}>
-                    <option>Select experience level</option>
-                    <option>0-2 Years (Graduate)</option>
-                    <option>2-5 Years</option>
-                    <option>5-10 Years</option>
-                    <option>10+ Years</option>
-                  </select>
+                  <label>MOBILE NUMBER</label>
+                  <input 
+                    type="tel" 
+                    required 
+                    placeholder="Enter your mobile number" 
+                    value={phone}
+                    maxLength={15}
+                    onChange={e => {
+                      setPhone(e.target.value.replace(/[^0-9]/g, ''));
+                      if (phoneError) setPhoneError('');
+                    }}
+                  />
+                  {phoneError && <span className="error-message" style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>{phoneError}</span>}
                 </div>
                 <div className="cd-input-group">
                   <label>PRIMARY GOAL</label>

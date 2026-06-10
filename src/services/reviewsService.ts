@@ -11,6 +11,9 @@ function mapReview(r: Record<string, unknown>): Review {
     role: r.role as string | undefined,
     image: (r.image_url as string | undefined) ?? undefined,
     source: r.source as "google" | "internal",
+    isDeleted: r.is_deleted as boolean | undefined,
+    deletedAt: r.deleted_at as string | undefined,
+    deletedBy: r.deleted_by as string | undefined,
   };
 }
 
@@ -61,6 +64,36 @@ export const deleteReview = async (id: string): Promise<boolean> => {
     return true;
   } catch (err) {
     console.error("Failed to delete review:", err);
+    return false;
+  }
+};
+
+export const getTrashReviews = async (): Promise<Review[]> => {
+  try {
+    const res = await api.get("/reviews/trash");
+    return Array.isArray(res.data) ? res.data.map(mapReview) : [];
+  } catch (err) {
+    console.error("Failed to fetch trash reviews:", err);
+    return [];
+  }
+};
+
+export const restoreReview = async (id: string): Promise<Review | null> => {
+  try {
+    const res = await api.post(`/reviews/${id}/restore`);
+    return res.data ? mapReview(res.data as Record<string, unknown>) : null;
+  } catch (err) {
+    console.error("Failed to restore review:", err);
+    return null;
+  }
+};
+
+export const hardDeleteReview = async (id: string): Promise<boolean> => {
+  try {
+    await api.delete(`/reviews/${id}/hard-delete`);
+    return true;
+  } catch (err) {
+    console.error("Failed to hard delete review:", err);
     return false;
   }
 };

@@ -35,6 +35,9 @@ export interface Course {
   price: number;
   coverImageUrl?: string;
   brochureUrl?: string;
+  isDeleted?: boolean;
+  deletedAt?: string;
+  deletedBy?: string;
 }
 
 export const mapCourse = (data: any): Course => {
@@ -72,7 +75,10 @@ export const mapCourse = (data: any): Course => {
     isAiOptimized: !!(data?.isAiOptimized || data?.is_ai_optimized),
     price: data?.price !== null && data?.price !== undefined ? Number(data.price) : 0,
     coverImageUrl: data?.coverImageUrl || data?.cover_image_url || undefined,
-    brochureUrl: data?.brochureUrl || data?.brochure_url || undefined
+    brochureUrl: data?.brochureUrl || data?.brochure_url || undefined,
+    isDeleted: !!data?.is_deleted,
+    deletedAt: data?.deleted_at || undefined,
+    deletedBy: data?.deleted_by || undefined
   };
 };
 
@@ -200,6 +206,38 @@ export const deleteCourse = async (courseId: string): Promise<boolean> => {
     return true;
   } catch (err) {
     console.error("Failed to delete course:", err);
+    return false;
+  }
+};
+
+export const getTrashCourses = async (): Promise<Course[]> => {
+  try {
+    const res = await api.get("/courses/trash");
+    return Array.isArray(res.data) ? res.data.map(mapCourse) : [];
+  } catch (err) {
+    console.error("Failed to fetch trash courses:", err);
+    return [];
+  }
+};
+
+export const restoreCourse = async (id: string): Promise<Course | null> => {
+  try {
+    const res = await api.post(`/courses/${id}/restore`);
+    invalidateCourseCache();
+    return res.data ? mapCourse(res.data) : null;
+  } catch (err) {
+    console.error("Failed to restore course:", err);
+    return null;
+  }
+};
+
+export const hardDeleteCourse = async (id: string): Promise<boolean> => {
+  try {
+    await api.delete(`/courses/${id}/hard-delete`);
+    invalidateCourseCache();
+    return true;
+  } catch (err) {
+    console.error("Failed to hard delete course:", err);
     return false;
   }
 };

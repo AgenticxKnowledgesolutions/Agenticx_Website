@@ -901,25 +901,25 @@ export default function LeadsAdmin() {
               <form onSubmit={handleSaveChanges} className="admin-login-form" style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0, overflow: 'hidden' }}>
                 <div className="admin-modal-body">
                   <div className="admin-details-grid">
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Name:</span>
+                    <span style={{ color: '#001943', fontWeight: 600 }}>{selectedLead.name}</span>
+
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Phone:</span>
+                    <span style={{ color: '#001943' }}>{selectedLead.phone || 'N/A'}</span>
+
                     <span style={{ fontWeight: 600, color: '#64748b' }}>Email:</span>
                     <a href={`mailto:${selectedLead.email}`} style={{ color: '#2563eb', textDecoration: 'underline' }}>{selectedLead.email}</a>
-
-                    <span style={{ fontWeight: 600, color: '#64748b' }}>Phone Number:</span>
-                    <span style={{ color: '#001943' }}>{selectedLead.phone || 'N/A'}</span>
 
                     <span style={{ fontWeight: 600, color: '#64748b' }}>Course Interest:</span>
                     <span style={{ color: '#001943', fontWeight: 500 }}>{selectedLead.interestedCourse || 'General Inquiry'}</span>
 
-                    <span style={{ fontWeight: 600, color: '#64748b' }}>Lead Source:</span>
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Goal:</span>
+                    <span style={{ color: '#475569', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>{selectedLead.message || 'No goal specified.'}</span>
+
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Source:</span>
                     <span style={{ color: '#001943', fontWeight: 500 }}>{selectedLead.source || 'Website'}</span>
 
-                    <span style={{ fontWeight: 600, color: '#64748b' }}>Source Page:</span>
-                    <span style={{ color: '#64748b', fontSize: '13px' }}>{selectedLead.sourcePage || 'Unknown'}</span>
-
-                    <span style={{ fontWeight: 600, color: '#64748b' }}>Original Message:</span>
-                    <span style={{ color: '#475569', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>{selectedLead.message || 'No initial message.'}</span>
-
-                    <span style={{ fontWeight: 600, color: '#64748b' }}>Received Date:</span>
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>Created At:</span>
                     <span style={{ color: '#64748b' }}>{new Date(selectedLead.createdAt).toLocaleString()}</span>
                   </div>
 
