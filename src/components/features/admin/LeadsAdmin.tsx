@@ -3,6 +3,7 @@ import {
   type Lead, 
   type LeadNote, 
   type LeadTimelineEvent, 
+  type LeadInteraction,
   updateLead, 
   createLead, 
   deleteLead, 
@@ -10,7 +11,8 @@ import {
   bulkUpdate, 
   bulkDelete, 
   addNote, 
-  getLeadById
+  getLeadById,
+  mergeLeads
 } from '@/services/leadService';
 import { useToast } from '@/components/ui/Toast';
 import { useAdminStore } from '@/services/adminStore';
@@ -36,7 +38,12 @@ export default function LeadsAdmin() {
   const [timelineEvents, setTimelineEvents] = useState<LeadTimelineEvent[]>([]);
   
   // Detail modal sub-panels/tabs
-  const [detailTab, setDetailTab] = useState<'details' | 'notes' | 'timeline'>('details');
+  const [detailTab, setDetailTab] = useState<'details' | 'notes' | 'timeline' | 'interactions'>('details');
+
+  // Merge leads state
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [mergeMasterId, setMergeMasterId] = useState<string>('');
+  const [merging, setMerging] = useState(false);
   const [newNoteText, setNewNoteText] = useState('');
   
   // Creation Form Modal States
@@ -481,6 +488,19 @@ export default function LeadsAdmin() {
               Export
             </button>
 
+            {selectedIds.length >= 2 && (
+              <button
+                onClick={() => {
+                  setMergeMasterId(selectedIds[0]);
+                  setShowMergeModal(true);
+                }}
+                style={{ background: '#7c3aed', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>merge</span>
+                Merge Leads
+              </button>
+            )}
+
             <button
               onClick={() => setShowBulkDeleteConfirm(true)}
               style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
@@ -894,6 +914,13 @@ export default function LeadsAdmin() {
               >
                 Lead Timeline
               </button>
+
+              <button 
+                onClick={() => setDetailTab('interactions')}
+                style={{ background: 'none', border: 'none', borderBottom: detailTab === 'interactions' ? '2px solid #7c3aed' : '2px solid transparent', padding: '8px 4px', fontWeight: 600, color: detailTab === 'interactions' ? '#7c3aed' : '#64748b', cursor: 'pointer' }}
+              >
+                Interactions ({(selectedLead.interactions || []).length})
+              </button>
             </div>
 
             {/* TAB 1: Lead Details Form */}
@@ -922,6 +949,49 @@ export default function LeadsAdmin() {
                     <span style={{ fontWeight: 600, color: '#64748b' }}>Created At:</span>
                     <span style={{ color: '#64748b' }}>{new Date(selectedLead.createdAt).toLocaleString()}</span>
                   </div>
+
+                  {/* CRM Intelligence Section */}
+                  {(selectedLead.leadScore !== undefined || selectedLead.interactionCount !== undefined) && (
+                    <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px', marginTop: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#7c3aed' }}>psychology</span>
+                        <span style={{ fontWeight: 700, fontSize: '13px', color: '#7c3aed' }}>CRM Intelligence</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '12px' }}>
+                        <div style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '22px', fontWeight: 700, color: '#7c3aed' }}>{selectedLead.leadScore ?? 0}</div>
+                          <div style={{ fontSize: '11px', color: '#6d28d9', marginTop: '2px' }}>Lead Score</div>
+                          <div style={{ fontSize: '10px', color: '#8b5cf6', marginTop: '2px', fontStyle: 'italic' }}>
+                            {(selectedLead.leadScore ?? 0) >= 100 ? '🔥 High Intent' : (selectedLead.leadScore ?? 0) >= 51 ? '🔥 Hot' : (selectedLead.leadScore ?? 0) >= 21 ? '🟡 Warm' : '⚪ Cold'}
+                          </div>
+                        </div>
+                        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '22px', fontWeight: 700, color: '#1d4ed8' }}>{selectedLead.interactionCount ?? 1}</div>
+                          <div style={{ fontSize: '11px', color: '#1e40af', marginTop: '2px' }}>Interactions</div>
+                        </div>
+                        <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '22px', fontWeight: 700, color: '#b45309' }}>{selectedLead.duplicateHits ?? 0}</div>
+                          <div style={{ fontSize: '11px', color: '#92400e', marginTop: '2px' }}>Revisits</div>
+                        </div>
+                      </div>
+                      {selectedLead.mergedCourses && selectedLead.mergedCourses.length > 0 && (
+                        <div style={{ marginBottom: '8px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Course Interests: </span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                            {selectedLead.mergedCourses.map((c, i) => (
+                              <span key={i} style={{ fontSize: '11px', background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '2px 8px' }}>{c}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {selectedLead.firstSource && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px' }}>
+                          <div><span style={{ color: '#64748b' }}>First Source: </span><span style={{ color: '#001943', fontWeight: 500 }}>{selectedLead.firstSource}</span></div>
+                          <div><span style={{ color: '#64748b' }}>Latest Source: </span><span style={{ color: '#001943', fontWeight: 500 }}>{selectedLead.latestSource || selectedLead.firstSource}</span></div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
                     <div className="admin-form-row">
@@ -1107,7 +1177,6 @@ export default function LeadsAdmin() {
                   <div style={{ position: 'relative', paddingLeft: '20px', borderLeft: '2px solid #e2e8f0', marginLeft: '8px' }}>
                     {timelineEvents.map((evt) => (
                       <div key={evt.id} style={{ position: 'relative', marginBottom: '20px' }}>
-                        {/* Timeline node marker */}
                         <div style={{
                           position: 'absolute',
                           left: '-27px',
@@ -1118,7 +1187,6 @@ export default function LeadsAdmin() {
                           background: evt.eventType === 'Converted' ? '#10b981' : evt.eventType === 'Deleted' ? '#ef4444' : '#3b82f6',
                           border: '2px solid #fff'
                         }} />
-                        
                         <div style={{ fontSize: '13px' }}>
                           <span style={{ fontWeight: 600, color: '#001943' }}>{evt.eventType}</span>
                           <span style={{ color: '#64748b', fontSize: '11px', marginLeft: '10px' }}>
@@ -1134,6 +1202,129 @@ export default function LeadsAdmin() {
               </div>
             )}
 
+            {/* TAB 4: Interactions History */}
+            {detailTab === 'interactions' && (
+              <div className="admin-modal-body">
+                {(selectedLead.interactions || []).length === 0 ? (
+                  <p style={{ color: '#64748b', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No interaction history recorded.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {(selectedLead.interactions || []).map((inter: LeadInteraction) => (
+                      <div key={inter.id} style={{ background: '#faf5ff', border: '1px solid #ddd6fe', borderRadius: '8px', padding: '12px', fontSize: '13px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#7c3aed' }}>touch_app</span>
+                            <span style={{ fontWeight: 700, color: '#6d28d9' }}>{inter.interactionType}</span>
+                            {inter.source && (
+                              <span style={{ fontSize: '11px', background: '#ede9fe', color: '#7c3aed', borderRadius: '10px', padding: '1px 7px' }}>{inter.source}</span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap' }}>{new Date(inter.createdAt).toLocaleString()}</span>
+                        </div>
+                        {inter.course && (
+                          <div style={{ fontSize: '12px', color: '#4c1d95', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: 600 }}>Course: </span>{inter.course}
+                          </div>
+                        )}
+                        {inter.notes && (
+                          <p style={{ margin: '4px 0 0 0', color: '#475569', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>{inter.notes}</p>
+                        )}
+                        {inter.ipAddress && (
+                          <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>IP: {inter.ipAddress}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* Merge Leads Modal */}
+      {showMergeModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,25,67,0.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '20px' }}>
+          <div className="admin-modal-card glass-panel" style={{ maxWidth: '500px', width: '100%', animation: 'modal-zoom 0.2s ease-out' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined" style={{ color: '#7c3aed', fontSize: '22px' }}>merge</span>
+                <h3 style={{ margin: 0, color: '#001943', fontSize: '18px' }}>Merge Leads</h3>
+              </div>
+              <button onClick={() => setShowMergeModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <p style={{ color: '#475569', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px' }}>
+              You have selected <strong>{selectedIds.length} leads</strong> to merge. Choose the <strong>Master Record</strong> — all notes, timeline events, and interaction history from the other leads will be consolidated into it.
+            </p>
+
+            <div className="admin-form-group" style={{ marginBottom: '20px' }}>
+              <label style={{ fontWeight: 600, color: '#001943', display: 'block', marginBottom: '6px' }}>Master Record (Lead ID)</label>
+              <select
+                value={mergeMasterId}
+                onChange={e => setMergeMasterId(e.target.value)}
+                style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none', fontSize: '13px' }}
+              >
+                {selectedIds.map(id => {
+                  const lead = leads.find(l => l.id === id);
+                  return (
+                    <option key={id} value={id}>
+                      {lead ? `${lead.name} — ${lead.email}` : id}
+                    </option>
+                  );
+                })}
+              </select>
+              <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>All other selected leads will be soft-deleted after merging.</p>
+            </div>
+
+            <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px 14px', marginBottom: '20px', fontSize: '13px', color: '#92400e' }}>
+              ⚠️ This action is <strong>permanent</strong>. The duplicate leads will be moved to Trash and cannot participate in future duplicate detection.
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowMergeModal(false)}
+                style={{ background: '#e2e8f0', color: '#475569', border: 'none', padding: '9px 20px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}
+              >
+                Cancel
+              </button>
+              <button
+                disabled={merging || !mergeMasterId}
+                onClick={async () => {
+                  if (!mergeMasterId) return;
+                  const dupIds = selectedIds.filter(id => id !== mergeMasterId);
+                  if (dupIds.length === 0) {
+                    toast('Please select at least 2 different leads to merge.', 'error');
+                    return;
+                  }
+                  setMerging(true);
+                  try {
+                    const result = await mergeLeads(mergeMasterId, dupIds);
+                    if (result) {
+                      toast(`Successfully merged ${dupIds.length} lead(s) into master record.`, 'success');
+                      setShowMergeModal(false);
+                      setSelectedIds([]);
+                      invalidateAll();
+                      loadLeads(true);
+                    } else {
+                      toast('Merge failed. Please try again.', 'error');
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    toast('Error during merge.', 'error');
+                  } finally {
+                    setMerging(false);
+                  }
+                }}
+                style={{ background: merging ? '#a78bfa' : '#7c3aed', color: '#fff', border: 'none', padding: '9px 20px', borderRadius: '8px', fontWeight: 600, cursor: merging ? 'not-allowed' : 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>merge</span>
+                {merging ? 'Merging...' : 'Confirm Merge'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1159,3 +1350,4 @@ export default function LeadsAdmin() {
     </div>
   );
 }
+

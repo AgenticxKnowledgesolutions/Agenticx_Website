@@ -17,6 +17,17 @@ export interface LeadTimelineEvent {
   createdAt: string;
 }
 
+export interface LeadInteraction {
+  id: string;
+  leadId: string;
+  interactionType: string;
+  source?: string;
+  course?: string;
+  notes?: string;
+  ipAddress?: string;
+  createdAt: string;
+}
+
 export interface Lead {
   id: string;
   name: string;
@@ -39,6 +50,15 @@ export interface Lead {
   isDeleted?: boolean;
   deletedAt?: string;
   deletedBy?: string;
+  // CRM duplicate detection & scoring
+  interactionCount?: number;
+  lastInteractionAt?: string;
+  firstSource?: string;
+  latestSource?: string;
+  mergedCourses?: string[];
+  duplicateHits?: number;
+  leadScore?: number;
+  interactions?: LeadInteraction[];
 }
 
 // Map FastAPI snake_case response to frontend camelCase interfaces
@@ -60,6 +80,19 @@ function mapTimelineEvent(t: any): LeadTimelineEvent {
     description: t.description,
     createdBy: t.created_by || undefined,
     createdAt: t.created_at,
+  };
+}
+
+function mapInteraction(i: any): LeadInteraction {
+  return {
+    id: i.id,
+    leadId: i.lead_id,
+    interactionType: i.interaction_type,
+    source: i.source || undefined,
+    course: i.course || undefined,
+    notes: i.notes || undefined,
+    ipAddress: i.ip_address || undefined,
+    createdAt: i.created_at,
   };
 }
 
@@ -86,6 +119,14 @@ function mapLead(r: Record<string, unknown>): Lead {
     isDeleted: r.is_deleted as boolean | undefined,
     deletedAt: r.deleted_at as string | undefined,
     deletedBy: r.deleted_by as string | undefined,
+    interactionCount: (r.interaction_count as number | undefined) ?? 1,
+    lastInteractionAt: (r.last_interaction_at as string | undefined) ?? undefined,
+    firstSource: (r.first_source as string | undefined) ?? undefined,
+    latestSource: (r.latest_source as string | undefined) ?? undefined,
+    mergedCourses: Array.isArray(r.merged_courses) ? (r.merged_courses as string[]) : [],
+    duplicateHits: (r.duplicate_hits as number | undefined) ?? 0,
+    leadScore: (r.lead_score as number | undefined) ?? 0,
+    interactions: Array.isArray(r.interactions) ? r.interactions.map(mapInteraction) : [],
   };
 }
 
@@ -277,3 +318,20 @@ export const hardDeleteLead = async (id: string): Promise<boolean> => {
     return false;
   }
 };
+
+export const mergeLeads = async (
+  masterLeadId: string,
+  duplicateLeadIds: string[]
+): Promise<Lead | null> => {
+  try {
+    const res = await api.post("/leads/merge", {
+      master_lead_id: masterLeadId,
+      duplicate_lead_ids: duplicateLeadIds,
+    });
+    return mapLead(res.data as Record<string, unknown>);
+  } catch (err) {
+    console.error("Failed to merge leads:", err);
+    return null;
+  }
+};
+
