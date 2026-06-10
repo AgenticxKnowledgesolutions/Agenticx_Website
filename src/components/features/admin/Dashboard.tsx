@@ -14,6 +14,22 @@ const LeadsGrowthChart = lazy(() => import('./charts/LeadsGrowthChart'));
 const LeadStatusPieChart = lazy(() => import('./charts/LeadStatusPieChart'));
 const InterestAnalyticsChart = lazy(() => import('./charts/InterestAnalyticsChart'));
 
+const formatFollowupTime = (isoString: string): string => {
+  if (!isoString) return 'N/A';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    return d.toLocaleTimeString('en-US', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch (e) {
+    return isoString;
+  }
+};
+
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -738,7 +754,7 @@ export default function Dashboard() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#fef3c7', color: '#b45309', padding: '3px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 600 }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>alarm</span>
-                      {item.dueTime}
+                      {formatFollowupTime(item.dueTime)}
                     </div>
                   </div>
                 ))
