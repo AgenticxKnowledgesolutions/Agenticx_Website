@@ -41,6 +41,79 @@ export default function PdfViewerModal({ isOpen, onClose, pdfUrl, title }: PdfVi
     };
   }, [isOpen, onClose]);
 
+  // Handle ESC key press
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  // Focus trap and restore focus
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousActiveElement = document.activeElement as HTMLElement;
+
+    // Focus the close button or first interactive element inside the modal initially
+    const modalElement = document.querySelector('.pdf-viewer-container') as HTMLElement;
+    if (modalElement) {
+      const focusableElements = modalElement.querySelectorAll(
+        'a[href], button, textarea, input, select, iframe, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusableElements.length > 0) {
+        (focusableElements[0] as HTMLElement).focus();
+      }
+    }
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      const currentModalElement = document.querySelector('.pdf-viewer-container');
+      if (!currentModalElement) return;
+
+      const focusableElements = Array.from(
+        currentModalElement.querySelectorAll(
+          'a[href], button, textarea, input, select, iframe, [tabindex]:not([tabindex="-1"])'
+        )
+      ) as HTMLElement[];
+
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleTabKey);
+
+    return () => {
+      window.removeEventListener('keydown', handleTabKey);
+      if (previousActiveElement) {
+        previousActiveElement.focus();
+      }
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -56,17 +129,17 @@ export default function PdfViewerModal({ isOpen, onClose, pdfUrl, title }: PdfVi
           <div className="pdf-viewer-actions">
             {pdfUrl && (
               <>
-                <a href={pdfUrl} download className="pdf-action-btn" title="Download PDF">
+                <a href={pdfUrl} download className="pdf-action-btn" title="Download PDF" aria-label="Download PDF">
                   <span className="material-symbols-outlined">download</span>
                   <span className="btn-text">Download</span>
                 </a>
-                <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="pdf-action-btn" title="Open in New Tab">
+                <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="pdf-action-btn" title="Open in New Tab" aria-label="Open PDF in new tab">
                   <span className="material-symbols-outlined">open_in_new</span>
                   <span className="btn-text">Open</span>
                 </a>
               </>
             )}
-            <button onClick={onClose} className="pdf-close-btn" title="Close Viewer">
+            <button onClick={onClose} className="pdf-close-btn" title="Close Viewer" aria-label="Close Viewer">
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
