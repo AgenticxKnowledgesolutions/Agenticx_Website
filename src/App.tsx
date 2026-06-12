@@ -31,6 +31,8 @@ const ReviewEdit = lazy(() => import('./components/features/admin/reviews/Review
 const LeadsAdmin = lazy(() => import('./components/features/admin/LeadsAdmin'))
 const TrashAdmin = lazy(() => import('./components/features/admin/trash/TrashAdmin'))
 const CompanySettingsAdmin = lazy(() => import('./components/features/admin/settings/CompanySettingsAdmin'))
+const CandidateApply = lazy(() => import('./pages/CandidateApply'))
+const CandidatesAdmin = lazy(() => import('./components/features/admin/candidates/CandidatesAdmin'))
 
 function App() {
   const fetchSettings = useSettingsStore(state => state.fetchSettings)
@@ -90,6 +92,7 @@ function App() {
             <Route path="services" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><Services /></Suspense></ErrorBoundary>} />
             <Route path="about" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><About /></Suspense></ErrorBoundary>} />
             <Route path="contact" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><Contact /></Suspense></ErrorBoundary>} />
+            <Route path="apply" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><CandidateApply /></Suspense></ErrorBoundary>} />
           </Route>
 
           {/* Admin Login */}
@@ -109,6 +112,7 @@ function App() {
               <Route path="reviews/add" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ReviewAdd /></Suspense></ErrorBoundary>} />
               <Route path="reviews/edit/:id" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ReviewEdit /></Suspense></ErrorBoundary>} />
               <Route path="leads" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><LeadsAdmin /></Suspense></ErrorBoundary>} />
+              <Route path="candidates" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CandidatesAdmin /></Suspense></ErrorBoundary>} />
               <Route path="trash" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><TrashAdmin /></Suspense></ErrorBoundary>} />
               <Route path="settings" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CompanySettingsAdmin /></Suspense></ErrorBoundary>} />
             </Route>

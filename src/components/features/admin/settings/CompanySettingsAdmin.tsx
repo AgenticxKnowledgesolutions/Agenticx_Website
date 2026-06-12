@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { type CompanySettings, getCompanySettings, updateCompanySettings } from '@/services/companySettingsService';
 import { useToast } from '@/components/ui/Toast';
+import FileUploader from '@/components/admin/FileUploader';
 import '../Admin.css';
 
 export default function CompanySettingsAdmin() {
@@ -44,6 +45,7 @@ export default function CompanySettingsAdmin() {
   const [heroDescription, setHeroDescription] = useState('');
   const [heroPrimaryCtaText, setHeroPrimaryCtaText] = useState('');
   const [heroSecondaryCtaText, setHeroSecondaryCtaText] = useState('');
+  const [curriculumBrochureUrl, setCurriculumBrochureUrl] = useState('');
 
   // Load Settings
   useEffect(() => {
@@ -86,6 +88,7 @@ export default function CompanySettingsAdmin() {
           setHeroDescription(data.heroDescription || '');
           setHeroPrimaryCtaText(data.heroPrimaryCtaText || '');
           setHeroSecondaryCtaText(data.heroSecondaryCtaText || '');
+          setCurriculumBrochureUrl(data.curriculumBrochureUrl || '');
         }
       } catch (err) {
         console.error(err);
@@ -142,7 +145,8 @@ export default function CompanySettingsAdmin() {
       heroTitle,
       heroDescription,
       heroPrimaryCtaText,
-      heroSecondaryCtaText
+      heroSecondaryCtaText,
+      curriculumBrochureUrl
     };
 
     try {
@@ -547,6 +551,64 @@ export default function CompanySettingsAdmin() {
                 placeholder="Book Free Demo"
                 style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1' }}
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 7 - Curriculum Brochure */}
+        <div className="admin-kpi-card glass-panel" style={{ display: 'block', padding: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #cbd5e1', paddingBottom: '12px', marginBottom: '20px' }}>
+            <span className="material-symbols-outlined" style={{ color: '#2563eb' }}>picture_as_pdf</span>
+            <h3 style={{ margin: 0, color: '#001943', fontSize: '16px', fontWeight: 600 }}>Curriculum Brochure</h3>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {curriculumBrochureUrl && (
+              <div className="admin-form-group" style={{ marginBottom: 0 }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: '#001943', fontWeight: 600 }}>Current Brochure:</label>
+                <div style={{ marginBottom: '8px' }}>
+                  <a 
+                    href={curriculumBrochureUrl} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="activity-book-btn"
+                    style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '8px', 
+                      padding: '8px 16px', 
+                      borderRadius: '6px', 
+                      fontSize: '13px', 
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                      background: '#eff6ff',
+                      color: '#2563eb',
+                      border: '1px solid #bfdbfe',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>visibility</span>
+                    View PDF
+                  </a>
+                </div>
+              </div>
+            )}
+
+            <div className="admin-form-group" style={{ marginBottom: 0 }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#001943', fontWeight: 600 }}>Upload New Brochure:</label>
+              <FileUploader
+                type="pdf"
+                folder="company-settings/brochures"
+                currentValue={curriculumBrochureUrl}
+                onUploadSuccess={(url) => handleFieldChange(setCurriculumBrochureUrl, url)}
+                onRemove={() => handleFieldChange(setCurriculumBrochureUrl, '')}
+                maxSize={20}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', color: '#64748b' }}>
+              <div><strong>Allowed Types:</strong> PDF only</div>
+              <div><strong>Max Size:</strong> 20 MB</div>
             </div>
           </div>
         </div>

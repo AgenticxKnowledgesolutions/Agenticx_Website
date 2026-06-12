@@ -40,6 +40,7 @@ export interface CompanySettings {
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string;
+  curriculumBrochureUrl?: string;
 
   createdAt: string;
   updatedAt: string;
@@ -86,6 +87,7 @@ export function mapCompanySettings(r: Record<string, unknown>): CompanySettings 
     metaTitle: (r.meta_title as string | undefined) ?? undefined,
     metaDescription: (r.meta_description as string | undefined) ?? undefined,
     metaKeywords: (r.meta_keywords as string | undefined) ?? undefined,
+    curriculumBrochureUrl: (r.curriculum_bro_url as string | undefined) ?? (r.curriculum_brochure_url as string | undefined) ?? undefined,
 
     createdAt: (r.created_at as string) ?? new Date().toISOString(),
     updatedAt: (r.updated_at as string) ?? new Date().toISOString(),
@@ -148,6 +150,7 @@ export function mapCompanySettingsToBackend(s: Partial<CompanySettings>): Record
   if (s.metaTitle !== undefined) payload.meta_title = s.metaTitle || null;
   if (s.metaDescription !== undefined) payload.meta_description = s.metaDescription || null;
   if (s.metaKeywords !== undefined) payload.meta_keywords = s.metaKeywords || null;
+  if (s.curriculumBrochureUrl !== undefined) payload.curriculum_brochure_url = s.curriculumBrochureUrl || null;
 
   return payload;
 }

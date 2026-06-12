@@ -1106,6 +1106,22 @@ export default function LeadsAdmin() {
                   </button>
                   
                   <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const params = new URLSearchParams();
+                        params.set("lead_id", selectedLead.id);
+                        if (selectedLead.name) params.set("name", selectedLead.name);
+                        if (selectedLead.email) params.set("email", selectedLead.email);
+                        if (selectedLead.phone) params.set("phone", selectedLead.phone);
+                        if (selectedLead.interestedCourse) params.set("course", selectedLead.interestedCourse);
+                        window.location.href = `/apply?${params.toString()}`;
+                      }}
+                      style={{ background: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>assignment_ind</span>
+                      Convert to Candidate
+                    </button>
                     <button 
                       type="button" 
                       onClick={() => setSelectedLead(null)}
