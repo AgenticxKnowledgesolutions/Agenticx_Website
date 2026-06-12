@@ -11,6 +11,7 @@ export interface Activity {
   isDeleted?: boolean;
   deletedAt?: string;
   deletedBy?: string;
+  registrationUrl?: string;
 }
 
 // Map FastAPI snake_case → frontend camelCase
@@ -26,6 +27,7 @@ function mapActivity(r: Record<string, unknown>): Activity {
     isDeleted: r.is_deleted as boolean | undefined,
     deletedAt: r.deleted_at as string | undefined,
     deletedBy: r.deleted_by as string | undefined,
+    registrationUrl: r.registration_url as string | undefined,
   };
 }
 

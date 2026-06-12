@@ -60,9 +60,28 @@
 /* Grid & Scroll Container */
 .live-activities-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: 1fr;
   gap: 30px;
   padding: 10px;
+}
+
+@media (min-width: 769px) {
+  .live-activities-container {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 1000px;
+    margin: 0 auto;
+    gap: 32px;
+  }
+}
+
+/* Hardening for single card layout */
+.live-activities-container.single-card {
+  display: block;
+}
+
+.live-activities-container.single-card .activity-card {
+  max-width: 540px;
+  margin: 0 auto;
 }
 
 /* Card Styling */
@@ -84,15 +103,35 @@
 
 .activity-image-wrapper {
   position: relative;
-  height: 180px;
+  height: 300px;
   width: 100%;
   overflow: hidden;
+  background: #020617;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.activity-image {
+.activity-image-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: blur(20px) brightness(0.5);
+  opacity: 0.8;
+  z-index: 1;
+  transform: scale(1.15);
+  pointer-events: none;
+}
+
+.activity-image {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   transition: transform 0.5s ease;
 }
 
@@ -222,5 +261,95 @@
     max-width: 320px;
     scroll-snap-align: center;
     flex: 0 0 auto;
+  }
+
+  .activity-image-wrapper {
+    height: 180px;
+  }
+
+  .live-activities-container.single-card {
+    display: block;
+    margin: 0 auto;
+    padding: 10px;
+  }
+
+  .live-activities-container.single-card .activity-card {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+/* Image Viewer Modal */
+.image-viewer-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(9, 15, 26, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInViewer 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.image-viewer-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10000;
+}
+
+.image-viewer-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.image-viewer-content {
+  max-width: 90%;
+  max-height: 85%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: zoomInViewer 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.image-viewer-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+@keyframes fadeInViewer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomInViewer {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }

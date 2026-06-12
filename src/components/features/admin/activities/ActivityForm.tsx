@@ -26,6 +26,7 @@ export default function ActivityForm({ mode, activityId }: ActivityFormProps) {
   const [duration, setDuration] = useState('');
   const [price, setPrice] = useState<number | ''>('');
   const [isFree, setIsFree] = useState(true);
+  const [registrationUrl, setRegistrationUrl] = useState('');
 
   // Load Activity data in Edit mode
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function ActivityForm({ mode, activityId }: ActivityFormProps) {
             setDuration(act.duration || '');
             setIsFree(act.isFree);
             setPrice(act.price !== undefined ? act.price : '');
+            setRegistrationUrl(act.registrationUrl || '');
           } else {
             toast('Activity not found', 'error');
             navigate('/admin/activities');
@@ -71,13 +73,20 @@ export default function ActivityForm({ mode, activityId }: ActivityFormProps) {
     e.preventDefault();
     setLoading(true);
 
+    if (registrationUrl && !/^https?:\/\/.+/i.test(registrationUrl)) {
+      toast('Please enter a valid Registration Form URL starting with http:// or https://', 'error');
+      setLoading(false);
+      return;
+    }
+
     const payload = {
       title,
       description: description || null,
       image_url: image || null,
       duration,
       is_free: isFree,
-      price: isFree ? null : Number(price)
+      price: isFree ? null : Number(price),
+      registration_url: registrationUrl || null
     };
 
     const { invalidateActivities } = useAdminStore.getState();
@@ -180,6 +189,17 @@ export default function ActivityForm({ mode, activityId }: ActivityFormProps) {
             onChange={e => { setDuration(e.target.value); setIsDirty(true); }} 
             required 
             placeholder="2 Hours Live Masterclass" 
+            style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1' }} 
+          />
+        </div>
+
+        <div className="admin-form-group">
+          <label>Registration Form URL</label>
+          <input 
+            type="text" 
+            value={registrationUrl} 
+            onChange={e => { setRegistrationUrl(e.target.value); setIsDirty(true); }} 
+            placeholder="https://forms.google.com/..." 
             style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1' }} 
           />
         </div>

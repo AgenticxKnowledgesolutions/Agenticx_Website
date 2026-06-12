@@ -14,6 +14,7 @@ const CourseDetail = lazy(() => import('./pages/CourseDetail'))
 const Services = lazy(() => import('./pages/Services'))
 const About = lazy(() => import('./pages/About'))
 const Contact = lazy(() => import('./pages/contact/Contact'))
+const CurriculumPage = lazy(() => import('./pages/CurriculumPage'))
 
 // Lazy Admin Imports
 const Login = lazy(() => import('./components/features/admin/Login'))
@@ -93,6 +94,7 @@ function App() {
             <Route path="about" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><About /></Suspense></ErrorBoundary>} />
             <Route path="contact" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><Contact /></Suspense></ErrorBoundary>} />
             <Route path="apply" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><CandidateApply /></Suspense></ErrorBoundary>} />
+            <Route path="curriculum" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><CurriculumPage /></Suspense></ErrorBoundary>} />
           </Route>
 
           {/* Admin Login */}

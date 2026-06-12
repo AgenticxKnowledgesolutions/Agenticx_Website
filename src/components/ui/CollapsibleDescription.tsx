@@ -4,12 +4,14 @@ interface CollapsibleDescriptionProps {
   description: string;
   clampMobile?: number;
   clampDesktop?: number;
+  textColor?: string;
 }
 
 export default function CollapsibleDescription({
   description,
   clampMobile = 3,
-  clampDesktop = 4
+  clampDesktop = 4,
+  textColor
 }: CollapsibleDescriptionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
@@ -48,7 +50,7 @@ export default function CollapsibleDescription({
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           maxHeight: isExpanded ? '1000px' : '96px',
           marginBottom: isTruncated ? '8px' : '24px',
-          color: 'rgba(255, 255, 255, 0.7)'
+          color: textColor || 'rgba(255, 255, 255, 0.7)'
         }}
       >
         {description}
