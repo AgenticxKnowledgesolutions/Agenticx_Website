@@ -31,6 +31,9 @@ export default function Footer() {
             <Link to="/courses" className="footer-link">
               Courses
             </Link>
+            <Link to="/products" className="footer-link">
+              Products
+            </Link>
             <Link to="/services" className="footer-link">
               Services
             </Link>

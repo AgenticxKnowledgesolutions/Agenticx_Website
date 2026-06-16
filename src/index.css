@@ -5,10 +5,9 @@
 
 @layer base {
   body {
-    background: var(--color-bg);
+    background: transparent;
     color: var(--color-text);
     font-family: var(--font-primary);
-    
     min-height: 100vh;
   }
 }
@@ -43,7 +42,15 @@
   display: none;
 }
 
-html, body {
+html {
+  scroll-behavior: smooth;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+  overflow-x: hidden;
+}
+
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  overflow-x: hidden;
 }

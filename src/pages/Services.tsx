@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
-import LiveActivities from '@/components/features/home/LiveActivities'
 import NeuralCanvas from '@/components/ui/NeuralCanvas'
+import SolutionsWeBuild from '@/components/features/products/SolutionsWeBuild'
+import TechStack from '@/components/features/products/TechStack'
+import ProjectCta from '@/components/features/products/ProjectCta'
 import '../styles/services.css'
 
 export default function Services() {
@@ -106,34 +108,23 @@ export default function Services() {
                   </p>
                 </div>
               </div>
-
-              {/* Service 5 (Other Services List) */}
-              <div className="srv-card ambient-shadow group srv-card-span">
-                <div className="srv-card-inner">
-                  <div className="srv-card-header">
-                    <h3 className="srv-card-title">Other Services</h3>
-                    <span className="material-symbols-outlined srv-card-icon">widgets</span>
-                  </div>
-                  <ul className="srv-list">
-                    <li><span className="material-symbols-outlined srv-list-icon">check_circle</span> Automation & AI/ML solution development</li>
-                    <li><span className="material-symbols-outlined srv-list-icon">check_circle</span> Online exam support</li>
-                    <li><span className="material-symbols-outlined srv-list-icon">check_circle</span> Workshops & webinars for colleges and organizations</li>
-                    <li><span className="material-symbols-outlined srv-list-icon">check_circle</span> Workspace / learning space support</li>
-                    <li><span className="material-symbols-outlined srv-list-icon">check_circle</span> Digital literacy programs for kids & homemakers</li>
-                    <li><span className="material-symbols-outlined srv-list-icon">check_circle</span> Career guidance & soft skill training</li>
-                    <li><span className="material-symbols-outlined srv-list-icon">check_circle</span> Typing speed crash course</li>
-                    <li><span className="material-symbols-outlined srv-list-icon">check_circle</span> Website development support</li>
-                    <li><span className="material-symbols-outlined srv-list-icon">check_circle</span> Dashboard & presentation support</li>
-                  </ul>
-                </div>
-              </div>
-
             </section>
+
+            {/* Solutions We Build Section */}
+            <div style={{ marginTop: '48px' }}>
+              <SolutionsWeBuild />
+            </div>
+
+            {/* Tech Stack Section */}
+            <TechStack />
+
+            {/* Custom Product CTA */}
+            <ProjectCta />
 
           </div>
         </div>
       </div>
-      <LiveActivities />
+
     </>
   )
 }

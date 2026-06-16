@@ -1,11 +1,12 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
 import "./Header.css";
+import logoImg from "@/assets/images/logo/AgenticX-removebg-preview.png";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const isStickyPage = ["/courses", "/about", "/services"].includes(location.pathname);
+  const isStickyPage = ["/courses", "/about", "/services", "/products"].includes(location.pathname);
 
   return (
     <header className={isStickyPage ? "header header-sticky" : "header"}>
@@ -13,7 +14,11 @@ export default function Header() {
 
         {/* Logo */}
         <NavLink to="/" className="header-logo">
-          AgenticX Knowledge Solutions
+          <img src={logoImg} alt="AgenticX Logo" className="header-logo-img" />
+          <span className="header-logo-text">
+            <span className="brand-name-main">AgenticX</span>
+            <span className="brand-name-sub"> Knowledge Solutions</span>
+          </span>
         </NavLink>
 
         {/* Desktop Nav */}
@@ -24,6 +29,10 @@ export default function Header() {
 
           <NavLink to="/courses" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
             Courses
+          </NavLink>
+
+          <NavLink to="/products" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+            Products
           </NavLink>
 
           <NavLink to="/services" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
@@ -52,6 +61,7 @@ export default function Header() {
       <div className={`mobile-menu ${isOpen ? "show" : ""}`}>
         <NavLink to="/" onClick={() => setIsOpen(false)}>Home</NavLink>
         <NavLink to="/courses" onClick={() => setIsOpen(false)}>Courses</NavLink>
+        <NavLink to="/products" onClick={() => setIsOpen(false)}>Products</NavLink>
         <NavLink to="/services" onClick={() => setIsOpen(false)}>Services</NavLink>
         <NavLink to="/about" onClick={() => setIsOpen(false)}>About</NavLink>
 

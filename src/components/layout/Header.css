@@ -51,6 +51,21 @@
   font-weight: 600;
   letter-spacing: -0.04em;
   margin-right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-logo-img {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+  margin-top: -8px;
+  margin-bottom: -8px;
+}
+
+.header-logo-text {
+  white-space: nowrap;
 }
 
 /* ========================= */
@@ -254,4 +269,10 @@
   width: 100%;
   z-index: 1000;
   border-bottom: none;
+}
+
+@media (max-width: 576px) {
+  .brand-name-sub {
+    display: none;
+  }
 }

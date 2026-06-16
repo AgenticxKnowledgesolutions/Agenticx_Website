@@ -3,7 +3,6 @@
   background-color: #0A1628;
   position: relative;
   overflow: hidden;
-  min-height: 100vh;
 }
 
 /* Background gradient glows */
@@ -33,7 +32,7 @@
 
 .courses-page {
   padding-top: 48px;
-  padding-bottom: 80px;
+  padding-bottom: 48px;
   position: relative;
   z-index: 1;
 }
