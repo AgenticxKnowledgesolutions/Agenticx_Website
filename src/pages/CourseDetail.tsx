@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { getCourseBySlug, type Course } from '@/services/courseService'
 import { createLead } from '@/services/leadService'
 import { CourseDetailSkeleton } from '@/components/ui/Skeletons'
+import SEO from '@/components/seo/SEO'
 import '../styles/course-detail.css'
 
 export default function CourseDetail() {
@@ -104,6 +105,11 @@ export default function CourseDetail() {
 
   return (
     <div className="cd-page">
+      <SEO 
+        title={`${course.title} Course in Kollam | AgenticX`}
+        description={course.description || `Enroll in the ${course.title} program at AgenticX. Advanced syllabus, professional guidance, and placement support.`}
+        keywords={`${course.title}, IT training Kollam, AgenticX courses, placement support`}
+      />
       <div className="container cd-container">
 
         {/* Main Content Column */}

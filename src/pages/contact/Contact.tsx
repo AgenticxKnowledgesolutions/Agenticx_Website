@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createLead } from '@/services/leadService';
 import './Contact.css';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import SEO from '@/components/seo/SEO';
 
 const COURSE_OPTIONS = {
   Corporate: ['HTD Model', 'Corporate Training', 'Leadership Program'],
@@ -54,6 +55,11 @@ export default function Contact() {
   if (isSubmitted) {
     return (
       <div className="contact-page success-page">
+        <SEO 
+          title="Contact AgenticX | IT Training & Placement in Kollam"
+          description="Get in touch with AgenticX Knowledge Solutions Kollam. Contact us for training inquiries, admissions, placements, or business automation partnerships."
+          keywords="Contact AgenticX, IT training Kollam, academic admissions Kerala, business automation Kollam"
+        />
         <div className="container contact-success-container">
           <div className="success-card glass-panel contact-shadow">
             <span className="material-symbols-outlined success-icon-large">check_circle</span>
@@ -72,6 +78,11 @@ export default function Contact() {
 
   return (
     <div className="contact-page">
+      <SEO 
+        title="Contact AgenticX | IT Training & Placement in Kollam"
+        description="Get in touch with AgenticX Knowledge Solutions Kollam. Contact us for training inquiries, admissions, placements, or business automation partnerships."
+        keywords="Contact AgenticX, IT training Kollam, academic admissions Kerala, business automation Kollam"
+      />
       {/* HERO SECTION */}
       <section className="contact-hero">
         <div className="container contact-hero-container">

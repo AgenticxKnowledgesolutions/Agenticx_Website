@@ -6,6 +6,7 @@ import '../styles/courses.css'
 import NeuralCanvas from '@/components/ui/NeuralCanvas'
 import { getCourses } from '@/services/courseService'
 import { CourseCardSkeleton } from '@/components/ui/Skeletons'
+import SEO from '@/components/seo/SEO'
 
 export interface CourseData {
   id: string
@@ -53,6 +54,11 @@ export default function Courses() {
 
   return (
     <>
+      <SEO 
+        title="Explore IT & AI Courses in Kollam | AgenticX"
+        description="Upskill with professional IT courses at AgenticX. Offering Python Full Stack, AI, Data Science, and Cyber Security courses with placement assistance."
+        keywords="Python Full Stack training, AI course, Cyber Security certification, AgenticX Kollam"
+      />
 
       <div className="courses-page-wrapper">
         <NeuralCanvas nodeCount={30} />

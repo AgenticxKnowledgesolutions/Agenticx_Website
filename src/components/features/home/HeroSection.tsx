@@ -54,7 +54,7 @@ export default function HeroSection({ onOpenDemo }: { onOpenDemo?: () => void })
         {/* 🔥 Mobile CTA (below buttons) */}
         <div className="hero-contact-mobile">
           <div className="hero-phone">
-            <img src={phoneIcon} alt="Contact us" />
+            <img src={phoneIcon} alt="Contact us" loading="lazy" />
             <div className="number-info">
               <span>Have any questions?</span>
               <h2 className="number">
@@ -68,7 +68,7 @@ export default function HeroSection({ onOpenDemo }: { onOpenDemo?: () => void })
       {/* 🔥 Desktop CTA */}
       <div className="hero-contact-desktop">
         <div className="hero-phone">
-          <img src={phoneIcon} alt="Contact us" />
+          <img src={phoneIcon} alt="Contact us" loading="lazy" />
           <div className="number-info">
             <span>Have any questions?</span>
             <h2 className="number">

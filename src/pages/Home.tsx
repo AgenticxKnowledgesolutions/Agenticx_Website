@@ -9,6 +9,7 @@ import SuccessStories from '@/components/features/home/SuccessStories'
 import LiveActivities from '@/components/features/home/LiveActivities'
 import CtaSection from '@/components/features/home/CtaSection'
 import DemoModal from '@/components/features/home/DemoModal'
+import SEO from '@/components/seo/SEO'
 
 export default function Home() {
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
@@ -46,6 +47,11 @@ export default function Home() {
 
   return (
     <>
+      <SEO 
+        title="AgenticX | AI & Data Science Training in Kollam"
+        description="AgenticX Knowledge Solutions offers industry-ready AI, Data Science, Full Stack, and Cyber Security courses with placement support in Kollam, Kerala."
+        keywords="AI course Kollam, Data analytics Kerala, Python full stack course, Cyber security training"
+      />
       <HeroSection onOpenDemo={() => setIsDemoModalOpen(true)} />
       <StatsSection />
       <OfferingsBento />

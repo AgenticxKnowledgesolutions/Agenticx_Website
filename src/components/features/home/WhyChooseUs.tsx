@@ -40,7 +40,7 @@ export default function WhyChooseUs() {
         </div>
         <div className="why-image-wrapper">
           <div className="why-image-inner">
-            <img className="why-image" alt="A diverse group of professional colleagues collaborating around a computer screen in a bright modern office" src={teamCollaborationImg} />
+            <img className="why-image" alt="A diverse group of professional colleagues collaborating around a computer screen in a bright modern office" src={teamCollaborationImg} loading="lazy" />
           </div>
           <div className="why-stat-card">
             <div className="why-stat-value">100%</div>
