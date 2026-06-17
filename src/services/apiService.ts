@@ -1,18 +1,10 @@
 import axios from "axios";
 
-// Dynamically resolve base URL and append /api/v1 if not present
-const getBaseURL = (): string => {
-  const envUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-  const cleanUrl = envUrl.endsWith("/") ? envUrl.slice(0, -1) : envUrl;
-  
-  if (cleanUrl.includes("/api/v1")) {
-    return cleanUrl;
-  }
-  return `${cleanUrl}/api/v1`;
-};
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://api.agenticx.co.in/api/v1";
 
 export const api = axios.create({
-  baseURL: getBaseURL(),
+  baseURL: API_BASE_URL,
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
