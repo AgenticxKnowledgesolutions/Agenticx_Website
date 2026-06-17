@@ -1,11 +1,12 @@
 import { useEffect, useState, lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useSettingsStore } from './store/useSettingsStore'
 import AppLoader from './components/ui/AppLoader'
 import RootLayout from './components/layout/RootLayout'
 import ProtectedRoute from './routes/ProtectedRoute'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 import { PageSkeleton, AdminSkeleton, CourseDetailSkeleton } from './components/ui/Skeletons'
+import { useAuthStore } from './store/useAuthStore'
 
 // Lazy Page Imports
 const Home = lazy(() => import('./pages/Home'))
@@ -45,7 +46,10 @@ function App() {
   useEffect(() => {
     const bootstrap = async () => {
       try {
-        await fetchSettings();
+        await Promise.all([
+          fetchSettings(),
+          useAuthStore.getState().initializeAuth()
+        ]);
       } catch (err) {
         console.error("Initial bootstrap failed:", err);
       } finally {
@@ -105,6 +109,7 @@ function App() {
           {/* Protected Admin Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/admin" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><AdminLayout /></Suspense></ErrorBoundary>}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><Dashboard /></Suspense></ErrorBoundary>} />
               <Route path="courses" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CourseList /></Suspense></ErrorBoundary>} />
               <Route path="courses/add" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CourseAdd /></Suspense></ErrorBoundary>} />

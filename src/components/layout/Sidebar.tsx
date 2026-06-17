@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -11,11 +12,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [isActivitiesOpen, setIsActivitiesOpen] = useState(false);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const navigate = useNavigate();
+  const clearAuth = useAuthStore((state) => state.clearAuth);
 
   const handleLogout = () => {
-    localStorage.removeItem("isAdmin");
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_refresh_token");
+    clearAuth();
     navigate("/admin/login");
   };
 

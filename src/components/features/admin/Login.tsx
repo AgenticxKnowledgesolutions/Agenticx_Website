@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '@/services/apiService';
+import { useAuthStore } from '@/store/useAuthStore';
 import './Admin.css';
 
 export default function Login() {
@@ -10,6 +11,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   useEffect(() => {
     if (searchParams.get('expired') === 'true') {
@@ -30,10 +32,8 @@ export default function Login() {
 
       const { access_token, refresh_token } = response.data;
 
-      // Store tokens and admin state in browser
-      localStorage.setItem('admin_token', access_token);
-      localStorage.setItem('admin_refresh_token', refresh_token);
-      localStorage.setItem('isAdmin', 'true');
+      // Store tokens and admin state via Zustand
+      setAuth(access_token, refresh_token);
 
       navigate('/admin/dashboard');
     } catch (err) {
