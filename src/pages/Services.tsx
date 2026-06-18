@@ -14,7 +14,7 @@ export default function Services() {
   return (
     <>
       <div className="services-page">
-        <NeuralCanvas />
+        <NeuralCanvas nodeCount={35} />
         <div className="srv-content-wrapper">
           <div className="container srv-container">
 

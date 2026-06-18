@@ -13,7 +13,7 @@ export default function About() {
 
   return (
     <div className="about-page">
-      <NeuralCanvas />
+      <NeuralCanvas nodeCount={35} />
 
       <div className="abt-content-wrapper">
         <div className="container abt-container">

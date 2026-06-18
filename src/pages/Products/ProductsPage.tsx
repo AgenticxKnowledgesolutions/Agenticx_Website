@@ -62,7 +62,7 @@ export default function ProductsPage() {
   return (
     <div className={styles.productsPage}>
       {/* Background Particles Canvas */}
-      <NeuralCanvas />
+      <NeuralCanvas nodeCount={35} />
 
       <div className={styles.contentWrapper}>
         <div className="container">

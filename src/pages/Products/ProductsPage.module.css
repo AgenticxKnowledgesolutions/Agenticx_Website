@@ -1,5 +1,5 @@
 .productsPage {
-  padding-top: 80px;
+  padding-top: 120px;
   background-color: #0A1628;
   color: #ffffff;
   position: relative;
@@ -201,6 +201,7 @@
   flex-direction: column;
   justify-content: space-between;
   transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  will-change: transform;
 }
 
 .featuredCard:hover {
@@ -350,6 +351,7 @@
   padding: 28px;
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  will-change: transform;
 }
 
 .upcomingCard:hover {
@@ -541,6 +543,7 @@
   border-radius: 16px;
   padding: 24px;
   backdrop-filter: blur(10px);
+  will-change: transform;
 }
 
 .categoryTitle {
