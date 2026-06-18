@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import emailjs from '@emailjs/browser';
 import { 
   type Lead, 
   type LeadNote, 
@@ -53,7 +54,7 @@ export default function LeadsAdmin() {
   const [newPhone, setNewPhone] = useState('');
   const [newCourse, setNewCourse] = useState('General Inquiry');
   const [newSource, setNewSource] = useState('Manual Entry');
-  const [newStatus, setNewStatus] = useState('Pending');
+  const [newStatus, setNewStatus] = useState('new');
   const [newPriority, setNewPriority] = useState('Cold');
   const [newNotes, setNewNotes] = useState('');
   const [newAssignedTo, setNewAssignedTo] = useState('');
@@ -157,6 +158,64 @@ export default function LeadsAdmin() {
     } catch (err) {
       console.error(err);
       toast('Failed to save lead updates', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleConvertLead = async (lead: Lead) => {
+    const showError = (msg: string) => {
+      toast(msg, 'error');
+    };
+
+    // STEP 1 — VALIDATE STATUS
+    if (lead.status !== "qualified") {
+      showError("Only Qualified leads can be converted");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // STEP 2 — GENERATE APPLICATION LINK
+      const generatedLink = `https://www.agenticx.co.in/apply?lead_id=${lead.id}&name=${encodeURIComponent(lead.name)}&email=${encodeURIComponent(lead.email)}&phone=${lead.phone || ''}&course=${encodeURIComponent(lead.interestedCourse || '')}`;
+
+      // STEP 3 — SEND EMAIL (MANDATORY)
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        {
+          to_name: lead.name,
+          to_email: lead.email,
+          application_link: generatedLink,
+        },
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+
+      // STEP 4 — UPDATE LEAD STATUS
+      const updated = await updateLead(
+        lead.id,
+        "converted",
+        lead.adminNotes,
+        lead.lastContactedAt,
+        lead.nextFollowupDate,
+        lead.followupNotes,
+        lead.source,
+        lead.priority,
+        lead.assignedTo
+      );
+
+      if (updated) {
+        // STEP 5 — SUCCESS FEEDBACK
+        toast("Application link sent to candidate successfully", "success");
+        setSelectedLead(null);
+        invalidateAll();
+        loadLeads(true);
+      } else {
+        toast("Failed to update lead status to converted", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      toast("Failed to send email or convert lead", "error");
     } finally {
       setSaving(false);
     }
@@ -360,6 +419,29 @@ export default function LeadsAdmin() {
     return '⚪ Cold';
   };
 
+  const getLeadStatusBadgeStyle = (status: string) => {
+    const s = (status || '').toLowerCase();
+    switch (s) {
+      case 'new':
+      case 'pending':
+        return { background: '#fef3c7', color: '#92400e' };
+      case 'contacted':
+        return { background: '#dbeafe', color: '#1e40af' };
+      case 'interested':
+        return { background: '#e0f2fe', color: '#0369a1' };
+      case 'not interested':
+      case 'rejected':
+        return { background: '#fee2e2', color: '#991b1b' };
+      case 'qualified':
+        return { background: '#dcfce7', color: '#166534' };
+      case 'converted':
+      case 'enrolled':
+        return { background: '#f3e8ff', color: '#6b21a8' };
+      default:
+        return { background: '#f1f5f9', color: '#475569' };
+    }
+  };
+
   const sourcesList = [
     "Website", "Contact Form", "Course Enquiry", "Free Demo", "Consultation",
     "WhatsApp", "Phone Call", "Office Visit", "Referral", "Workshop", "Seminar",
@@ -426,11 +508,12 @@ export default function LeadsAdmin() {
                 style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
               >
                 <option value="">Select Status...</option>
-                <option value="Pending">Pending</option>
-                <option value="Contacted">Contacted</option>
-                <option value="Demo Booked">Demo Booked</option>
-                <option value="Enrolled">Enrolled</option>
-                <option value="Rejected">Rejected</option>
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="interested">Interested</option>
+                <option value="not interested">Not Interested</option>
+                <option value="qualified">Qualified</option>
+                <option value="converted">Converted</option>
               </select>
             )}
 
@@ -586,8 +669,7 @@ export default function LeadsAdmin() {
                     </td>
                     <td style={{ padding: '16px 8px' }} onClick={() => handleRowClick(lead)}>
                       <span style={{ 
-                        background: lead.status === 'Pending' ? '#fef3c7' : lead.status === 'Contacted' ? '#dbeafe' : lead.status === 'Enrolled' ? '#dcfce7' : '#f1f5f9', 
-                        color: lead.status === 'Pending' ? '#92400e' : lead.status === 'Contacted' ? '#1e40af' : lead.status === 'Enrolled' ? '#166534' : '#475569', 
+                        ...getLeadStatusBadgeStyle(lead.status),
                         padding: '4px 8px', 
                         borderRadius: '4px', 
                         fontSize: '12px', 
@@ -691,10 +773,12 @@ export default function LeadsAdmin() {
                       onChange={e => setNewStatus(e.target.value)}
                       style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
                     >
-                      <option value="Pending">Pending</option>
-                      <option value="Contacted">Contacted</option>
-                      <option value="Demo Booked">Demo Booked</option>
-                      <option value="Enrolled">Enrolled</option>
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="interested">Interested</option>
+                      <option value="not interested">Not Interested</option>
+                      <option value="qualified">Qualified</option>
+                      <option value="converted">Converted</option>
                     </select>
                   </div>
 
@@ -1002,11 +1086,12 @@ export default function LeadsAdmin() {
                           onChange={e => setStatus(e.target.value)}
                           style={{ background: '#f8fafc', color: '#001943', border: '1px solid #cbd5e1', width: '100%', height: '40px', borderRadius: '6px', padding: '0 8px', outline: 'none' }}
                         >
-                          <option value="Pending">Pending</option>
-                          <option value="Contacted">Contacted</option>
-                          <option value="Demo Booked">Demo Booked</option>
-                          <option value="Enrolled">Enrolled</option>
-                          <option value="Rejected">Rejected</option>
+                          <option value="new">New</option>
+                          <option value="contacted">Contacted</option>
+                          <option value="interested">Interested</option>
+                          <option value="not interested">Not Interested</option>
+                          <option value="qualified">Qualified</option>
+                          <option value="converted">Converted</option>
                         </select>
                       </div>
 
@@ -1108,16 +1193,9 @@ export default function LeadsAdmin() {
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
                       type="button"
-                      onClick={() => {
-                        const params = new URLSearchParams();
-                        params.set("lead_id", selectedLead.id);
-                        if (selectedLead.name) params.set("name", selectedLead.name);
-                        if (selectedLead.email) params.set("email", selectedLead.email);
-                        if (selectedLead.phone) params.set("phone", selectedLead.phone);
-                        if (selectedLead.interestedCourse) params.set("course", selectedLead.interestedCourse);
-                        window.location.href = `/apply?${params.toString()}`;
-                      }}
-                      style={{ background: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+                      disabled={saving}
+                      onClick={() => handleConvertLead(selectedLead)}
+                      style={{ background: '#e0e7ff', color: '#4f46e5', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', opacity: saving ? 0.7 : 1 }}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>assignment_ind</span>
                       Convert to Candidate
