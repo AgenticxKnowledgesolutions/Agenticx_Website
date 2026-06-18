@@ -1610,3 +1610,217 @@ body.modal-open-lock {
   }
 }
 
+/* Candidate Detail View Redesign */
+.candidate-detail-view-container {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-sizing: border-box;
+}
+
+.candidate-detail-sticky-header {
+  position: sticky;
+  top: 0;
+  background: #0f172a;
+  z-index: 100;
+  padding: 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+}
+
+.candidate-detail-back-btn {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.candidate-detail-back-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  color: white;
+}
+
+.candidate-detail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Redesigned Primary UI Block Detail Card */
+.candidate-primary-detail-card {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+.candidate-card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 16px;
+}
+
+.candidate-caf-id {
+  font-size: 16px;
+  font-weight: 700;
+  color: #3b82f6;
+  font-family: monospace;
+}
+
+.candidate-card-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.candidate-card-meta-label {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.candidate-card-middle-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.candidate-card-name-large {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.candidate-card-contact-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+.candidate-contact-divider {
+  color: #475569;
+  padding: 0 4px;
+}
+
+.candidate-card-bottom-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 16px;
+}
+
+.candidate-card-course-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.candidate-course-label {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.candidate-course-value-highlight {
+  font-size: 15px;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.candidate-card-doc-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Responsive Overrides */
+@media (max-width: 640px) {
+  .candidate-detail-view-container {
+    padding: 0 8px;
+  }
+  .candidate-detail-sticky-header {
+    padding: 12px 8px;
+  }
+  .candidate-primary-detail-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  .candidate-card-top-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+  .candidate-card-badges {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+  }
+  .candidate-card-name-large {
+    font-size: 20px;
+  }
+  .candidate-card-contact-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .candidate-contact-divider {
+    display: none;
+  }
+  .candidate-card-bottom-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+  }
+  .candidate-card-course-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+  }
+  .candidate-card-doc-badge {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+  }
+}
+
+

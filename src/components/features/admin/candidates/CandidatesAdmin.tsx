@@ -33,7 +33,6 @@ export default function CandidatesAdmin() {
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [isFullView, setIsFullView] = useState(false);
 
   // Note/Status actions
   const [newNoteContent, setNewNoteContent] = useState("");
@@ -128,7 +127,6 @@ export default function CandidatesAdmin() {
     try {
       await softDeleteCandidate(selectedCandidate.id);
       setSelectedCandidateId(null);
-      setIsFullView(false);
       await loadCandidates();
     } catch (err) {
       console.error("Failed to soft delete candidate:", err);
@@ -144,7 +142,6 @@ export default function CandidatesAdmin() {
     try {
       await restoreCandidate(selectedCandidate.id);
       setSelectedCandidateId(null);
-      setIsFullView(false);
       await loadCandidates();
     } catch (err) {
       console.error("Failed to restore candidate:", err);
@@ -163,7 +160,6 @@ export default function CandidatesAdmin() {
     try {
       await hardDeleteCandidate(selectedCandidate.id);
       setSelectedCandidateId(null);
-      setIsFullView(false);
       await loadCandidates();
     } catch (err) {
       console.error("Failed to permanently delete candidate:", err);
@@ -252,7 +248,6 @@ export default function CandidatesAdmin() {
             onClick={() => {
               setActiveTab("list");
               setSelectedCandidateId(null);
-              setIsFullView(false);
             }}
             style={{
               ...styles.tabBtn,
@@ -265,7 +260,6 @@ export default function CandidatesAdmin() {
             onClick={() => {
               setActiveTab("import");
               setSelectedCandidateId(null);
-              setIsFullView(false);
             }}
             style={{
               ...styles.tabBtn,
@@ -278,7 +272,6 @@ export default function CandidatesAdmin() {
             onClick={() => {
               setActiveTab("import-history");
               setSelectedCandidateId(null);
-              setIsFullView(false);
             }}
             style={{
               ...styles.tabBtn,
@@ -291,7 +284,6 @@ export default function CandidatesAdmin() {
             onClick={() => {
               setActiveTab("trash");
               setSelectedCandidateId(null);
-              setIsFullView(false);
             }}
             style={{
               ...styles.tabBtn,
@@ -361,246 +353,274 @@ export default function CandidatesAdmin() {
 
       {activeTab === "import-history" && <CandidatesImportHistory />}
       {(activeTab === "list" || activeTab === "trash") && (
-        <div className={`candidate-main-layout ${selectedCandidateId ? "with-details" : ""} ${isFullView ? "full-detail-view" : ""}`}>
-          {/* Main List Section */}
-          <div className="list-section" style={{ display: isFullView ? "none" : "block", minWidth: 0 }}>
-            {/* Filters Bar */}
-            <div style={styles.filterBar}>
-              <input
-                type="text"
-                placeholder="Search name, email, phone or app number..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                style={styles.searchInput}
-              />
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setPage(1);
-                }}
-                style={styles.selectInput}
-              >
-                <option value="">All Statuses</option>
-                <option value="Submitted">Submitted</option>
-                <option value="Under Review">Under Review</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Enrolled">Enrolled</option>
-              </select>
-
-              <select
-                value={courseFilter}
-                onChange={(e) => {
-                  setCourseFilter(e.target.value);
-                  setPage(1);
-                }}
-                style={styles.selectInput}
-              >
-                <option value="">All Courses</option>
-                <option value="Artificial Intelligence & Machine Learning">AI & ML</option>
-                <option value="Full Stack Web Development">Full Stack Web Dev</option>
-                <option value="Data Science & Analytics">Data Science</option>
-                <option value="Software Engineering & DevOps">Software Eng</option>
-                <option value="Cyber Security">Cyber Security</option>
-              </select>
-
-              <div style={styles.dateRange}>
+        <div style={{ width: "100%" }}>
+          {!selectedCandidateId ? (
+            /* Main List Section */
+            <div className="list-section" style={{ width: "100%", minWidth: 0 }}>
+              {/* Filters Bar */}
+              <div style={styles.filterBar}>
                 <input
-                  type="date"
-                  value={startDate}
+                  type="text"
+                  placeholder="Search name, email, phone or app number..."
+                  value={search}
                   onChange={(e) => {
-                    setStartDate(e.target.value);
+                    setSearch(e.target.value);
                     setPage(1);
                   }}
-                  style={styles.dateInput}
+                  style={styles.searchInput}
                 />
-                <span style={{ color: "#94a3b8" }}>to</span>
-                <input
-                  type="date"
-                  value={endDate}
+                <select
+                  value={statusFilter}
                   onChange={(e) => {
-                    setEndDate(e.target.value);
+                    setStatusFilter(e.target.value);
                     setPage(1);
                   }}
-                  style={styles.dateInput}
-                />
-              </div>
-            </div>
+                  style={styles.selectInput}
+                >
+                  <option value="">All Statuses</option>
+                  <option value="Submitted">Submitted</option>
+                  <option value="Under Review">Under Review</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
+                  <option value="Enrolled">Enrolled</option>
+                </select>
 
-            {loading ? (
-              <div style={styles.loader}>Loading candidates list...</div>
-            ) : candidates.length === 0 ? (
-              <div style={styles.emptyState}>No candidate records found.</div>
-            ) : (
-              <>
-                {/* Desktop View Table */}
-                <div className="candidate-table-wrapper candidate-table-container">
-                  <table className="candidates-table">
-                    <thead>
-                      <tr>
-                        <th>App Number</th>
-                        <th>Full Name</th>
-                        <th>Course</th>
-                        <th>Status</th>
-                        <th>Documents</th>
-                        <th>Source</th>
-                        <th>Created</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {candidates.map((c) => (
-                        <tr
-                          key={c.id}
-                          onClick={() => setSelectedCandidateId(c.id)}
-                          className={selectedCandidateId === c.id ? "selected" : ""}
-                        >
-                          <td style={{ fontWeight: "600", color: "#3b82f6" }}>{c.applicationNumber}</td>
-                          <td>
-                            <div style={{ fontWeight: "500" }}>{c.fullName}</div>
-                            <div style={{ fontSize: "12px", color: "#64748b" }}>{c.email} • {c.phone}</div>
-                          </td>
-                          <td>{c.courseApplied}</td>
-                          <td>
-                            <span
-                              style={{
-                                ...styles.badgeStatus,
-                                ...getStatusBadgeStyle(c.applicationStatus),
-                              }}
-                            >
-                              {c.applicationStatus}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              style={{
-                                ...styles.badgeDoc,
-                                ...getDocBadgeStyle(c.documentStatus),
-                              }}
-                            >
-                              {c.documentStatus}
-                            </span>
-                          </td>
-                          <td>{c.candidateSource}</td>
-                          <td>{new Date(c.createdAt).toLocaleDateString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <select
+                  value={courseFilter}
+                  onChange={(e) => {
+                    setCourseFilter(e.target.value);
+                    setPage(1);
+                  }}
+                  style={styles.selectInput}
+                >
+                  <option value="">All Courses</option>
+                  <option value="Artificial Intelligence & Machine Learning">AI & ML</option>
+                  <option value="Full Stack Web Development">Full Stack Web Dev</option>
+                  <option value="Data Science & Analytics">Data Science</option>
+                  <option value="Software Engineering & DevOps">Software Eng</option>
+                  <option value="Cyber Security">Cyber Security</option>
+                </select>
+
+                <div style={styles.dateRange}>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      setPage(1);
+                    }}
+                    style={styles.dateInput}
+                  />
+                  <span style={{ color: "#94a3b8" }}>to</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      setPage(1);
+                    }}
+                    style={styles.dateInput}
+                  />
                 </div>
+              </div>
 
-                {/* Mobile Responsive List Cards */}
-                <div className="candidate-mobile-cards">
-                  {candidates.map((c) => (
-                    <div
-                      key={c.id}
-                      onClick={() => setSelectedCandidateId(c.id)}
+              {loading ? (
+                <div style={styles.loader}>Loading candidates list...</div>
+              ) : candidates.length === 0 ? (
+                <div style={styles.emptyState}>No candidate records found.</div>
+              ) : (
+                <>
+                  {/* Desktop View Table */}
+                  <div className="candidate-table-wrapper candidate-table-container">
+                    <table className="candidates-table">
+                      <thead>
+                        <tr>
+                          <th>App Number</th>
+                          <th>Full Name</th>
+                          <th>Course</th>
+                          <th>Status</th>
+                          <th>Documents</th>
+                          <th>Source</th>
+                          <th>Created</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {candidates.map((c) => (
+                          <tr
+                            key={c.id}
+                            onClick={() => setSelectedCandidateId(c.id)}
+                            className={selectedCandidateId === c.id ? "selected" : ""}
+                          >
+                            <td style={{ fontWeight: "600", color: "#3b82f6" }}>{c.applicationNumber}</td>
+                            <td>
+                              <div style={{ fontWeight: "500" }}>{c.fullName}</div>
+                              <div style={{ fontSize: "12px", color: "#64748b" }}>{c.email} • {c.phone}</div>
+                            </td>
+                            <td>{c.courseApplied}</td>
+                            <td>
+                              <span
+                                style={{
+                                  ...styles.badgeStatus,
+                                  ...getStatusBadgeStyle(c.applicationStatus),
+                                }}
+                              >
+                                {c.applicationStatus}
+                              </span>
+                            </td>
+                            <td>
+                              <span
+                                style={{
+                                  ...styles.badgeDoc,
+                                  ...getDocBadgeStyle(c.documentStatus),
+                                }}
+                              >
+                                {c.documentStatus}
+                              </span>
+                            </td>
+                            <td>{c.candidateSource}</td>
+                            <td>{new Date(c.createdAt).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Responsive List Cards */}
+                  <div className="candidate-mobile-cards">
+                    {candidates.map((c) => (
+                      <div
+                        key={c.id}
+                        onClick={() => setSelectedCandidateId(c.id)}
+                        style={{
+                          ...styles.mobileCard,
+                          borderColor: selectedCandidateId === c.id ? "#3b82f6" : "rgba(255, 255, 255, 0.08)",
+                        }}
+                      >
+                        <div style={styles.cardHeader}>
+                          <span style={styles.cardAppNum}>{c.applicationNumber}</span>
+                          <span
+                            style={{
+                              ...styles.badgeStatus,
+                              ...getStatusBadgeStyle(c.applicationStatus),
+                            }}
+                          >
+                            {c.applicationStatus}
+                          </span>
+                        </div>
+                        <div style={styles.cardName}>{c.fullName}</div>
+                        <div style={styles.cardInfo}>{c.email} | {c.phone}</div>
+                        <div style={styles.cardCourse}>{c.courseApplied}</div>
+                        <div style={styles.cardFooter}>
+                          <span
+                            style={{
+                              ...styles.badgeDoc,
+                              ...getDocBadgeStyle(c.documentStatus),
+                            }}
+                          >
+                            {c.documentStatus}
+                          </span>
+                          <span style={styles.cardDate}>
+                            {new Date(c.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  <div style={styles.pagination}>
+                    <button
+                      disabled={page === 1}
+                      onClick={() => setPage(page - 1)}
+                      style={styles.pageBtn}
+                    >
+                      Previous
+                    </button>
+                    <span style={styles.pageLabel}>
+                      Page {page} of {Math.ceil(total / limit) || 1} ({total} total)
+                    </span>
+                    <button
+                      disabled={page >= Math.ceil(total / limit)}
+                      onClick={() => setPage(page + 1)}
+                      style={styles.pageBtn}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            /* Redesigned Full-Page Candidate Detail View */
+            <div className="candidate-detail-view-container">
+              {/* Sticky Header with Back Button */}
+              <div className="candidate-detail-sticky-header">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCandidateId(null);
+                  }}
+                  className="candidate-detail-back-btn"
+                >
+                  ← Back to Candidates List
+                </button>
+                <h3 className="candidate-detail-title">Candidate Profile Details</h3>
+              </div>
+
+              {/* Summary Card - Primary UI Block */}
+              <div className="candidate-primary-detail-card">
+                {/* Top Row */}
+                <div className="candidate-card-top-row">
+                  <div className="candidate-caf-id">
+                    {selectedCandidate?.applicationNumber || "CAF-N/A"}
+                  </div>
+                  <div className="candidate-card-badges">
+                    <span
                       style={{
-                        ...styles.mobileCard,
-                        borderColor: selectedCandidateId === c.id ? "#3b82f6" : "rgba(255, 255, 255, 0.08)",
+                        ...styles.badgeStatus,
+                        ...getStatusBadgeStyle(selectedCandidate?.applicationStatus || ""),
                       }}
                     >
-                      <div style={styles.cardHeader}>
-                        <span style={styles.cardAppNum}>{c.applicationNumber}</span>
-                        <span
-                          style={{
-                            ...styles.badgeStatus,
-                            ...getStatusBadgeStyle(c.applicationStatus),
-                          }}
-                        >
-                          {c.applicationStatus}
-                        </span>
-                      </div>
-                      <div style={styles.cardName}>{c.fullName}</div>
-                      <div style={styles.cardInfo}>{c.email} | {c.phone}</div>
-                      <div style={styles.cardCourse}>{c.courseApplied}</div>
-                      <div style={styles.cardFooter}>
-                        <span
-                          style={{
-                            ...styles.badgeDoc,
-                            ...getDocBadgeStyle(c.documentStatus),
-                          }}
-                        >
-                          {c.documentStatus}
-                        </span>
-                        <span style={styles.cardDate}>
-                          {new Date(c.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                <div style={styles.pagination}>
-                  <button
-                    disabled={page === 1}
-                    onClick={() => setPage(page - 1)}
-                    style={styles.pageBtn}
-                  >
-                    Previous
-                  </button>
-                  <span style={styles.pageLabel}>
-                    Page {page} of {Math.ceil(total / limit) || 1} ({total} total)
-                  </span>
-                  <button
-                    disabled={page >= Math.ceil(total / limit)}
-                    onClick={() => setPage(page + 1)}
-                    style={styles.pageBtn}
-                  >
-                    Next
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Slide-out Detail Drawer (desktop splits screen, mobile covers) */}
-          {selectedCandidateId && (
-            <div className="candidate-detail-view">
-              <div className="candidate-detail-header">
-                <div>
-                  <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 700 }}>Candidate Details</h3>
-                  <div style={{ marginTop: "4px", fontSize: "14px", color: "#94a3b8" }}>
-                    Application Ref: <strong style={{ color: "#3b82f6" }}>{selectedCandidate?.applicationNumber}</strong>
+                      {selectedCandidate?.applicationStatus}
+                    </span>
+                    <span className="candidate-card-meta-label">
+                      Created: {selectedCandidate ? new Date(selectedCandidate.createdAt).toLocaleDateString() : ""}
+                    </span>
+                    <span className="candidate-card-meta-label">
+                      Source: {selectedCandidate?.candidateSource}
+                    </span>
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                  <button
-                    onClick={() => setIsFullView(!isFullView)}
-                    style={{
-                      background: "rgba(255, 255, 255, 0.05)",
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      color: "#3b82f6",
-                      fontSize: "13px",
-                      cursor: "pointer",
-                      fontWeight: "600",
-                      padding: "6px 12px",
-                      borderRadius: "8px",
-                      transition: "all 0.2s"
-                    }}
-                  >
-                    {isFullView ? "🪟 Split View" : "🖥️ Full Screen"}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedCandidateId(null);
-                      setIsFullView(false);
-                    }}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      color: "#ef4444",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      fontWeight: "600",
-                    }}
-                  >
-                    ✕ Close
-                  </button>
+
+                {/* Middle Row */}
+                <div className="candidate-card-middle-section">
+                  <h2 className="candidate-card-name-large">{selectedCandidate?.fullName}</h2>
+                  <div className="candidate-card-contact-info">
+                    <span>📧 {selectedCandidate?.email}</span>
+                    <span className="candidate-contact-divider">•</span>
+                    <span>📞 {selectedCandidate?.phone}</span>
+                  </div>
+                </div>
+
+                {/* Bottom Row */}
+                <div className="candidate-card-bottom-section">
+                  <div className="candidate-card-course-container">
+                    <span className="candidate-course-label">Course Applied For:</span>
+                    <span className="candidate-course-value-highlight">
+                      {selectedCandidate?.courseApplied}
+                    </span>
+                  </div>
+                  <div className="candidate-card-doc-badge">
+                    <span style={{ fontSize: "13px", color: "#cbd5e1" }}>Documents Status:</span>
+                    <span
+                      style={{
+                        ...styles.badgeDoc,
+                        ...getDocBadgeStyle(selectedCandidate?.documentStatus || ""),
+                      }}
+                    >
+                      {selectedCandidate?.documentStatus}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -1016,8 +1036,11 @@ const getStatusBadgeStyle = (status: string): React.CSSProperties => {
 const getDocBadgeStyle = (status: string): React.CSSProperties => {
   switch (status) {
     case "Complete":
+    case "Completed":
       return { backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981" };
     case "Partial":
+    case "Missing":
+    case "Missing Docs":
       return { backgroundColor: "rgba(245, 158, 11, 0.15)", color: "#f59e0b" };
     default:
       return { backgroundColor: "rgba(239, 68, 68, 0.15)", color: "#ef4444" };
