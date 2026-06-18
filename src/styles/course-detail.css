@@ -209,7 +209,26 @@
   margin-bottom: 24px;
   overflow-x: auto;
   white-space: nowrap;
-  padding-bottom: 2px;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cd-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.cd-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cd-tabs::-webkit-scrollbar-thumb {
+  background: rgba(197, 198, 208, 0.6);
+  border-radius: 99px;
+}
+
+.cd-tabs::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 82, 254, 0.3);
 }
 
 .cd-tab-button {
@@ -222,6 +241,7 @@
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .cd-tab-button:hover {
