@@ -6,10 +6,8 @@ import logoImg from "@/assets/images/logo/AgenticX-removebg-preview.png";
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const isStickyPage = ["/courses", "/about", "/services", "/products"].includes(location.pathname);
-
   return (
-    <header className={isStickyPage ? "header header-sticky" : "header"}>
+    <header className="header">
       <div className="container header-inner">
 
         {/* Logo */}

@@ -1,7 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
-import AiAssistantFab from '../ui/AiAssistantFab'
+import AiAssistant from '../ai-assistant/AiAssistant'
 import './RootLayout.css'
 
 export default function RootLayout() {
@@ -18,7 +18,7 @@ export default function RootLayout() {
       </main>
 
       <Footer />
-      <AiAssistantFab />
+      <AiAssistant />
     </div>
   )
 }

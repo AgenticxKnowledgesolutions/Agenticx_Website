@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { getCourseBySlug, type Course } from '@/services/courseService'
 import { createLead } from '@/services/leadService'
@@ -29,6 +29,8 @@ export default function CourseDetail() {
     setPhoneError('')
   }
 
+  const tabsRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     window.scrollTo(0, 0)
     
@@ -43,6 +45,23 @@ export default function CourseDetail() {
     
     fetchCourse()
   }, [slug])
+
+  // Translate vertical wheel scroll to horizontal scroll on tabs container
+  useEffect(() => {
+    const el = tabsRef.current
+    if (el) {
+      const onWheel = (e: WheelEvent) => {
+        if (e.deltaY === 0) return
+        e.preventDefault()
+        el.scrollTo({
+          left: el.scrollLeft + e.deltaY,
+          behavior: 'auto'
+        })
+      }
+      el.addEventListener('wheel', onWheel, { passive: false })
+      return () => el.removeEventListener('wheel', onWheel)
+    }
+  }, [course, loading])
 
   if (loading) {
     return <CourseDetailSkeleton />
@@ -179,7 +198,7 @@ export default function CourseDetail() {
             </div>
 
             {/* Tabs */}
-            <div className="cd-tabs">
+            <div className="cd-tabs" ref={tabsRef}>
               {course.curriculum.map((tab, idx) => (
                 <button
                   key={idx}
