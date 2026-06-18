@@ -7,6 +7,9 @@ import {
   getNotifications,
   markNotificationsRead,
   uploadCandidateDocument,
+  softDeleteCandidate,
+  restoreCandidate,
+  hardDeleteCandidate,
 } from "../../../../services/candidateService";
 import type { Candidate, AdminNotification } from "../../../../services/candidateService";
 import CandidatesImport from "./CandidatesImport";
@@ -30,6 +33,7 @@ export default function CandidatesAdmin() {
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [isFullView, setIsFullView] = useState(false);
 
   // Note/Status actions
   const [newNoteContent, setNewNoteContent] = useState("");
@@ -70,7 +74,7 @@ export default function CandidatesAdmin() {
   };
 
   // Import tabs
-  const [activeTab, setActiveTab] = useState<"list" | "import" | "import-history">("list");
+  const [activeTab, setActiveTab] = useState<"list" | "import" | "import-history" | "trash">("list");
 
   // Notifications
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
@@ -89,6 +93,7 @@ export default function CandidatesAdmin() {
         endDate,
         skip,
         limit,
+        isDeleted: activeTab === "trash",
       });
       setCandidates(res.records);
       setTotal(res.total);
@@ -113,6 +118,61 @@ export default function CandidatesAdmin() {
     }
   };
 
+  // Trash actions
+  const handleSoftDelete = async () => {
+    if (!selectedCandidate) return;
+    if (!window.confirm("Are you sure you want to move this candidate application to trash?")) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await softDeleteCandidate(selectedCandidate.id);
+      setSelectedCandidateId(null);
+      setIsFullView(false);
+      await loadCandidates();
+    } catch (err) {
+      console.error("Failed to soft delete candidate:", err);
+      alert("Failed to move candidate to trash.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!selectedCandidate) return;
+    setActionLoading(true);
+    try {
+      await restoreCandidate(selectedCandidate.id);
+      setSelectedCandidateId(null);
+      setIsFullView(false);
+      await loadCandidates();
+    } catch (err) {
+      console.error("Failed to restore candidate:", err);
+      alert("Failed to restore candidate.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!selectedCandidate) return;
+    if (!window.confirm("WARNING: Are you sure you want to PERMANENTLY delete this candidate application? This action CANNOT be undone.")) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await hardDeleteCandidate(selectedCandidate.id);
+      setSelectedCandidateId(null);
+      setIsFullView(false);
+      await loadCandidates();
+    } catch (err) {
+      console.error("Failed to permanently delete candidate:", err);
+      alert("Failed to delete candidate permanently.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Load Notifications
   const loadNotifications = async () => {
     try {
@@ -122,9 +182,10 @@ export default function CandidatesAdmin() {
       console.error("Failed to load notifications:", err);
     }
   };
+
   useEffect(() => {
     loadCandidates();
-  }, [search, statusFilter, courseFilter, startDate, endDate, page]);
+  }, [search, statusFilter, courseFilter, startDate, endDate, page, activeTab]);
 
   useEffect(() => {
     if (selectedCandidateId) {
@@ -188,7 +249,11 @@ export default function CandidatesAdmin() {
       <div style={styles.topHeader}>
         <div style={styles.tabButtons}>
           <button
-            onClick={() => setActiveTab("list")}
+            onClick={() => {
+              setActiveTab("list");
+              setSelectedCandidateId(null);
+              setIsFullView(false);
+            }}
             style={{
               ...styles.tabBtn,
               ...(activeTab === "list" ? styles.activeTabBtn : {}),
@@ -197,7 +262,11 @@ export default function CandidatesAdmin() {
             Candidates List
           </button>
           <button
-            onClick={() => setActiveTab("import")}
+            onClick={() => {
+              setActiveTab("import");
+              setSelectedCandidateId(null);
+              setIsFullView(false);
+            }}
             style={{
               ...styles.tabBtn,
               ...(activeTab === "import" ? styles.activeTabBtn : {}),
@@ -206,13 +275,30 @@ export default function CandidatesAdmin() {
             Excel Batch Import
           </button>
           <button
-            onClick={() => setActiveTab("import-history")}
+            onClick={() => {
+              setActiveTab("import-history");
+              setSelectedCandidateId(null);
+              setIsFullView(false);
+            }}
             style={{
               ...styles.tabBtn,
               ...(activeTab === "import-history" ? styles.activeTabBtn : {}),
             }}
           >
             Import History
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("trash");
+              setSelectedCandidateId(null);
+              setIsFullView(false);
+            }}
+            style={{
+              ...styles.tabBtn,
+              ...(activeTab === "trash" ? styles.activeTabBtn : {}),
+            }}
+          >
+            🗑️ Trash Bin
           </button>
         </div>
 
@@ -274,11 +360,10 @@ export default function CandidatesAdmin() {
       )}
 
       {activeTab === "import-history" && <CandidatesImportHistory />}
-
-      {activeTab === "list" && (
-        <div className={`candidate-main-layout ${selectedCandidateId ? "with-details" : ""}`}>
+      {(activeTab === "list" || activeTab === "trash") && (
+        <div className={`candidate-main-layout ${selectedCandidateId ? "with-details" : ""} ${isFullView ? "full-detail-view" : ""}`}>
           {/* Main List Section */}
-          <div className="list-section" style={{ minWidth: 0 }}>
+          <div className="list-section" style={{ display: isFullView ? "none" : "block", minWidth: 0 }}>
             {/* Filters Bar */}
             <div style={styles.filterBar}>
               <input
@@ -483,19 +568,40 @@ export default function CandidatesAdmin() {
                     Application Ref: <strong style={{ color: "#3b82f6" }}>{selectedCandidate?.applicationNumber}</strong>
                   </div>
                 </div>
-                <button
-                  onClick={() => setSelectedCandidateId(null)}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    color: "#ef4444",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                  }}
-                >
-                  ✕ Close
-                </button>
+                <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                  <button
+                    onClick={() => setIsFullView(!isFullView)}
+                    style={{
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "#3b82f6",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    {isFullView ? "🪟 Split View" : "🖥️ Full Screen"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedCandidateId(null);
+                      setIsFullView(false);
+                    }}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "#ef4444",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                    }}
+                  >
+                    ✕ Close
+                  </button>
+                </div>
               </div>
 
               {detailLoading ? (
@@ -690,14 +796,16 @@ export default function CandidatesAdmin() {
                                     </a>
                                   </>
                                 )}
-                                <button
-                                  type="button"
-                                  className="doc-upload-label"
-                                  onClick={() => triggerFileUpload(doc.key)}
-                                  disabled={actionLoading}
-                                >
-                                  {hasDoc ? "🔄 Replace" : "📤 Upload"}
-                                </button>
+                                {activeTab !== "trash" && (
+                                  <button
+                                    type="button"
+                                    className="doc-upload-label"
+                                    onClick={() => triggerFileUpload(doc.key)}
+                                    disabled={actionLoading}
+                                  >
+                                    {hasDoc ? "🔄 Replace" : "📤 Upload"}
+                                  </button>
+                                )}
                               </div>
                             </div>
                           );
@@ -712,51 +820,111 @@ export default function CandidatesAdmin() {
                       />
                     </div>
 
-                    {/* Counselor Status Update Form */}
-                    <div className="info-card-section">
-                      <h4>Update Admission Status</h4>
-                      <form onSubmit={handleStatusChange} style={styles.inlineForm}>
+                    {/* Counselor Status Update Form or Trash Actions */}
+                    {activeTab === "trash" ? (
+                      <div className="info-card-section" style={{ border: "1px solid rgba(239, 68, 68, 0.3)" }}>
+                        <h4 style={{ color: "#ef4444", marginBottom: "15px" }}>Trash Actions</h4>
                         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                          <select
-                            value={statusUpdateVal}
-                            onChange={(e) => setStatusUpdateVal(e.target.value)}
-                            style={{
-                              ...styles.selectInput,
-                              width: "100%",
-                            }}
-                          >
-                            <option value="Submitted">Submitted</option>
-                            <option value="Under Review">Under Review</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Rejected">Rejected</option>
-                            <option value="Enrolled">Enrolled</option>
-                          </select>
-                          <input
-                            type="text"
-                            placeholder="Add counselor remarks..."
-                            value={statusRemarks}
-                            onChange={(e) => setStatusRemarks(e.target.value)}
-                            style={{
-                              ...styles.remarksInput,
-                              width: "100%",
-                              boxSizing: "border-box",
-                            }}
-                          />
                           <button
-                            type="submit"
+                            type="button"
+                            onClick={handleRestore}
                             disabled={actionLoading}
                             style={{
-                              ...styles.actionBtn,
-                              width: "100%",
+                              background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                              border: "none",
+                              color: "white",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              cursor: "pointer",
+                              fontWeight: "600",
+                              transition: "all 0.2s"
                             }}
                           >
-                            {actionLoading ? "Updating..." : "Update Status"}
+                            {actionLoading ? "Restoring..." : "✨ Restore Candidate"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handlePermanentDelete}
+                            disabled={actionLoading}
+                            style={{
+                              background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                              border: "none",
+                              color: "white",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              cursor: "pointer",
+                              fontWeight: "600",
+                              transition: "all 0.2s"
+                            }}
+                          >
+                            {actionLoading ? "Deleting..." : "🚨 Permanent Delete"}
                           </button>
                         </div>
-                      </form>
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="info-card-section">
+                        <h4>Update Admission Status</h4>
+                        <form onSubmit={handleStatusChange} style={styles.inlineForm}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                            <select
+                              value={statusUpdateVal}
+                              onChange={(e) => setStatusUpdateVal(e.target.value)}
+                              style={{
+                                ...styles.selectInput,
+                                width: "100%",
+                              }}
+                            >
+                              <option value="Submitted">Submitted</option>
+                              <option value="Under Review">Under Review</option>
+                              <option value="Approved">Approved</option>
+                              <option value="Rejected">Rejected</option>
+                              <option value="Enrolled">Enrolled</option>
+                            </select>
+                            <input
+                              type="text"
+                              placeholder="Add counselor remarks..."
+                              value={statusRemarks}
+                              onChange={(e) => setStatusRemarks(e.target.value)}
+                              style={{
+                                ...styles.remarksInput,
+                                width: "100%",
+                                boxSizing: "border-box",
+                              }}
+                            />
+                            <button
+                              type="submit"
+                              disabled={actionLoading}
+                              style={{
+                                ...styles.actionBtn,
+                                width: "100%",
+                              }}
+                            >
+                              {actionLoading ? "Updating..." : "Update Status"}
+                            </button>
+                          </div>
+                        </form>
+                        <button
+                          type="button"
+                          onClick={handleSoftDelete}
+                          disabled={actionLoading}
+                          style={{
+                            background: "rgba(239, 68, 68, 0.08)",
+                            border: "1px solid rgba(239, 68, 68, 0.2)",
+                            color: "#ef4444",
+                            padding: "10px",
+                            borderRadius: "8px",
+                            cursor: "pointer",
+                            fontWeight: "600",
+                            width: "100%",
+                            marginTop: "12px",
+                            transition: "all 0.2s"
+                          }}
+                        >
+                          {actionLoading ? "Moving to Trash..." : "🗑️ Move to Trash"}
+                        </button>
+                      </div>
+                    )}
 
-                    {/* Timeline Events */}
                     <div className="info-card-section">
                       <h4>Timeline Events</h4>
                       <div className="candidate-timeline">
@@ -775,30 +943,32 @@ export default function CandidatesAdmin() {
                     {/* Counselor Notes */}
                     <div className="info-card-section">
                       <h4>Counselor Remarks & Notes</h4>
-                      <form onSubmit={handleAddNote} style={styles.noteForm}>
-                        <textarea
-                          required
-                          placeholder="Add counselor remark/note..."
-                          value={newNoteContent}
-                          onChange={(e) => setNewNoteContent(e.target.value)}
-                          rows={2}
-                          style={{
-                            ...styles.textareaInput,
-                            width: "100%",
-                            boxSizing: "border-box",
-                          }}
-                        />
-                        <button
-                          type="submit"
-                          disabled={actionLoading}
-                          style={{
-                            ...styles.actionBtn,
-                            width: "100%",
-                          }}
-                        >
-                          {actionLoading ? "Adding..." : "Add Note"}
-                        </button>
-                      </form>
+                      {activeTab !== "trash" && (
+                        <form onSubmit={handleAddNote} style={styles.noteForm}>
+                          <textarea
+                            required
+                            placeholder="Add counselor remark/note..."
+                            value={newNoteContent}
+                            onChange={(e) => setNewNoteContent(e.target.value)}
+                            rows={2}
+                            style={{
+                              ...styles.textareaInput,
+                              width: "100%",
+                              boxSizing: "border-box",
+                            }}
+                          />
+                          <button
+                            type="submit"
+                            disabled={actionLoading}
+                            style={{
+                              ...styles.actionBtn,
+                              width: "100%",
+                            }}
+                          >
+                            {actionLoading ? "Adding..." : "Add Note"}
+                          </button>
+                        </form>
+                      )}
 
                       <div style={styles.notesList}>
                         {selectedCandidate.notes?.map((n) => (

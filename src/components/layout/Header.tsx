@@ -1,11 +1,10 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import "./Header.css";
 import logoImg from "@/assets/images/logo/AgenticX-removebg-preview.png";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
-  const location = useLocation();
   return (
     <header className="header">
       <div className="container header-inner">

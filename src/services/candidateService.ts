@@ -183,6 +183,7 @@ export const listCandidates = async (params: {
   endDate?: string;
   skip?: number;
   limit?: number;
+  isDeleted?: boolean;
 }): Promise<{ total: number; records: Candidate[] }> => {
   const queryParams: any = {};
   if (params.status) queryParams.status = params.status;
@@ -193,6 +194,7 @@ export const listCandidates = async (params: {
   if (params.endDate) queryParams.end_date = params.endDate;
   if (params.skip !== undefined) queryParams.skip = params.skip;
   if (params.limit !== undefined) queryParams.limit = params.limit;
+  if (params.isDeleted !== undefined) queryParams.is_deleted = params.isDeleted;
 
   const res = await api.get("/candidates/", { params: queryParams });
   return {
@@ -291,5 +293,20 @@ export const getNotifications = async (): Promise<AdminNotification[]> => {
 
 export const markNotificationsRead = async (): Promise<any> => {
   const res = await api.put("/candidates/notifications/read");
+  return res.data;
+};
+
+export const softDeleteCandidate = async (id: string): Promise<any> => {
+  const res = await api.delete(`/candidates/${id}`);
+  return res.data;
+};
+
+export const restoreCandidate = async (id: string): Promise<any> => {
+  const res = await api.post(`/candidates/${id}/restore`);
+  return res.data;
+};
+
+export const hardDeleteCandidate = async (id: string): Promise<any> => {
+  const res = await api.delete(`/candidates/${id}/permanent`);
   return res.data;
 };

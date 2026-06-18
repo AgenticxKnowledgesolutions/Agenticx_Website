@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { applyCandidate, uploadCandidateDocument } from "../services/candidateService";
+import { getLeadById } from "../services/leadService";
 
 export default function CandidateApply() {
   const [searchParams] = useSearchParams();
@@ -45,18 +46,36 @@ export default function CandidateApply() {
   const [appNumber, setAppNumber] = useState("");
   const [uploadingFilesStatus, setUploadingFilesStatus] = useState("");
 
-  // Pre-fill query parameters (Name, Email, Phone, Course)
+  // Pre-fill query parameters or fetch lead details by ID
   useEffect(() => {
-    const qName = searchParams.get("name");
-    const qEmail = searchParams.get("email");
-    const qPhone = searchParams.get("phone");
-    const qCourse = searchParams.get("course");
-    
-    if (qName) setFullName(qName);
-    if (qEmail) setEmail(qEmail);
-    if (qPhone) setPhone(qPhone);
-    if (qCourse) setCourseApplied(qCourse);
-  }, [searchParams]);
+    const fetchLeadAndPrefill = async () => {
+      const qName = searchParams.get("name");
+      const qEmail = searchParams.get("email");
+      const qPhone = searchParams.get("phone");
+      const qCourse = searchParams.get("course");
+      
+      if (qName) setFullName(qName);
+      if (qEmail) setEmail(qEmail);
+      if (qPhone) setPhone(qPhone);
+      if (qCourse) setCourseApplied(qCourse);
+
+      if (leadId) {
+        try {
+          const lead = await getLeadById(leadId);
+          if (lead) {
+            if (lead.name) setFullName(lead.name);
+            if (lead.email) setEmail(lead.email);
+            if (lead.phone) setPhone(lead.phone);
+            if (lead.interestedCourse) setCourseApplied(lead.interestedCourse);
+          }
+        } catch (err) {
+          console.error("Failed to prefill lead info:", err);
+        }
+      }
+    };
+
+    fetchLeadAndPrefill();
+  }, [searchParams, leadId]);
 
   const handleFileChange = (type: keyof typeof files, file: File | null) => {
     if (!file) return;
