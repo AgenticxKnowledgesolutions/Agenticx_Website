@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { applyCandidate, uploadCandidateDocument, validateConversionToken } from "../services/candidateService";
+import { getCourses, type Course } from "../services/courseService";
 
 export default function CandidateApply() {
   const [searchParams] = useSearchParams();
@@ -33,6 +34,10 @@ export default function CandidateApply() {
   const [tokenValidating, setTokenValidating] = useState(false);
   const [tokenError, setTokenError] = useState("");
 
+  // Live courses from backend
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
+
   // File states
   const [files, setFiles] = useState<{
     cv?: File;
@@ -51,11 +56,20 @@ export default function CandidateApply() {
   // On mount: if token param is present, validate it and prefill form from backend
   useEffect(() => {
     const initForm = async () => {
+      // Fetch live courses in parallel with token validation
+      const coursesPromise = getCourses().then((data) => {
+        setCourses(data.filter(c => !c.isDeleted));
+        setCoursesLoading(false);
+      }).catch(() => setCoursesLoading(false));
+
       if (tokenParam) {
         // Token-based flow: validate token and get lead details securely from backend
         setTokenValidating(true);
         try {
-          const details = await validateConversionToken(tokenParam);
+          const [details] = await Promise.all([
+            validateConversionToken(tokenParam),
+            coursesPromise,
+          ]);
           setConversionToken(tokenParam);
           if (details.name) setFullName(details.name);
           if (details.email) setEmail(details.email);
@@ -78,6 +92,7 @@ export default function CandidateApply() {
         if (qEmail) setEmail(qEmail);
         if (qPhone) setPhone(qPhone);
         if (qCourse) setCourseApplied(qCourse);
+        await coursesPromise;
       }
     };
 
@@ -388,13 +403,16 @@ export default function CandidateApply() {
                     value={courseApplied}
                     onChange={(e) => setCourseApplied(e.target.value)}
                     style={styles.select}
+                    disabled={coursesLoading}
                   >
-                    <option value="">Select a Course</option>
-                    <option value="Artificial Intelligence & Machine Learning">AI & Machine Learning</option>
-                    <option value="Full Stack Web Development">Full Stack Web Development</option>
-                    <option value="Data Science & Analytics">Data Science & Analytics</option>
-                    <option value="Software Engineering & DevOps">Software Engineering & DevOps</option>
-                    <option value="Cyber Security">Cyber Security</option>
+                    <option value="">
+                      {coursesLoading ? "Loading courses…" : "Select a Course"}
+                    </option>
+                    {courses.map((course) => (
+                      <option key={course.id} value={course.title}>
+                        {course.title}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div style={styles.formGroup}>
