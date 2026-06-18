@@ -6,7 +6,7 @@ import './RootLayout.css'
 
 export default function RootLayout() {
   const location = useLocation();
-  const isStickyPage = ["/courses", "/about", "/services", "/products", "/careers"].includes(location.pathname);
+  const isStickyPage = ["/courses", "/about", "/services", "/products"].includes(location.pathname);
 
   return (
     <div className="root-layout">

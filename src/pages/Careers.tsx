@@ -161,9 +161,12 @@ export default function Careers() {
         </div>
       ) : (
         /* Jobs List */
-        <div className="jobs-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-full">
+        <div className={jobs.length === 1
+          ? "jobs-grid flex justify-center w-full"
+          : "jobs-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-full"
+        }>
           {jobs.map((job) => (
-            <div key={job.id} className="job-card w-full max-w-full">
+            <div key={job.id} className={`job-card w-full ${jobs.length === 1 ? 'max-w-md' : 'max-w-full'}`}>
               <div>
                 <h3 className="job-card-title">{job.title}</h3>
                 <p className="job-card-description">{job.description}</p>
