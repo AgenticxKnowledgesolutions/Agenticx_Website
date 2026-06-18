@@ -124,7 +124,7 @@ export default function Careers() {
   };
 
   return (
-    <div className="careers-container">
+    <div className="careers-container pt-20 md:pt-24 max-w-7xl mx-auto px-4 w-full">
       {/* Hero Header */}
       <div className="careers-hero">
         <h1 className="careers-title">Careers at AgenticX</h1>
@@ -161,9 +161,9 @@ export default function Careers() {
         </div>
       ) : (
         /* Jobs List */
-        <div className="jobs-grid">
+        <div className="jobs-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-full">
           {jobs.map((job) => (
-            <div key={job.id} className="job-card">
+            <div key={job.id} className="job-card w-full max-w-full">
               <div>
                 <h3 className="job-card-title">{job.title}</h3>
                 <p className="job-card-description">{job.description}</p>

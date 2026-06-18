@@ -5,10 +5,11 @@
   color: #191c1e;
   font-family: "Space Grotesk", sans-serif;
   min-height: 100vh;
-  padding: 80px 24px;
+  padding-bottom: 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .careers-hero {
@@ -65,12 +66,8 @@
 
 /* Job Cards Grid */
 .jobs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 32px;
-  width: 100%;
-  max-width: 1100px;
   margin-top: 20px;
+  box-sizing: border-box;
 }
 
 .job-card {
@@ -276,16 +273,12 @@
   .careers-title {
     font-size: 2.25rem;
   }
-  .jobs-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
   .modal-content {
     padding: 24px;
     margin: 16px;
   }
   .careers-container {
-    padding: 60px 16px;
+    padding-bottom: 60px;
   }
 }
 
