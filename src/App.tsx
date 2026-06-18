@@ -17,6 +17,7 @@ const About = lazy(() => import('./pages/About'))
 const Contact = lazy(() => import('./pages/contact/Contact'))
 const CurriculumPage = lazy(() => import('./pages/CurriculumPage'))
 const Products = lazy(() => import('./pages/Products/ProductsPage'))
+const Careers = lazy(() => import('./pages/Careers'))
 
 // Lazy Admin Imports
 const Login = lazy(() => import('./components/features/admin/Login'))
@@ -36,6 +37,10 @@ const TrashAdmin = lazy(() => import('./components/features/admin/trash/TrashAdm
 const CompanySettingsAdmin = lazy(() => import('./components/features/admin/settings/CompanySettingsAdmin'))
 const CandidateApply = lazy(() => import('./pages/CandidateApply'))
 const CandidatesAdmin = lazy(() => import('./components/features/admin/candidates/CandidatesAdmin'))
+const JobList = lazy(() => import('./components/features/admin/jobs/JobList'))
+const JobAdd = lazy(() => import('./components/features/admin/jobs/JobAdd'))
+const JobEdit = lazy(() => import('./components/features/admin/jobs/JobEdit'))
+const ApplicationsAdmin = lazy(() => import('./components/features/admin/jobs/ApplicationsAdmin'))
 
 function App() {
   const fetchSettings = useSettingsStore(state => state.fetchSettings)
@@ -101,6 +106,7 @@ function App() {
             <Route path="apply" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><CandidateApply /></Suspense></ErrorBoundary>} />
             <Route path="curriculum" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><CurriculumPage /></Suspense></ErrorBoundary>} />
             <Route path="products" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><Products /></Suspense></ErrorBoundary>} />
+            <Route path="careers" element={<ErrorBoundary><Suspense fallback={<PageSkeleton />}><Careers /></Suspense></ErrorBoundary>} />
           </Route>
 
           {/* Admin Login */}
@@ -124,6 +130,12 @@ function App() {
               <Route path="candidates" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CandidatesAdmin /></Suspense></ErrorBoundary>} />
               <Route path="trash" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><TrashAdmin /></Suspense></ErrorBoundary>} />
               <Route path="settings" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CompanySettingsAdmin /></Suspense></ErrorBoundary>} />
+
+              {/* Jobs Admin routes */}
+              <Route path="jobs" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><JobList /></Suspense></ErrorBoundary>} />
+              <Route path="jobs/add" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><JobAdd /></Suspense></ErrorBoundary>} />
+              <Route path="jobs/edit/:id" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><JobEdit /></Suspense></ErrorBoundary>} />
+              <Route path="jobs/applications" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ApplicationsAdmin /></Suspense></ErrorBoundary>} />
             </Route>
           </Route>
         </Routes>

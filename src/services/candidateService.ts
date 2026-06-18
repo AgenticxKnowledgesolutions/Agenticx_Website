@@ -151,7 +151,7 @@ export interface ConversionTokenDetails {
   email: string;
   phone: string;
   course: string;
-  lead_id: string;
+  lead_id?: string;
 }
 
 export const applyCandidate = async (

@@ -11,6 +11,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isActivitiesOpen, setIsActivitiesOpen] = useState(false);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
+  const [isJobsOpen, setIsJobsOpen] = useState(false);
   const navigate = useNavigate();
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
@@ -73,6 +74,43 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onMouseEnter={() => import('@/components/features/admin/courses/CourseAdd')}
               >
                 Add Course
+              </NavLink>
+            </div>
+          </div>
+
+          {/* Jobs Collapsible Group */}
+          <div className="admin-nav-group">
+            <button className="admin-nav-link dropdown-toggle" onClick={() => setIsJobsOpen(!isJobsOpen)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined">work</span> Jobs
+              </div>
+              <span className={`material-symbols-outlined chevron ${isJobsOpen ? 'rotated' : ''}`}>expand_more</span>
+            </button>
+            <div className={`admin-submenu ${isJobsOpen ? 'open' : ''}`}>
+              <NavLink 
+                to="/admin/jobs" 
+                onClick={onClose} 
+                end 
+                className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/jobs/JobList')}
+              >
+                View Jobs
+              </NavLink>
+              <NavLink 
+                to="/admin/jobs/add" 
+                onClick={onClose} 
+                className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/jobs/JobAdd')}
+              >
+                Add Job
+              </NavLink>
+              <NavLink 
+                to="/admin/jobs/applications" 
+                onClick={onClose} 
+                className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/jobs/ApplicationsAdmin')}
+              >
+                View Applications
               </NavLink>
             </div>
           </div>

@@ -40,6 +40,9 @@ export default function Footer() {
             <Link to="/about" className="footer-link">
               About
             </Link>
+            <Link to="/careers" className="footer-link">
+              Careers
+            </Link>
             <Link to="/admin/login" className="footer-link">
               Admin Login
             </Link>
