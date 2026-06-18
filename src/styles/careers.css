@@ -66,8 +66,18 @@
 
 /* Job Cards Grid */
 .jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  width: 100%;
   margin-top: 20px;
   box-sizing: border-box;
+}
+
+/* If only one job exists, center it */
+.jobs-grid.single-job {
+  display: flex;
+  justify-content: center;
 }
 
 .job-card {
@@ -80,6 +90,13 @@
   justify-content: space-between;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.01);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.jobs-grid.single-job .job-card {
+  max-width: 450px;
 }
 
 .job-card:hover {

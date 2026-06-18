@@ -124,187 +124,186 @@ export default function Careers() {
   };
 
   return (
-    <div className="careers-container pt-20 md:pt-24 max-w-7xl mx-auto px-4 w-full">
-      {/* Hero Header */}
-      <div className="careers-hero">
-        <h1 className="careers-title">Careers at AgenticX</h1>
-        <p className="careers-subtitle">
-          Help us build the next generation of AI-native platforms, autonomous workflows, and intelligent interfaces.
-        </p>
-      </div>
-
-      {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
-          <div className="loading-spinner" style={{
-            width: "40px",
-            height: "40px",
-            border: "3px solid rgba(0,0,0,0.1)",
-            borderTop: "3px solid #000000",
-            borderRadius: "50%",
-            animation: "spin 1s linear infinite"
-          }}></div>
-          <style>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}</style>
-        </div>
-      ) : jobs.length === 0 ? (
-        /* Empty State: NO jobs. Do NOT show any form */
-        <div className="careers-empty-state">
-          <span className="careers-empty-icon">💼</span>
-          <h2 className="careers-empty-title">No Open Positions Currently</h2>
-          <p className="careers-empty-text">
-            We currently don’t have any active openings. Please check back later.
+    <div className="careers-container pt-20 md:pt-24 w-full">
+      <div className="max-w-7xl mx-auto px-4 w-full flex flex-col items-center">
+        {/* Hero Header */}
+        <div className="careers-hero">
+          <h1 className="careers-title">Careers at AgenticX</h1>
+          <p className="careers-subtitle">
+            Help us build the next generation of AI-native platforms, autonomous workflows, and intelligent interfaces.
           </p>
         </div>
-      ) : (
-        /* Jobs List */
-        <div className={jobs.length === 1
-          ? "jobs-grid flex justify-center w-full"
-          : "jobs-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-full"
-        }>
-          {jobs.map((job) => (
-            <div key={job.id} className={`job-card w-full ${jobs.length === 1 ? 'max-w-md' : 'max-w-full'}`}>
-              <div>
-                <h3 className="job-card-title">{job.title}</h3>
-                <p className="job-card-description">{job.description}</p>
+
+        {loading ? (
+          <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
+            <div className="loading-spinner" style={{
+              width: "40px",
+              height: "40px",
+              border: "3px solid rgba(0,0,0,0.1)",
+              borderTop: "3px solid #000000",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite"
+            }}></div>
+            <style>{`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
+        ) : jobs.length === 0 ? (
+          /* Empty State: NO jobs. Do NOT show any form */
+          <div className="careers-empty-state">
+            <span className="careers-empty-icon">💼</span>
+            <h2 className="careers-empty-title">No Open Positions Currently</h2>
+            <p className="careers-empty-text">
+              We currently don’t have any active openings. Please check back later.
+            </p>
+          </div>
+        ) : (
+          /* Jobs List */
+          <div className={`jobs-grid ${jobs.length === 1 ? 'single-job' : ''}`}>
+            {jobs.map((job) => (
+              <div key={job.id} className="job-card">
+                <div>
+                  <h3 className="job-card-title">{job.title}</h3>
+                  <p className="job-card-description">{job.description}</p>
+                </div>
+                <button
+                  type="button"
+                  className="job-apply-btn"
+                  onClick={() => handleOpenDetailModal(job)}
+                >
+                  View Details
+                </button>
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* Stage 1: Job Detail Modal */}
+        {selectedJob && !isApplyMode && (
+          <div className="modal-overlay" onClick={handleCloseModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
-                className="job-apply-btn"
-                onClick={() => handleOpenDetailModal(job)}
-              >
-                View Details
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Stage 1: Job Detail Modal */}
-      {selectedJob && !isApplyMode && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="modal-close-btn"
-              onClick={handleCloseModal}
-              aria-label="Close details"
-            >
-              &times;
-            </button>
-            <h2 className="modal-title">{selectedJob.title}</h2>
-            <p className="modal-subtitle">Open Position Details</p>
-
-            <div className="job-detail-body">
-              {selectedJob.description}
-            </div>
-
-            <div className="job-detail-footer">
-              <button
-                type="button"
-                className="modal-cancel-btn"
+                className="modal-close-btn"
                 onClick={handleCloseModal}
+                aria-label="Close details"
               >
-                Close
+                &times;
               </button>
-              <button
-                type="button"
-                className="job-apply-btn"
-                onClick={handleOpenApplyForm}
-              >
-                Apply Now
-              </button>
+              <h2 className="modal-title">{selectedJob.title}</h2>
+              <p className="modal-subtitle">Open Position Details</p>
+
+              <div className="job-detail-body">
+                {selectedJob.description}
+              </div>
+
+              <div className="job-detail-footer">
+                <button
+                  type="button"
+                  className="modal-cancel-btn"
+                  onClick={handleCloseModal}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="job-apply-btn"
+                  onClick={handleOpenApplyForm}
+                >
+                  Apply Now
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Stage 2: Apply Form Modal */}
-      {selectedJob && isApplyMode && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="modal-close-btn"
-              onClick={handleCloseModal}
-              aria-label="Close application form"
-            >
-              &times;
-            </button>
-            <h2 className="modal-title">Apply for Position</h2>
-            <p className="modal-subtitle">Submit details for <strong>{selectedJob.title}</strong></p>
-
-            <form onSubmit={handleFormSubmit} className="modal-form">
-              <div className="form-group">
-                <label className="form-label" htmlFor="full-name">Full Name *</label>
-                <input
-                  type="text"
-                  id="full-name"
-                  className="form-input"
-                  placeholder="John Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="email">Email Address *</label>
-                <input
-                  type="email"
-                  id="email"
-                  className="form-input"
-                  placeholder="john.doe@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="phone">Phone Number *</label>
-                <input
-                  type="tel"
-                  id="phone"
-                  className="form-input"
-                  placeholder="+91 98765 43210"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="resume">Resume (PDF only, max 5MB) *</label>
-                <input
-                  type="file"
-                  id="resume"
-                  className="form-input"
-                  accept=".pdf,application/pdf"
-                  onChange={handleFileChange}
-                  required
-                />
-                {fileError ? (
-                  <span className="form-file-helper error">{fileError}</span>
-                ) : (
-                  <span className="form-file-helper">Please upload your CV or resume in PDF format.</span>
-                )}
-              </div>
-
+        {/* Stage 2: Apply Form Modal */}
+        {selectedJob && isApplyMode && (
+          <div className="modal-overlay" onClick={handleCloseModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <button
-                type="submit"
-                className="form-submit-btn"
-                disabled={submitting}
+                type="button"
+                className="modal-close-btn"
+                onClick={handleCloseModal}
+                aria-label="Close application form"
               >
-                {submitting ? "Submitting Application..." : "Submit Application"}
+                &times;
               </button>
-            </form>
+              <h2 className="modal-title">Apply for Position</h2>
+              <p className="modal-subtitle">Submit details for <strong>{selectedJob.title}</strong></p>
+
+              <form onSubmit={handleFormSubmit} className="modal-form">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="full-name">Full Name *</label>
+                  <input
+                    type="text"
+                    id="full-name"
+                    className="form-input"
+                    placeholder="John Doe"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="email">Email Address *</label>
+                  <input
+                    type="email"
+                    id="email"
+                    className="form-input"
+                    placeholder="john.doe@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="phone">Phone Number *</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    className="form-input"
+                    placeholder="+91 98765 43210"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="resume">Resume (PDF only, max 5MB) *</label>
+                  <input
+                    type="file"
+                    id="resume"
+                    className="form-input"
+                    accept=".pdf,application/pdf"
+                    onChange={handleFileChange}
+                    required
+                  />
+                  {fileError ? (
+                    <span className="form-file-helper error">{fileError}</span>
+                  ) : (
+                    <span className="form-file-helper">Please upload your CV or resume in PDF format.</span>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className="form-submit-btn"
+                  disabled={submitting}
+                >
+                  {submitting ? "Submitting Application..." : "Submit Application"}
+                </button>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
