@@ -168,9 +168,18 @@ export default function LeadsAdmin() {
       toast(msg, 'error');
     };
 
+    // Log lead object to confirm email exists
+    console.log("Converting lead:", lead);
+
     // STEP 1 — VALIDATE STATUS
     if (lead.status !== "qualified") {
       showError("Only Qualified leads can be converted");
+      return;
+    }
+
+    // Validate email existence
+    if (!lead.email) {
+      showError("Recipient email address is missing");
       return;
     }
 
