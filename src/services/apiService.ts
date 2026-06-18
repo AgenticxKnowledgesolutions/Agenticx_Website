@@ -107,7 +107,8 @@ api.interceptors.response.use(
           useAuthStore.getState().clearAuth();
           if (
             typeof window !== "undefined" &&
-            !window.location.pathname.startsWith("/admin/login")
+            !window.location.pathname.startsWith("/admin/login") &&
+            !window.location.pathname.startsWith("/apply")
           ) {
             window.location.href = "/admin/login?expired=true";
           }
@@ -119,7 +120,8 @@ api.interceptors.response.use(
         useAuthStore.getState().clearAuth();
         if (
           typeof window !== "undefined" &&
-          !window.location.pathname.startsWith("/admin/login")
+          !window.location.pathname.startsWith("/admin/login") &&
+          !window.location.pathname.startsWith("/apply")
         ) {
           window.location.href = "/admin/login?expired=true";
         }

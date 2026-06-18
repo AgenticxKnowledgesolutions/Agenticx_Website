@@ -335,3 +335,16 @@ export const mergeLeads = async (
   }
 };
 
+/**
+ * Admin: Generate a secure single-use conversion token for a qualified lead.
+ * The token is stored in the DB and sent to the candidate via email.
+ * Returns the token string to build the /apply?token=... link.
+ */
+export const generateConversionToken = async (
+  leadId: string
+): Promise<{ token: string }> => {
+  const res = await api.post(`/leads/${leadId}/conversion-token`);
+  return res.data as { token: string };
+};
+
+

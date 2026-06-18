@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { applyCandidate, uploadCandidateDocument } from "../services/candidateService";
-import { getLeadById } from "../services/leadService";
+import { applyCandidate, uploadCandidateDocument, validateConversionToken } from "../services/candidateService";
 
 export default function CandidateApply() {
   const [searchParams] = useSearchParams();
@@ -28,8 +27,11 @@ export default function CandidateApply() {
   const [registrationTransactionId, setRegistrationTransactionId] = useState("");
   const [remarks, setRemarks] = useState("");
 
-  // Lead Conversion support
-  const leadId = searchParams.get("lead_id") || undefined;
+  // Token-based conversion support
+  const tokenParam = searchParams.get("token") || undefined;
+  const [conversionToken, setConversionToken] = useState<string | undefined>(undefined);
+  const [tokenValidating, setTokenValidating] = useState(false);
+  const [tokenError, setTokenError] = useState("");
 
   // File states
   const [files, setFiles] = useState<{
@@ -46,36 +48,41 @@ export default function CandidateApply() {
   const [appNumber, setAppNumber] = useState("");
   const [uploadingFilesStatus, setUploadingFilesStatus] = useState("");
 
-  // Pre-fill query parameters or fetch lead details by ID
+  // On mount: if token param is present, validate it and prefill form from backend
   useEffect(() => {
-    const fetchLeadAndPrefill = async () => {
-      const qName = searchParams.get("name");
-      const qEmail = searchParams.get("email");
-      const qPhone = searchParams.get("phone");
-      const qCourse = searchParams.get("course");
-      
-      if (qName) setFullName(qName);
-      if (qEmail) setEmail(qEmail);
-      if (qPhone) setPhone(qPhone);
-      if (qCourse) setCourseApplied(qCourse);
-
-      if (leadId) {
+    const initForm = async () => {
+      if (tokenParam) {
+        // Token-based flow: validate token and get lead details securely from backend
+        setTokenValidating(true);
         try {
-          const lead = await getLeadById(leadId);
-          if (lead) {
-            if (lead.name) setFullName(lead.name);
-            if (lead.email) setEmail(lead.email);
-            if (lead.phone) setPhone(lead.phone);
-            if (lead.interestedCourse) setCourseApplied(lead.interestedCourse);
-          }
-        } catch (err) {
-          console.error("Failed to prefill lead info:", err);
+          const details = await validateConversionToken(tokenParam);
+          setConversionToken(tokenParam);
+          if (details.name) setFullName(details.name);
+          if (details.email) setEmail(details.email);
+          if (details.phone) setPhone(details.phone);
+          if (details.course) setCourseApplied(details.course);
+        } catch (err: any) {
+          const msg = err?.response?.data?.detail ||
+            "This application link is invalid or has already been used. Please contact the admissions office.";
+          setTokenError(msg);
+        } finally {
+          setTokenValidating(false);
         }
+      } else {
+        // Fallback: plain URL params (direct form access without token)
+        const qName = searchParams.get("name");
+        const qEmail = searchParams.get("email");
+        const qPhone = searchParams.get("phone");
+        const qCourse = searchParams.get("course");
+        if (qName) setFullName(qName);
+        if (qEmail) setEmail(qEmail);
+        if (qPhone) setPhone(qPhone);
+        if (qCourse) setCourseApplied(qCourse);
       }
     };
 
-    fetchLeadAndPrefill();
-  }, [searchParams, leadId]);
+    initForm();
+  }, [tokenParam]);
 
   const handleFileChange = (type: keyof typeof files, file: File | null) => {
     if (!file) return;
@@ -110,7 +117,7 @@ export default function CandidateApply() {
     }
 
     try {
-      // Create Candidate
+      // Create Candidate — pass token so backend can link lead_id and mark token used
       const res = await applyCandidate({
         fullName,
         email,
@@ -132,7 +139,8 @@ export default function CandidateApply() {
         aadhaarNumber: aadhaar || undefined,
         registrationTransactionId,
         remarks,
-        leadId,
+        // Pass token (not leadId directly) — backend resolves lead_id from token
+        token: conversionToken,
       });
 
       const candId = res.id;
@@ -188,6 +196,34 @@ export default function CandidateApply() {
           <p style={styles.subtitle}>Fill in your details to apply for training & internship placement</p>
         </div>
 
+        {/* Token validation loading state */}
+        {tokenValidating && (
+          <div style={{ textAlign: "center", padding: "60px 20px", color: "#94a3b8" }}>
+            <div style={{ fontSize: "2rem", marginBottom: "16px" }}>⏳</div>
+            <p style={{ fontSize: "1.1rem" }}>Validating your application link…</p>
+          </div>
+        )}
+
+        {/* Token invalid / already used — block the form */}
+        {!tokenValidating && tokenError && (
+          <div style={{
+            textAlign: "center",
+            padding: "60px 20px",
+            background: "rgba(239, 68, 68, 0.08)",
+            borderRadius: "12px",
+            border: "1px solid rgba(239, 68, 68, 0.3)",
+            margin: "20px 0",
+          }}>
+            <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🔒</div>
+            <h2 style={{ color: "#f87171", fontSize: "1.3rem", marginBottom: "12px" }}>
+              Invalid Application Link
+            </h2>
+            <p style={{ color: "#94a3b8", fontSize: "0.95rem", maxWidth: "420px", margin: "0 auto" }}>
+              {tokenError}
+            </p>
+          </div>
+        )}
+
         {error && <div style={styles.errorBanner}>{error}</div>}
         {successMsg && (
           <div style={styles.successBanner}>
@@ -201,6 +237,8 @@ export default function CandidateApply() {
           </div>
         )}
 
+        {/* Only show form when token is valid (or no token required) */}
+        {!tokenValidating && !tokenError && (
         <form onSubmit={handleSubmit} style={styles.form}>
           {/* PERSONAL DETAILS SECTION */}
           <div style={styles.section}>
@@ -534,6 +572,7 @@ export default function CandidateApply() {
             {loading ? "Submitting Application..." : "Submit Application"}
           </button>
         </form>
+        )} {/* end !tokenValidating && !tokenError */}
       </div>
     </div>
   );

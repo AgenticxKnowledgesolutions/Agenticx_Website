@@ -145,7 +145,18 @@ const mapCandidate = (c: any): Candidate => {
   };
 };
 
-export const applyCandidate = async (candidateData: Partial<Candidate> & { aadhaarNumber?: string }): Promise<any> => {
+export interface ConversionTokenDetails {
+  valid: boolean;
+  name: string;
+  email: string;
+  phone: string;
+  course: string;
+  lead_id: string;
+}
+
+export const applyCandidate = async (
+  candidateData: Partial<Candidate> & { aadhaarNumber?: string; token?: string }
+): Promise<any> => {
   const payload = {
     full_name: candidateData.fullName,
     email: candidateData.email,
@@ -169,6 +180,7 @@ export const applyCandidate = async (candidateData: Partial<Candidate> & { aadha
     remarks: candidateData.remarks || null,
     lead_id: candidateData.leadId || null,
     next_followup_at: candidateData.nextFollowupAt || null,
+    token: candidateData.token || null,
   };
   const res = await api.post("/candidates/apply", payload);
   return res.data;
@@ -310,3 +322,19 @@ export const hardDeleteCandidate = async (id: string): Promise<any> => {
   const res = await api.delete(`/candidates/${id}/permanent`);
   return res.data;
 };
+
+/**
+ * Public: Validate a single-use conversion token and return lead details.
+ * Called on /apply page load when ?token= param is present.
+ * Returns lead name/email/phone/course for pre-filling the form.
+ * Throws on invalid or already-used token.
+ */
+export const validateConversionToken = async (
+  token: string
+): Promise<ConversionTokenDetails> => {
+  const res = await api.get("/candidates/validate-token", {
+    params: { token },
+  });
+  return res.data as ConversionTokenDetails;
+};
+

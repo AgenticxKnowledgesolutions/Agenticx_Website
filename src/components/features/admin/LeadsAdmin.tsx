@@ -13,7 +13,8 @@ import {
   bulkDelete, 
   addNote, 
   getLeadById,
-  mergeLeads
+  mergeLeads,
+  generateConversionToken,
 } from '@/services/leadService';
 import { useToast } from '@/components/ui/Toast';
 import { useAdminStore } from '@/services/adminStore';
@@ -164,67 +165,46 @@ export default function LeadsAdmin() {
   };
 
   const handleConvertLead = async (lead: Lead) => {
-    const showError = (msg: string) => {
-      toast(msg, 'error');
-    };
-
-    // Log lead object to confirm email exists
-    console.log("Converting lead:", lead);
-
-    // STEP 1 — VALIDATE STATUS
+    // STEP 1 — CLIENT-SIDE VALIDATION
     if (lead.status !== "qualified") {
-      showError("Only Qualified leads can be converted");
+      toast("Only Qualified leads can be converted", "error");
       return;
     }
-
-    // Validate email existence
     if (!lead.email) {
-      showError("Recipient email address is missing");
+      toast("Recipient email address is missing", "error");
       return;
     }
 
     setSaving(true);
     try {
-      // STEP 2 — GENERATE APPLICATION LINK
-      const generatedLink = `https://www.agenticx.co.in/apply?lead_id=${lead.id}&name=${encodeURIComponent(lead.name)}&email=${encodeURIComponent(lead.email)}&phone=${lead.phone || ''}&course=${encodeURIComponent(lead.interestedCourse || '')}`;
+      // STEP 2 — GENERATE SECURE SINGLE-USE TOKEN (also updates lead status to 'converted' server-side)
+      const { token } = await generateConversionToken(lead.id);
 
-      // STEP 3 — SEND EMAIL (MANDATORY)
+      // STEP 3 — BUILD TOKENIZED LINK (no lead_id, name, email in URL)
+      const frontendUrl = import.meta.env.VITE_FRONTEND_URL || "https://www.agenticx.co.in";
+      const applicationLink = `${frontendUrl}/apply?token=${token}`;
+
+      // STEP 4 — SEND EMAIL with tokenized link
       await emailjs.send(
         import.meta.env.VITE_EMAILJS_SERVICE_ID,
         import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
         {
           to_name: lead.name,
           to_email: lead.email,
-          application_link: generatedLink,
+          application_link: applicationLink,
         },
         import.meta.env.VITE_EMAILJS_PUBLIC_KEY
       );
 
-      // STEP 4 — UPDATE LEAD STATUS
-      const updated = await updateLead(
-        lead.id,
-        "converted",
-        lead.adminNotes,
-        lead.lastContactedAt,
-        lead.nextFollowupDate,
-        lead.followupNotes,
-        lead.source,
-        lead.priority,
-        lead.assignedTo
-      );
-
-      if (updated) {
-        // STEP 5 — SUCCESS FEEDBACK
-        toast("Application link sent to candidate successfully", "success");
-        setSelectedLead(null);
-        invalidateAll();
-        loadLeads(true);
-      } else {
-        toast("Failed to update lead status to converted", "error");
-      }
-    } catch (err) {
-      console.error(err);
-      toast("Failed to send email or convert lead", "error");
+      // STEP 5 — SUCCESS FEEDBACK
+      toast("Application link sent to candidate successfully", "success");
+      setSelectedLead(null);
+      invalidateAll();
+      loadLeads(true);
+    } catch (err: any) {
+      console.error("Convert lead error:", err);
+      const detail = err?.response?.data?.detail || err?.message || "Failed to send email or convert lead";
+      toast(detail, "error");
     } finally {
       setSaving(false);
     }
