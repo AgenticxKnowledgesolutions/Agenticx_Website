@@ -3,7 +3,7 @@ import { createLead } from '@/services/leadService';
 import './Contact.css';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import SEO from '@/components/seo/SEO';
-import { getCourses, Course } from '@/services/courseService';
+import { getCourses, type Course } from '@/services/courseService';
 
 const COURSE_OPTIONS = {
   Corporate: ['HTD Model', 'Corporate Training', 'Leadership Program'],
