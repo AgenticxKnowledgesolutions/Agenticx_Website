@@ -16,6 +16,7 @@ export default function CandidateApply() {
   const [qualification, setQualification] = useState("");
   const [bloodGroup, setBloodGroup] = useState("");
   const [courseApplied, setCourseApplied] = useState("");
+  const [customCourseApplied, setCustomCourseApplied] = useState("");
   const [modeOfLearning, setModeOfLearning] = useState("Offline");
   const [collegeName, setCollegeName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
@@ -148,7 +149,7 @@ export default function CandidateApply() {
         emergencyContact,
         qualification,
         bloodGroup,
-        courseApplied,
+        courseApplied: courseApplied === "Custom Webinar / Other" ? customCourseApplied : courseApplied,
         modeOfLearning,
         collegeName,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : undefined,
@@ -190,6 +191,7 @@ export default function CandidateApply() {
       setQualification("");
       setBloodGroup("");
       setCourseApplied("");
+      setCustomCourseApplied("");
       setCollegeName("");
       setDateOfBirth("");
       setGender("");
@@ -420,6 +422,7 @@ export default function CandidateApply() {
                         {course.title}
                       </option>
                     ))}
+                    <option value="Custom Webinar / Other">Custom Webinar / Other Course</option>
                   </select>
                 </div>
                 <div style={styles.formGroup}>
@@ -435,6 +438,20 @@ export default function CandidateApply() {
                   </select>
                 </div>
               </div>
+
+              {courseApplied === "Custom Webinar / Other" && (
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Specify Webinar Topic / Course Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={customCourseApplied}
+                    onChange={(e) => setCustomCourseApplied(e.target.value)}
+                    placeholder="e.g. Webinar on Generative AI"
+                    style={styles.input}
+                  />
+                </div>
+              )}
 
               <div style={styles.grid2}>
                 <div style={styles.formGroup}>

@@ -3,6 +3,7 @@ import { createLead } from '@/services/leadService';
 import './Contact.css';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import SEO from '@/components/seo/SEO';
+import { getCourses, Course } from '@/services/courseService';
 
 const COURSE_OPTIONS = {
   Corporate: ['HTD Model', 'Corporate Training', 'Leadership Program'],
@@ -15,6 +16,8 @@ export default function Contact() {
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [customTopic, setCustomTopic] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -27,6 +30,46 @@ export default function Contact() {
     window.scrollTo(0, 0);
   }, [isSubmitted]);
 
+  useEffect(() => {
+    getCourses()
+      .then(data => {
+        setCourses(data.filter(c => !c.isDeleted));
+      })
+      .catch(err => console.error("Failed to load courses for contact form:", err));
+  }, []);
+
+  const getDynamicCourseOptions = (category: string) => {
+    const staticOptions = COURSE_OPTIONS[category as keyof typeof COURSE_OPTIONS] || [];
+    
+    // Filter dynamic courses matching this category
+    const dynamicOptions = courses
+      .filter(c => {
+        const badgeLower = (c.badge || '').toLowerCase();
+        const titleLower = c.title.toLowerCase();
+        if (category === 'Corporate') {
+          return badgeLower.includes('corporate') || titleLower.includes('corporate');
+        }
+        if (category === 'Internship') {
+          return badgeLower.includes('internship') || titleLower.includes('internship');
+        }
+        if (category === 'Student Program') {
+          return badgeLower.includes('student') || titleLower.includes('student');
+        }
+        if (category === 'Webinar') {
+          return badgeLower.includes('webinar') || badgeLower.includes('workshop') || titleLower.includes('webinar') || titleLower.includes('workshop');
+        }
+        return false;
+      })
+      .map(c => c.title);
+
+    // Merge static and dynamic options without duplicates
+    const merged = Array.from(new Set([...staticOptions, ...dynamicOptions]));
+    
+    // Add a custom option
+    merged.push("Custom / Other Topic");
+    return merged;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -36,11 +79,19 @@ export default function Contact() {
         email: formData.email,
         phone: formData.phone,
         message: `Course Type: ${formData.courseType}. Requested free demo session.`,
-        interestedCourse: formData.specificCourse || `${formData.courseType} Inquiry`,
+        interestedCourse: formData.specificCourse === "Custom / Other Topic" ? customTopic : (formData.specificCourse || `${formData.courseType} Inquiry`),
         sourcePage: 'Contact Us Page'
       });
       if (response) {
         setIsSubmitted(true);
+        setFormData({
+          name: '',
+          phone: '',
+          email: '',
+          courseType: '',
+          specificCourse: ''
+        });
+        setCustomTopic('');
       } else {
         alert('Failed to submit inquiry. Please try again.');
       }
@@ -215,6 +266,7 @@ export default function Contact() {
                   <option value="Corporate">Corporate</option>
                   <option value="Internship">Internship</option>
                   <option value="Student Program">Student Program</option>
+                  <option value="Webinar">Webinar</option>
                 </select>
               </div>
 
@@ -227,10 +279,23 @@ export default function Contact() {
                     onChange={e => setFormData({...formData, specificCourse: e.target.value})}
                   >
                     <option value="" disabled>Select a course</option>
-                    {COURSE_OPTIONS[formData.courseType as keyof typeof COURSE_OPTIONS].map(course => (
+                    {getDynamicCourseOptions(formData.courseType).map(course => (
                       <option key={course} value={course}>{course}</option>
                     ))}
                   </select>
+                </div>
+              )}
+
+              {formData.specificCourse === "Custom / Other Topic" && (
+                <div className="form-group slide-down">
+                  <label>Specify Custom Topic / Course Name *</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="e.g. Webinar on Generative AI"
+                    value={customTopic}
+                    onChange={e => setCustomTopic(e.target.value)}
+                  />
                 </div>
               )}
 

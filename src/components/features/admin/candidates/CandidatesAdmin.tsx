@@ -41,6 +41,8 @@ export default function CandidatesAdmin() {
   const [courseStartDateVal, setCourseStartDateVal] = useState("");
   const [completedAtVal, setCompletedAtVal] = useState("");
   const [courseDurationVal, setCourseDurationVal] = useState("");
+  const [performanceVal, setPerformanceVal] = useState("");
+  const [courseAppliedVal, setCourseAppliedVal] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
   // Document Uploads
@@ -116,6 +118,8 @@ export default function CandidatesAdmin() {
       setCourseStartDateVal(c.courseStartDate ? c.courseStartDate.split("T")[0] : "");
       setCompletedAtVal(c.completedAt ? c.completedAt.split("T")[0] : "");
       setCourseDurationVal(c.courseDuration || "");
+      setPerformanceVal(c.performance || "");
+      setCourseAppliedVal(c.courseApplied || "");
     } catch (err) {
       console.error("Failed to load candidate detail:", err);
     } finally {
@@ -229,7 +233,9 @@ export default function CandidatesAdmin() {
         statusRemarks,
         courseStartDateVal ? new Date(courseStartDateVal).toISOString() : undefined,
         completedAtVal ? new Date(completedAtVal).toISOString() : undefined,
-        courseDurationVal || undefined
+        courseDurationVal || undefined,
+        performanceVal || undefined,
+        courseAppliedVal || undefined
       );
       setStatusRemarks("");
       await loadSelectedCandidate(selectedCandidate.id);
@@ -931,6 +937,24 @@ export default function CandidatesAdmin() {
                               <option value="Completed">Completed</option>
                             </select>
                             
+                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course Applied For</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. MERN Stack, Webinar on Generative AI"
+                              value={courseAppliedVal}
+                              onChange={(e) => setCourseAppliedVal(e.target.value)}
+                              style={{
+                                ...styles.remarksInput,
+                                width: "100%",
+                                boxSizing: "border-box",
+                                padding: "8px 12px",
+                                background: "#1e293b",
+                                border: "1px solid rgba(255,255,255,0.1)",
+                                borderRadius: "6px",
+                                color: "#fff"
+                              }}
+                            />
+                            
                             <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course Start Date</label>
                             <input
                               type="date"
@@ -982,6 +1006,28 @@ export default function CandidatesAdmin() {
                                 color: "#fff"
                               }}
                             />
+
+                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Performance</label>
+                            <select
+                              value={performanceVal}
+                              onChange={(e) => setPerformanceVal(e.target.value)}
+                              style={{
+                                ...styles.selectInput,
+                                width: "100%",
+                                boxSizing: "border-box",
+                                padding: "8px 12px",
+                                background: "#1e293b",
+                                border: "1px solid rgba(255,255,255,0.1)",
+                                borderRadius: "6px",
+                                color: "#fff"
+                              }}
+                            >
+                              <option value="">Select Performance...</option>
+                              <option value="excellent">Excellent</option>
+                              <option value="good">Good</option>
+                              <option value="average">Average</option>
+                              <option value="satisfactory">Satisfactory</option>
+                            </select>
 
                             <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Counselor Remarks</label>
                             <input
