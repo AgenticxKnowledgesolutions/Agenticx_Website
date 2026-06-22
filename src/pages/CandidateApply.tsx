@@ -118,6 +118,12 @@ export default function CandidateApply() {
     setUploadingFilesStatus("");
 
     // Validation
+    if (!dateOfBirth) {
+      setError("Date of Birth is required");
+      setLoading(false);
+      return;
+    }
+
     const cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.length < 10 || cleanPhone.length > 15) {
       setError("Please enter a valid mobile number (10-15 digits)");
@@ -321,12 +327,13 @@ export default function CandidateApply() {
 
               <div style={styles.grid3}>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Date of Birth</label>
+                  <label style={styles.label}>Date of Birth *</label>
                   <input
                     type="date"
                     value={dateOfBirth}
                     onChange={(e) => setDateOfBirth(e.target.value)}
                     style={styles.input}
+                    required
                   />
                 </div>
                 <div style={styles.formGroup}>

@@ -55,6 +55,9 @@ export interface Candidate {
   confirmationLetterUrl?: string;
   importBatchId?: string;
   importTag?: string;
+  completedAt?: string;
+  courseStartDate?: string;
+  courseDuration?: string;
   createdAt: string;
   updatedAt: string;
   notes?: CandidateNote[];
@@ -121,6 +124,9 @@ const mapCandidate = (c: any): Candidate => {
     confirmationLetterUrl: c.confirmation_letter_url || undefined,
     importBatchId: c.import_batch_id || undefined,
     importTag: c.import_tag || undefined,
+    completedAt: c.completed_at || undefined,
+    courseStartDate: c.course_start_date || undefined,
+    courseDuration: c.course_duration || undefined,
     createdAt: c.created_at,
     updatedAt: c.updated_at,
     notes: Array.isArray(c.notes)
@@ -220,8 +226,21 @@ export const getCandidateById = async (id: string): Promise<Candidate> => {
   return mapCandidate(res.data);
 };
 
-export const updateCandidateStatus = async (id: string, status: string, remarks?: string): Promise<any> => {
-  const res = await api.put(`/candidates/${id}/status`, { status, remarks });
+export const updateCandidateStatus = async (
+  id: string,
+  status: string,
+  remarks?: string,
+  courseStartDate?: string,
+  completedAt?: string,
+  courseDuration?: string
+): Promise<any> => {
+  const res = await api.put(`/candidates/${id}/status`, {
+    status,
+    remarks,
+    course_start_date: courseStartDate || null,
+    completed_at: completedAt || null,
+    course_duration: courseDuration || null,
+  });
   return res.data;
 };
 

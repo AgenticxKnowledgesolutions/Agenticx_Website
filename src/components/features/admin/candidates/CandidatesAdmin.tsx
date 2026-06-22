@@ -38,6 +38,9 @@ export default function CandidatesAdmin() {
   const [newNoteContent, setNewNoteContent] = useState("");
   const [statusUpdateVal, setStatusUpdateVal] = useState("");
   const [statusRemarks, setStatusRemarks] = useState("");
+  const [courseStartDateVal, setCourseStartDateVal] = useState("");
+  const [completedAtVal, setCompletedAtVal] = useState("");
+  const [courseDurationVal, setCourseDurationVal] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
   // Document Uploads
@@ -110,6 +113,9 @@ export default function CandidatesAdmin() {
       const c = await getCandidateById(id);
       setSelectedCandidate(c);
       setStatusUpdateVal(c.applicationStatus);
+      setCourseStartDateVal(c.courseStartDate ? c.courseStartDate.split("T")[0] : "");
+      setCompletedAtVal(c.completedAt ? c.completedAt.split("T")[0] : "");
+      setCourseDurationVal(c.courseDuration || "");
     } catch (err) {
       console.error("Failed to load candidate detail:", err);
     } finally {
@@ -217,7 +223,14 @@ export default function CandidatesAdmin() {
     if (!selectedCandidate) return;
     setActionLoading(true);
     try {
-      await updateCandidateStatus(selectedCandidate.id, statusUpdateVal, statusRemarks);
+      await updateCandidateStatus(
+        selectedCandidate.id,
+        statusUpdateVal,
+        statusRemarks,
+        courseStartDateVal ? new Date(courseStartDateVal).toISOString() : undefined,
+        completedAtVal ? new Date(completedAtVal).toISOString() : undefined,
+        courseDurationVal || undefined
+      );
       setStatusRemarks("");
       await loadSelectedCandidate(selectedCandidate.id);
       await loadCandidates();
@@ -759,6 +772,22 @@ export default function CandidatesAdmin() {
                           <span className="label">College Name</span>
                           <span className="value">{selectedCandidate.collegeName || "N/A"}</span>
                         </div>
+                        <div className="info-item">
+                          <span className="label">Course Start Date</span>
+                          <span className="value">
+                            {selectedCandidate.courseStartDate ? new Date(selectedCandidate.courseStartDate).toLocaleDateString() : "N/A"}
+                          </span>
+                        </div>
+                        <div className="info-item">
+                          <span className="label">Course End Date</span>
+                          <span className="value">
+                            {selectedCandidate.completedAt ? new Date(selectedCandidate.completedAt).toLocaleDateString() : "N/A"}
+                          </span>
+                        </div>
+                        <div className="info-item">
+                          <span className="label">Course Duration</span>
+                          <span className="value">{selectedCandidate.courseDuration || "N/A"}</span>
+                        </div>
                         <div className="info-item" style={{ gridColumn: "1 / -1" }}>
                           <span className="label">Registration Transaction ID</span>
                           <span className="value" style={{ fontFamily: "monospace" }}>{selectedCandidate.registrationTransactionId || "N/A"}</span>
@@ -899,7 +928,62 @@ export default function CandidatesAdmin() {
                               <option value="Approved">Approved</option>
                               <option value="Rejected">Rejected</option>
                               <option value="Enrolled">Enrolled</option>
+                              <option value="Completed">Completed</option>
                             </select>
+                            
+                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course Start Date</label>
+                            <input
+                              type="date"
+                              value={courseStartDateVal}
+                              onChange={(e) => setCourseStartDateVal(e.target.value)}
+                              style={{
+                                ...styles.remarksInput,
+                                width: "100%",
+                                boxSizing: "border-box",
+                                padding: "8px 12px",
+                                background: "#1e293b",
+                                border: "1px solid rgba(255,255,255,0.1)",
+                                borderRadius: "6px",
+                                color: "#fff"
+                              }}
+                            />
+                            
+                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course End Date (Completed Date)</label>
+                            <input
+                              type="date"
+                              value={completedAtVal}
+                              onChange={(e) => setCompletedAtVal(e.target.value)}
+                              style={{
+                                ...styles.remarksInput,
+                                width: "100%",
+                                boxSizing: "border-box",
+                                padding: "8px 12px",
+                                background: "#1e293b",
+                                border: "1px solid rgba(255,255,255,0.1)",
+                                borderRadius: "6px",
+                                color: "#fff"
+                              }}
+                            />
+                            
+                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course Duration</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. 3 Months, 6 Weeks"
+                              value={courseDurationVal}
+                              onChange={(e) => setCourseDurationVal(e.target.value)}
+                              style={{
+                                ...styles.remarksInput,
+                                width: "100%",
+                                boxSizing: "border-box",
+                                padding: "8px 12px",
+                                background: "#1e293b",
+                                border: "1px solid rgba(255,255,255,0.1)",
+                                borderRadius: "6px",
+                                color: "#fff"
+                              }}
+                            />
+
+                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Counselor Remarks</label>
                             <input
                               type="text"
                               placeholder="Add counselor remarks..."
@@ -1028,6 +1112,8 @@ const getStatusBadgeStyle = (status: string): React.CSSProperties => {
       return { backgroundColor: "rgba(239, 68, 68, 0.15)", color: "#ef4444" };
     case "Enrolled":
       return { backgroundColor: "rgba(139, 92, 246, 0.15)", color: "#8b5cf6" };
+    case "Completed":
+      return { backgroundColor: "rgba(16, 185, 129, 0.25)", color: "#10b981" };
     default:
       return { backgroundColor: "rgba(148, 163, 184, 0.15)", color: "#94a3b8" };
   }
