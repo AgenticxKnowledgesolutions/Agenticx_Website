@@ -1029,20 +1029,7 @@ export default function CandidatesAdmin() {
                       </div>
                     )}
 
-                    <div className="info-card-section">
-                      <h4>Timeline Events</h4>
-                      <div className="candidate-timeline">
-                        {selectedCandidate.timelineEvents?.map((evt) => (
-                          <div key={evt.id} className="timeline-event-node">
-                            <div className="timeline-event-header">
-                              <strong>{evt.eventType}</strong>
-                              <span>{new Date(evt.createdAt).toLocaleString()} by {evt.createdBy || "System"}</span>
-                            </div>
-                            <div className="timeline-event-body">{evt.description}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+
 
                     {/* Counselor Notes */}
                     <div className="info-card-section">
@@ -1549,40 +1536,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: "600",
     cursor: "pointer",
   },
-  timelineList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    position: "relative",
-    paddingLeft: "16px",
-    borderLeft: "2px solid rgba(255, 255, 255, 0.08)",
-  },
-  timelineNode: {
-    position: "relative",
-  },
-  timelineDot: {
-    width: "10px",
-    height: "10px",
-    background: "#3b82f6",
-    borderRadius: "50%",
-    position: "absolute",
-    left: "-22px",
-    top: "6px",
-  },
-  timelineBox: {
-    background: "rgba(255, 255, 255, 0.01)",
-    borderRadius: "8px",
-    padding: "8px 12px",
-  },
-  timelineMeta: {
-    fontSize: "11px",
-    color: "#94a3b8",
-  },
-  timelineDesc: {
-    fontSize: "13px",
-    marginTop: "4px",
-    color: "#cbd5e1",
-  },
+
   noteForm: {
     display: "flex",
     flexDirection: "column",
