@@ -53,6 +53,9 @@ export interface Candidate {
   aadhaarUrl?: string;
   collegeIdUrl?: string;
   confirmationLetterUrl?: string;
+  certificateId?: string;
+  certificateUrl?: string;
+  certificateStatus?: string;
   importBatchId?: string;
   importTag?: string;
   completedAt?: string;
@@ -123,6 +126,9 @@ const mapCandidate = (c: any): Candidate => {
     aadhaarUrl: c.aadhaar_url || undefined,
     collegeIdUrl: c.college_id_url || undefined,
     confirmationLetterUrl: c.confirmation_letter_url || undefined,
+    certificateId: c.certificate_id || undefined,
+    certificateUrl: c.certificate_url || undefined,
+    certificateStatus: c.certificate_status || undefined,
     importBatchId: c.import_batch_id || undefined,
     importTag: c.import_tag || undefined,
     completedAt: c.completed_at || undefined,
@@ -345,6 +351,25 @@ export const restoreCandidate = async (id: string): Promise<any> => {
 
 export const hardDeleteCandidate = async (id: string): Promise<any> => {
   const res = await api.delete(`/candidates/${id}/permanent`);
+  return res.data;
+};
+
+export const regenerateCertificate = async (id: string): Promise<any> => {
+  const res = await api.post(`/candidates/${id}/regenerate-certificate`);
+  return res.data;
+};
+
+export const bulkRegenerateCertificates = async (candidateIds: string[]): Promise<any> => {
+  const res = await api.post("/candidates/bulk-regenerate-certificates", {
+    candidate_ids: candidateIds,
+  });
+  return res.data;
+};
+
+export const bulkHardDeleteCandidates = async (candidateIds: string[]): Promise<any> => {
+  const res = await api.delete("/candidates/permanent", {
+    data: { candidate_ids: candidateIds },
+  });
   return res.data;
 };
 

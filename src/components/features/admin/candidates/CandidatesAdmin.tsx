@@ -10,6 +10,9 @@ import {
   softDeleteCandidate,
   restoreCandidate,
   hardDeleteCandidate,
+  regenerateCertificate,
+  bulkRegenerateCertificates,
+  bulkHardDeleteCandidates,
 } from "../../../../services/candidateService";
 import type { Candidate, AdminNotification } from "../../../../services/candidateService";
 import CandidatesImport from "./CandidatesImport";
@@ -79,6 +82,11 @@ export default function CandidatesAdmin() {
 
   // Import tabs
   const [activeTab, setActiveTab] = useState<"list" | "import" | "import-history" | "trash">("list");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [activeTab]);
 
   // Notifications
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
@@ -174,6 +182,82 @@ export default function CandidatesAdmin() {
     } catch (err) {
       console.error("Failed to permanently delete candidate:", err);
       alert("Failed to delete candidate permanently.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSelectRow = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (candidates.length === 0) return;
+    if (selectedIds.length === candidates.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(candidates.map((c) => c.id));
+    }
+  };
+
+  const handleBulkRegenerateCertificates = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Are you sure you want to regenerate certificates for the ${selectedIds.length} selected candidate(s)?`)) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await bulkRegenerateCertificates(selectedIds);
+      alert(`Bulk certificate regeneration complete.\nProcessed: ${res.processed}\nSuccessful: ${res.success_count}\nFailed: ${res.failed_count}`);
+      setSelectedIds([]);
+      await loadCandidates();
+    } catch (err) {
+      console.error("Failed bulk certificate regeneration:", err);
+      alert("Failed to run bulk certificate regeneration.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBulkPermanentDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`WARNING: Are you sure you want to PERMANENTLY delete the ${selectedIds.length} selected candidate(s)? This action is IRREVERSIBLE and will also delete all uploaded candidate documents and generated certificates from storage!`)) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await bulkHardDeleteCandidates(selectedIds);
+      alert(`Successfully deleted the selected candidates and cleaned up all associated storage files.`);
+      setSelectedIds([]);
+      await loadCandidates();
+    } catch (err) {
+      console.error("Failed bulk permanent delete:", err);
+      alert("Failed to permanently delete the selected candidates.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRegenerateSingle = async (id: string) => {
+    if (!window.confirm("Are you sure you want to regenerate the certificate for this candidate?")) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await regenerateCertificate(id);
+      alert("Certificate regenerated successfully.");
+      // Refresh selected candidate detail
+      if (selectedCandidateId === id) {
+        const updated = await getCandidateById(id);
+        setSelectedCandidate(updated);
+      }
+      await loadCandidates();
+    } catch (err: any) {
+      console.error("Failed to regenerate certificate:", err);
+      const detail = err.response?.data?.detail || "Failed to regenerate certificate.";
+      alert(detail);
     } finally {
       setActionLoading(false);
     }
@@ -373,6 +457,89 @@ export default function CandidatesAdmin() {
       {activeTab === "import-history" && <CandidatesImportHistory />}
       {(activeTab === "list" || activeTab === "trash") && (
         <div style={{ width: "100%" }}>
+          {selectedIds.length > 0 && !selectedCandidateId && (
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              padding: '16px 24px',
+              marginBottom: '24px',
+              background: activeTab === 'trash' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+              border: activeTab === 'trash' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '12px',
+              color: '#fff'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined" style={{ color: activeTab === 'trash' ? '#ef4444' : '#3b82f6' }}>check_box</span>
+                <span style={{ fontWeight: 600, fontSize: '14px' }}>{selectedIds.length} candidate{selectedIds.length > 1 ? 's' : ''} selected</span>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                {activeTab === 'list' && (
+                  <button
+                    onClick={handleBulkRegenerateCertificates}
+                    disabled={actionLoading}
+                    style={{
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>workspace_premium</span>
+                    {actionLoading ? "Regenerating..." : "Regenerate Certificates"}
+                  </button>
+                )}
+
+                {activeTab === 'trash' && (
+                  <button
+                    onClick={handleBulkPermanentDelete}
+                    disabled={actionLoading}
+                    style={{
+                      background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete_forever</span>
+                    {actionLoading ? "Deleting..." : "Delete Permanently"}
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setSelectedIds([])}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#94a3b8',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
           {!selectedCandidateId ? (
             /* Main List Section */
             <div className="list-section" style={{ width: "100%", minWidth: 0 }}>
@@ -454,6 +621,14 @@ export default function CandidatesAdmin() {
                     <table className="candidates-table">
                       <thead>
                         <tr>
+                          <th style={{ width: "40px", textAlign: "center" }}>
+                            <input
+                              type="checkbox"
+                              checked={candidates.length > 0 && selectedIds.length === candidates.length}
+                              onChange={handleSelectAll}
+                              style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                            />
+                          </th>
                           <th>App Number</th>
                           <th>Full Name</th>
                           <th>Course</th>
@@ -468,8 +643,17 @@ export default function CandidatesAdmin() {
                           <tr
                             key={c.id}
                             onClick={() => setSelectedCandidateId(c.id)}
-                            className={selectedCandidateId === c.id ? "selected" : ""}
+                            className={`${selectedCandidateId === c.id ? "selected" : ""} ${selectedIds.includes(c.id) ? "admin-selected-row" : ""}`}
+                            style={selectedIds.includes(c.id) ? { background: "rgba(59, 130, 246, 0.05)" } : {}}
                           >
+                            <td style={{ width: "40px", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.includes(c.id)}
+                                onChange={() => handleSelectRow(c.id)}
+                                style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                              />
+                            </td>
                             <td style={{ fontWeight: "600", color: "#3b82f6" }}>{c.applicationNumber}</td>
                             <td>
                               <div style={{ fontWeight: "500" }}>{c.fullName}</div>
@@ -512,11 +696,20 @@ export default function CandidatesAdmin() {
                         onClick={() => setSelectedCandidateId(c.id)}
                         style={{
                           ...styles.mobileCard,
-                          borderColor: selectedCandidateId === c.id ? "#3b82f6" : "rgba(255, 255, 255, 0.08)",
+                          borderColor: selectedCandidateId === c.id ? "#3b82f6" : selectedIds.includes(c.id) ? "rgba(59, 130, 246, 0.4)" : "rgba(255, 255, 255, 0.08)",
+                          background: selectedIds.includes(c.id) ? "rgba(59, 130, 246, 0.03)" : styles.mobileCard.background,
                         }}
                       >
                         <div style={styles.cardHeader}>
-                          <span style={styles.cardAppNum}>{c.applicationNumber}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }} onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(c.id)}
+                              onChange={() => handleSelectRow(c.id)}
+                              style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                            />
+                            <span style={styles.cardAppNum}>{c.applicationNumber}</span>
+                          </div>
                           <span
                             style={{
                               ...styles.badgeStatus,
@@ -811,6 +1004,7 @@ export default function CandidatesAdmin() {
                           { label: "Aadhaar Card", url: selectedCandidate.aadhaarUrl, key: "aadhaar" as const },
                           { label: "College ID Card", url: selectedCandidate.collegeIdUrl, key: "college-id" as const },
                           { label: "Confirmation Letter", url: selectedCandidate.confirmationLetterUrl, key: "confirmation-letter" as const },
+                          { label: "Experience Certificate", url: selectedCandidate.certificateUrl, key: "certificate" as const },
                         ].map((doc) => {
                           const hasDoc = !!doc.url;
                           return (
@@ -852,14 +1046,33 @@ export default function CandidatesAdmin() {
                                   </>
                                 )}
                                 {activeTab !== "trash" && (
-                                  <button
-                                    type="button"
-                                    className="doc-upload-label"
-                                    onClick={() => triggerFileUpload(doc.key)}
-                                    disabled={actionLoading}
-                                  >
-                                    {hasDoc ? "🔄 Replace" : "📤 Upload"}
-                                  </button>
+                                  doc.key === "certificate" ? (
+                                    selectedCandidate.applicationStatus === "Completed" && (
+                                      <button
+                                        type="button"
+                                        className="doc-upload-label"
+                                        onClick={() => handleRegenerateSingle(selectedCandidate.id)}
+                                        disabled={actionLoading}
+                                        style={{
+                                          background: "rgba(59, 130, 246, 0.1)",
+                                          border: "1px solid rgba(59, 130, 246, 0.2)",
+                                          color: "#3b82f6",
+                                          cursor: "pointer"
+                                        }}
+                                      >
+                                        {actionLoading ? "Regenerating..." : "🔄 Regenerate"}
+                                      </button>
+                                    )
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="doc-upload-label"
+                                      onClick={() => triggerFileUpload(doc.key)}
+                                      disabled={actionLoading}
+                                    >
+                                      {hasDoc ? "🔄 Replace" : "📤 Upload"}
+                                    </button>
+                                  )
                                 )}
                               </div>
                             </div>
@@ -1072,6 +1285,27 @@ export default function CandidatesAdmin() {
                         >
                           {actionLoading ? "Moving to Trash..." : "🗑️ Move to Trash"}
                         </button>
+                        {selectedCandidate.applicationStatus === "Completed" && (
+                          <button
+                            type="button"
+                            onClick={() => handleRegenerateSingle(selectedCandidate.id)}
+                            disabled={actionLoading}
+                            style={{
+                              background: "rgba(59, 130, 246, 0.08)",
+                              border: "1px solid rgba(59, 130, 246, 0.2)",
+                              color: "#3b82f6",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              cursor: "pointer",
+                              fontWeight: "600",
+                              width: "100%",
+                              marginTop: "12px",
+                              transition: "all 0.2s"
+                            }}
+                          >
+                            {actionLoading ? "Regenerating..." : "🎓 Regenerate Certificate"}
+                          </button>
+                        )}
                       </div>
                     )}
 
