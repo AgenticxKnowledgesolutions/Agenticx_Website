@@ -13,6 +13,7 @@ import {
   regenerateCertificate,
   bulkRegenerateCertificates,
   bulkHardDeleteCandidates,
+  bulkSoftDeleteCandidates,
 } from "../../../../services/candidateService";
 import type { Candidate, AdminNotification } from "../../../../services/candidateService";
 import CandidatesImport from "./CandidatesImport";
@@ -40,7 +41,6 @@ export default function CandidatesAdmin() {
   // Note/Status actions
   const [newNoteContent, setNewNoteContent] = useState("");
   const [statusUpdateVal, setStatusUpdateVal] = useState("");
-  const [statusRemarks, setStatusRemarks] = useState("");
   const [courseStartDateVal, setCourseStartDateVal] = useState("");
   const [completedAtVal, setCompletedAtVal] = useState("");
   const [courseDurationVal, setCourseDurationVal] = useState("");
@@ -80,9 +80,22 @@ export default function CandidatesAdmin() {
     }
   };
 
-  // Import tabs
   const [activeTab, setActiveTab] = useState<"list" | "import" | "import-history" | "trash">("list");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDanger?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     setSelectedIds([]);
@@ -135,23 +148,51 @@ export default function CandidatesAdmin() {
     }
   };
 
+  // Custom confirm dialog trigger helper
+  const showConfirm = (options: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDanger?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: options.title,
+      message: options.message,
+      confirmText: options.confirmText || "Confirm",
+      cancelText: options.cancelText || "Cancel",
+      isDanger: options.isDanger || false,
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        await options.onConfirm();
+      }
+    });
+  };
+
   // Trash actions
   const handleSoftDelete = async () => {
     if (!selectedCandidate) return;
-    if (!window.confirm("Are you sure you want to move this candidate application to trash?")) {
-      return;
-    }
-    setActionLoading(true);
-    try {
-      await softDeleteCandidate(selectedCandidate.id);
-      setSelectedCandidateId(null);
-      await loadCandidates();
-    } catch (err) {
-      console.error("Failed to soft delete candidate:", err);
-      alert("Failed to move candidate to trash.");
-    } finally {
-      setActionLoading(false);
-    }
+    showConfirm({
+      title: "Move to Trash",
+      message: "Are you sure you want to move this candidate application to trash?",
+      confirmText: "Move to Trash",
+      isDanger: true,
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          await softDeleteCandidate(selectedCandidate.id);
+          setSelectedCandidateId(null);
+          await loadCandidates();
+        } catch (err) {
+          console.error("Failed to soft delete candidate:", err);
+          alert("Failed to move candidate to trash.");
+        } finally {
+          setActionLoading(false);
+        }
+      }
+    });
   };
 
   const handleRestore = async () => {
@@ -171,20 +212,25 @@ export default function CandidatesAdmin() {
 
   const handlePermanentDelete = async () => {
     if (!selectedCandidate) return;
-    if (!window.confirm("WARNING: Are you sure you want to PERMANENTLY delete this candidate application? This action CANNOT be undone.")) {
-      return;
-    }
-    setActionLoading(true);
-    try {
-      await hardDeleteCandidate(selectedCandidate.id);
-      setSelectedCandidateId(null);
-      await loadCandidates();
-    } catch (err) {
-      console.error("Failed to permanently delete candidate:", err);
-      alert("Failed to delete candidate permanently.");
-    } finally {
-      setActionLoading(false);
-    }
+    showConfirm({
+      title: "⚠️ Permanent Deletion",
+      message: "WARNING: Are you sure you want to PERMANENTLY delete this candidate application? This action CANNOT be undone.",
+      confirmText: "Delete Permanently",
+      isDanger: true,
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          await hardDeleteCandidate(selectedCandidate.id);
+          setSelectedCandidateId(null);
+          await loadCandidates();
+        } catch (err) {
+          console.error("Failed to permanently delete candidate:", err);
+          alert("Failed to delete candidate permanently.");
+        } finally {
+          setActionLoading(false);
+        }
+      }
+    });
   };
 
   const handleSelectRow = (id: string) => {
@@ -204,63 +250,100 @@ export default function CandidatesAdmin() {
 
   const handleBulkRegenerateCertificates = async () => {
     if (selectedIds.length === 0) return;
-    if (!window.confirm(`Are you sure you want to regenerate certificates for the ${selectedIds.length} selected candidate(s)?`)) {
-      return;
-    }
-    setActionLoading(true);
-    try {
-      const res = await bulkRegenerateCertificates(selectedIds);
-      alert(`Bulk certificate regeneration complete.\nProcessed: ${res.processed}\nSuccessful: ${res.success_count}\nFailed: ${res.failed_count}`);
-      setSelectedIds([]);
-      await loadCandidates();
-    } catch (err) {
-      console.error("Failed bulk certificate regeneration:", err);
-      alert("Failed to run bulk certificate regeneration.");
-    } finally {
-      setActionLoading(false);
-    }
+    showConfirm({
+      title: "Regenerate Certificates",
+      message: `Are you sure you want to regenerate certificates for the ${selectedIds.length} selected candidate(s)?`,
+      confirmText: "Regenerate",
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          const res = await bulkRegenerateCertificates(selectedIds);
+          alert(`Bulk certificate regeneration complete.\nProcessed: ${res.processed}\nSuccessful: ${res.success_count}\nFailed: ${res.failed_count}`);
+          setSelectedIds([]);
+          await loadCandidates();
+        } catch (err) {
+          console.error("Failed bulk certificate regeneration:", err);
+          alert("Failed to run bulk certificate regeneration.");
+        } finally {
+          setActionLoading(false);
+        }
+      }
+    });
   };
 
   const handleBulkPermanentDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!window.confirm(`WARNING: Are you sure you want to PERMANENTLY delete the ${selectedIds.length} selected candidate(s)? This action is IRREVERSIBLE and will also delete all uploaded candidate documents and generated certificates from storage!`)) {
-      return;
-    }
-    setActionLoading(true);
-    try {
-      await bulkHardDeleteCandidates(selectedIds);
-      alert(`Successfully deleted the selected candidates and cleaned up all associated storage files.`);
-      setSelectedIds([]);
-      await loadCandidates();
-    } catch (err) {
-      console.error("Failed bulk permanent delete:", err);
-      alert("Failed to permanently delete the selected candidates.");
-    } finally {
-      setActionLoading(false);
-    }
+    showConfirm({
+      title: "⚠️ Bulk Permanent Deletion",
+      message: `WARNING: Are you sure you want to PERMANENTLY delete the ${selectedIds.length} selected candidate(s)? This action is IRREVERSIBLE and will also delete all uploaded candidate documents and generated certificates from storage!`,
+      confirmText: "Delete Permanently",
+      isDanger: true,
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          await bulkHardDeleteCandidates(selectedIds);
+          alert(`Successfully deleted the selected candidates and cleaned up all associated storage files.`);
+          setSelectedIds([]);
+          await loadCandidates();
+        } catch (err) {
+          console.error("Failed bulk permanent delete:", err);
+          alert("Failed to permanently delete the selected candidates.");
+        } finally {
+          setActionLoading(false);
+        }
+      }
+    });
+  };
+
+  const handleBulkSoftDelete = async () => {
+    if (selectedIds.length === 0) return;
+    showConfirm({
+      title: "Move Selected to Trash",
+      message: `Are you sure you want to move the ${selectedIds.length} selected candidate(s) to trash?`,
+      confirmText: "Move to Trash",
+      isDanger: true,
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          await bulkSoftDeleteCandidates(selectedIds);
+          alert(`Successfully moved ${selectedIds.length} candidates to trash.`);
+          setSelectedIds([]);
+          await loadCandidates();
+        } catch (err) {
+          console.error("Failed bulk soft delete:", err);
+          alert("Failed to move selected candidates to trash.");
+        } finally {
+          setActionLoading(false);
+        }
+      }
+    });
   };
 
   const handleRegenerateSingle = async (id: string) => {
-    if (!window.confirm("Are you sure you want to regenerate the certificate for this candidate?")) {
-      return;
-    }
-    setActionLoading(true);
-    try {
-      await regenerateCertificate(id);
-      alert("Certificate regenerated successfully.");
-      // Refresh selected candidate detail
-      if (selectedCandidateId === id) {
-        const updated = await getCandidateById(id);
-        setSelectedCandidate(updated);
+    showConfirm({
+      title: "Regenerate Certificate",
+      message: "Are you sure you want to regenerate the certificate for this candidate?",
+      confirmText: "Regenerate",
+      onConfirm: async () => {
+        setActionLoading(true);
+        try {
+          await regenerateCertificate(id);
+          alert("Certificate regenerated successfully.");
+          // Refresh selected candidate detail
+          if (selectedCandidateId === id) {
+            const updated = await getCandidateById(id);
+            setSelectedCandidate(updated);
+          }
+          await loadCandidates();
+        } catch (err: any) {
+          console.error("Failed to regenerate certificate:", err);
+          const detail = err.response?.data?.detail || "Failed to regenerate certificate.";
+          alert(detail);
+        } finally {
+          setActionLoading(false);
+        }
       }
-      await loadCandidates();
-    } catch (err: any) {
-      console.error("Failed to regenerate certificate:", err);
-      const detail = err.response?.data?.detail || "Failed to regenerate certificate.";
-      alert(detail);
-    } finally {
-      setActionLoading(false);
-    }
+    });
   };
 
   // Load Notifications
@@ -314,14 +397,12 @@ export default function CandidatesAdmin() {
       await updateCandidateStatus(
         selectedCandidate.id,
         statusUpdateVal,
-        statusRemarks,
         courseStartDateVal ? new Date(courseStartDateVal).toISOString() : undefined,
         completedAtVal ? new Date(completedAtVal).toISOString() : undefined,
         courseDurationVal || undefined,
         performanceVal || undefined,
         courseAppliedVal || undefined
       );
-      setStatusRemarks("");
       await loadSelectedCandidate(selectedCandidate.id);
       await loadCandidates();
     } catch (err) {
@@ -478,26 +559,48 @@ export default function CandidatesAdmin() {
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 {activeTab === 'list' && (
-                  <button
-                    onClick={handleBulkRegenerateCertificates}
-                    disabled={actionLoading}
-                    style={{
-                      background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '6px',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>workspace_premium</span>
-                    {actionLoading ? "Regenerating..." : "Regenerate Certificates"}
-                  </button>
+                  <>
+                    <button
+                      onClick={handleBulkRegenerateCertificates}
+                      disabled={actionLoading}
+                      style={{
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>workspace_premium</span>
+                      {actionLoading ? "Regenerating..." : "Regenerate Certificates"}
+                    </button>
+                    <button
+                      onClick={handleBulkSoftDelete}
+                      disabled={actionLoading}
+                      style={{
+                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                      {actionLoading ? "Deleting..." : "Move to Trash"}
+                    </button>
+                  </>
                 )}
 
                 {activeTab === 'trash' && (
@@ -1242,18 +1345,7 @@ export default function CandidatesAdmin() {
                               <option value="satisfactory">Satisfactory</option>
                             </select>
 
-                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Counselor Remarks</label>
-                            <input
-                              type="text"
-                              placeholder="Add counselor remarks..."
-                              value={statusRemarks}
-                              onChange={(e) => setStatusRemarks(e.target.value)}
-                              style={{
-                                ...styles.remarksInput,
-                                width: "100%",
-                                boxSizing: "border-box",
-                              }}
-                            />
+
                             <button
                               type="submit"
                               disabled={actionLoading}
@@ -1358,6 +1450,103 @@ export default function CandidatesAdmin() {
               )}
             </div>
           )}
+        </div>
+      )}
+      {confirmDialog.isOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#1e293b',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: '480px',
+            width: '100%',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
+            color: '#fff'
+          }}>
+            <h3 style={{
+              margin: '0 0 12px 0',
+              fontSize: '18px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: confirmDialog.isDanger ? '#ef4444' : '#3b82f6'
+            }}>
+              <span className="material-symbols-outlined">
+                {confirmDialog.isDanger ? 'warning' : 'help'}
+              </span>
+              {confirmDialog.title}
+            </h3>
+            
+            <p style={{
+              margin: '0 0 24px 0',
+              fontSize: '14px',
+              color: '#94a3b8',
+              lineHeight: '1.6'
+            }}>
+              {confirmDialog.message}
+            </p>
+            
+            <div style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px'
+            }}>
+              <button
+                type="button"
+                onClick={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#94a3b8',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {confirmDialog.cancelText || 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => confirmDialog.onConfirm()}
+                style={{
+                  background: confirmDialog.isDanger
+                    ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                    : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 20px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: confirmDialog.isDanger
+                    ? '0 4px 12px rgba(239, 68, 68, 0.25)'
+                    : '0 4px 12px rgba(59, 130, 246, 0.25)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {confirmDialog.confirmText || 'Confirm'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

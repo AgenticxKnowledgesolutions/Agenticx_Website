@@ -120,7 +120,6 @@ const mapCandidate = (c: any): Candidate => {
     candidateSource: c.candidate_source,
     candidateToken: c.candidate_token,
     nextFollowupAt: c.next_followup_at || undefined,
-    remarks: c.remarks || undefined,
     cvUrl: c.cv_url || undefined,
     photoUrl: c.photo_url || undefined,
     aadhaarUrl: c.aadhaar_url || undefined,
@@ -237,7 +236,6 @@ export const getCandidateById = async (id: string): Promise<Candidate> => {
 export const updateCandidateStatus = async (
   id: string,
   status: string,
-  remarks?: string,
   courseStartDate?: string,
   completedAt?: string,
   courseDuration?: string,
@@ -246,7 +244,6 @@ export const updateCandidateStatus = async (
 ): Promise<any> => {
   const res = await api.put(`/candidates/${id}/status`, {
     status,
-    remarks,
     course_start_date: courseStartDate || null,
     completed_at: completedAt || null,
     course_duration: courseDuration || null,
@@ -369,6 +366,13 @@ export const bulkRegenerateCertificates = async (candidateIds: string[]): Promis
 export const bulkHardDeleteCandidates = async (candidateIds: string[]): Promise<any> => {
   const res = await api.delete("/candidates/permanent", {
     data: { candidate_ids: candidateIds },
+  });
+  return res.data;
+};
+
+export const bulkSoftDeleteCandidates = async (candidateIds: string[]): Promise<any> => {
+  const res = await api.post("/candidates/bulk-trash", {
+    candidate_ids: candidateIds,
   });
   return res.data;
 };
