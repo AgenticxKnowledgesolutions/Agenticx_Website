@@ -1,4 +1,5 @@
 import { api } from "./apiService";
+import { useAuthStore } from "../store/useAuthStore";
 
 export interface CandidateNote {
   id: string;
@@ -300,10 +301,14 @@ export const processImport = async (
   formData.append("mode", mode);
   if (tag) formData.append("tag", tag);
 
+  const token = useAuthStore.getState().accessToken || localStorage.getItem("admin_token");
+
   const res = await api.post("/candidates/import/process", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    timeout: 60000,
   });
   return res.data;
 };
