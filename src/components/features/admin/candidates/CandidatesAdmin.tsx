@@ -45,6 +45,7 @@ export default function CandidatesAdmin() {
   const [completedAtVal, setCompletedAtVal] = useState("");
   const [courseDurationVal, setCourseDurationVal] = useState("");
   const [performanceVal, setPerformanceVal] = useState("");
+  const [programTypeVal, setProgramTypeVal] = useState("");
   const [courseAppliedVal, setCourseAppliedVal] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -139,7 +140,27 @@ export default function CandidatesAdmin() {
       setCourseStartDateVal(c.courseStartDate ? c.courseStartDate.split("T")[0] : "");
       setCompletedAtVal(c.completedAt ? c.completedAt.split("T")[0] : "");
       setCourseDurationVal(c.courseDuration || "");
-      setPerformanceVal(c.performance || "");
+      const normalizePerformance = (p?: string) => {
+        if (!p) return "";
+        const lower = p.toLowerCase();
+        if (lower === "excellent") return "Excellent";
+        if (lower === "good") return "Good";
+        if (lower === "average") return "Average";
+        if (lower === "satisfactory") return "Satisfactory";
+        return p;
+      };
+      const normalizeProgramType = (pt?: string) => {
+        if (!pt) return "";
+        const lower = pt.toLowerCase();
+        if (lower === "course") return "Course";
+        if (lower === "internship") return "Internship";
+        if (lower === "crash course") return "Crash Course";
+        if (lower === "webinar") return "Webinar";
+        if (lower === "workshop") return "Workshop";
+        return pt;
+      };
+      setPerformanceVal(normalizePerformance(c.performance));
+      setProgramTypeVal(normalizeProgramType(c.programType));
       setCourseAppliedVal(c.courseApplied || "");
     } catch (err) {
       console.error("Failed to load candidate detail:", err);
@@ -392,6 +413,16 @@ export default function CandidatesAdmin() {
   const handleStatusChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCandidate) return;
+    if (statusUpdateVal.toLowerCase() === "completed") {
+      if (!programTypeVal) {
+        alert("Program Type is required before marking status as Completed.");
+        return;
+      }
+      if (!performanceVal) {
+        alert("Performance is required before marking status as Completed.");
+        return;
+      }
+    }
     setActionLoading(true);
     try {
       await updateCandidateStatus(
@@ -401,12 +432,15 @@ export default function CandidatesAdmin() {
         completedAtVal ? new Date(completedAtVal).toISOString() : undefined,
         courseDurationVal || undefined,
         performanceVal || undefined,
+        programTypeVal || undefined,
         courseAppliedVal || undefined
       );
       await loadSelectedCandidate(selectedCandidate.id);
       await loadCandidates();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update status:", err);
+      const detail = err.response?.data?.detail || "Failed to update status.";
+      alert(detail);
     } finally {
       setActionLoading(false);
     }
@@ -1323,6 +1357,29 @@ export default function CandidatesAdmin() {
                               }}
                             />
 
+                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Program Type</label>
+                            <select
+                              value={programTypeVal}
+                              onChange={(e) => setProgramTypeVal(e.target.value)}
+                              style={{
+                                ...styles.selectInput,
+                                width: "100%",
+                                boxSizing: "border-box",
+                                padding: "8px 12px",
+                                background: "#1e293b",
+                                border: "1px solid rgba(255,255,255,0.1)",
+                                borderRadius: "6px",
+                                color: "#fff"
+                              }}
+                            >
+                              <option value="">Select Program Type...</option>
+                              <option value="Course">Course</option>
+                              <option value="Internship">Internship</option>
+                              <option value="Crash Course">Crash Course</option>
+                              <option value="Webinar">Webinar</option>
+                              <option value="Workshop">Workshop</option>
+                            </select>
+
                             <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Performance</label>
                             <select
                               value={performanceVal}
@@ -1339,10 +1396,10 @@ export default function CandidatesAdmin() {
                               }}
                             >
                               <option value="">Select Performance...</option>
-                              <option value="excellent">Excellent</option>
-                              <option value="good">Good</option>
-                              <option value="average">Average</option>
-                              <option value="satisfactory">Satisfactory</option>
+                              <option value="Excellent">Excellent</option>
+                              <option value="Good">Good</option>
+                              <option value="Average">Average</option>
+                              <option value="Satisfactory">Satisfactory</option>
                             </select>
 
 

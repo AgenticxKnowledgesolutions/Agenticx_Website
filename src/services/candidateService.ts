@@ -62,6 +62,7 @@ export interface Candidate {
   courseStartDate?: string;
   courseDuration?: string;
   performance?: string;
+  programType?: string;
   createdAt: string;
   updatedAt: string;
   notes?: CandidateNote[];
@@ -134,6 +135,7 @@ const mapCandidate = (c: any): Candidate => {
     courseStartDate: c.course_start_date || undefined,
     courseDuration: c.course_duration || undefined,
     performance: c.performance || undefined,
+    programType: c.program_type || undefined,
     createdAt: c.created_at,
     updatedAt: c.updated_at,
     notes: Array.isArray(c.notes)
@@ -240,6 +242,7 @@ export const updateCandidateStatus = async (
   completedAt?: string,
   courseDuration?: string,
   performance?: string,
+  programType?: string,
   courseApplied?: string
 ): Promise<any> => {
   const res = await api.put(`/candidates/${id}/status`, {
@@ -248,6 +251,7 @@ export const updateCandidateStatus = async (
     completed_at: completedAt || null,
     course_duration: courseDuration || null,
     performance: performance || null,
+    program_type: programType || null,
     course_applied: courseApplied || null,
   });
   return res.data;
