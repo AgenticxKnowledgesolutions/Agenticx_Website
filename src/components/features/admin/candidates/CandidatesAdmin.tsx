@@ -3,7 +3,6 @@ import {
   listCandidates,
   getCandidateById,
   updateCandidateStatus,
-  addCandidateNote,
   getNotifications,
   markNotificationsRead,
   uploadCandidateDocument,
@@ -39,7 +38,6 @@ export default function CandidatesAdmin() {
   const [detailLoading, setDetailLoading] = useState(false);
 
   // Note/Status actions
-  const [newNoteContent, setNewNoteContent] = useState("");
   const [statusUpdateVal, setStatusUpdateVal] = useState("");
   const [courseStartDateVal, setCourseStartDateVal] = useState("");
   const [completedAtVal, setCompletedAtVal] = useState("");
@@ -47,7 +45,16 @@ export default function CandidatesAdmin() {
   const [performanceVal, setPerformanceVal] = useState("");
   const [programTypeVal, setProgramTypeVal] = useState("");
   const [courseAppliedVal, setCourseAppliedVal] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Document Uploads
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null);
@@ -136,7 +143,7 @@ export default function CandidatesAdmin() {
     try {
       const c = await getCandidateById(id);
       setSelectedCandidate(c);
-      setStatusUpdateVal(c.applicationStatus);
+      setStatusUpdateVal((c.applicationStatus || "").toLowerCase());
       setCourseStartDateVal(c.courseStartDate ? c.courseStartDate.split("T")[0] : "");
       setCompletedAtVal(c.completedAt ? c.completedAt.split("T")[0] : "");
       setCourseDurationVal(c.courseDuration || "");
@@ -201,16 +208,17 @@ export default function CandidatesAdmin() {
       confirmText: "Move to Trash",
       isDanger: true,
       onConfirm: async () => {
-        setActionLoading(true);
+        setIsDeleting(true);
         try {
           await softDeleteCandidate(selectedCandidate.id);
           setSelectedCandidateId(null);
           await loadCandidates();
+          showToast("Candidate moved to trash", "success");
         } catch (err) {
           console.error("Failed to soft delete candidate:", err);
           alert("Failed to move candidate to trash.");
         } finally {
-          setActionLoading(false);
+          setIsDeleting(false);
         }
       }
     });
@@ -218,16 +226,17 @@ export default function CandidatesAdmin() {
 
   const handleRestore = async () => {
     if (!selectedCandidate) return;
-    setActionLoading(true);
+    setIsDeleting(true);
     try {
       await restoreCandidate(selectedCandidate.id);
       setSelectedCandidateId(null);
       await loadCandidates();
+      showToast("Candidate restored successfully", "success");
     } catch (err) {
       console.error("Failed to restore candidate:", err);
       alert("Failed to restore candidate.");
     } finally {
-      setActionLoading(false);
+      setIsDeleting(false);
     }
   };
 
@@ -239,16 +248,17 @@ export default function CandidatesAdmin() {
       confirmText: "Delete Permanently",
       isDanger: true,
       onConfirm: async () => {
-        setActionLoading(true);
+        setIsDeleting(true);
         try {
           await hardDeleteCandidate(selectedCandidate.id);
           setSelectedCandidateId(null);
           await loadCandidates();
+          showToast("Candidate permanently deleted", "success");
         } catch (err) {
           console.error("Failed to permanently delete candidate:", err);
           alert("Failed to delete candidate permanently.");
         } finally {
-          setActionLoading(false);
+          setIsDeleting(false);
         }
       }
     });
@@ -276,7 +286,7 @@ export default function CandidatesAdmin() {
       message: `Are you sure you want to regenerate certificates for the ${selectedIds.length} selected candidate(s)?`,
       confirmText: "Regenerate",
       onConfirm: async () => {
-        setActionLoading(true);
+        setIsRegenerating(true);
         try {
           const res = await bulkRegenerateCertificates(selectedIds);
           alert(`Bulk certificate regeneration complete.\nProcessed: ${res.processed}\nSuccessful: ${res.success_count}\nFailed: ${res.failed_count}`);
@@ -286,7 +296,7 @@ export default function CandidatesAdmin() {
           console.error("Failed bulk certificate regeneration:", err);
           alert("Failed to run bulk certificate regeneration.");
         } finally {
-          setActionLoading(false);
+          setIsRegenerating(false);
         }
       }
     });
@@ -300,7 +310,7 @@ export default function CandidatesAdmin() {
       confirmText: "Delete Permanently",
       isDanger: true,
       onConfirm: async () => {
-        setActionLoading(true);
+        setIsDeleting(true);
         try {
           await bulkHardDeleteCandidates(selectedIds);
           alert(`Successfully deleted the selected candidates and cleaned up all associated storage files.`);
@@ -310,7 +320,7 @@ export default function CandidatesAdmin() {
           console.error("Failed bulk permanent delete:", err);
           alert("Failed to permanently delete the selected candidates.");
         } finally {
-          setActionLoading(false);
+          setIsDeleting(false);
         }
       }
     });
@@ -324,7 +334,7 @@ export default function CandidatesAdmin() {
       confirmText: "Move to Trash",
       isDanger: true,
       onConfirm: async () => {
-        setActionLoading(true);
+        setIsDeleting(true);
         try {
           await bulkSoftDeleteCandidates(selectedIds);
           alert(`Successfully moved ${selectedIds.length} candidates to trash.`);
@@ -334,7 +344,7 @@ export default function CandidatesAdmin() {
           console.error("Failed bulk soft delete:", err);
           alert("Failed to move selected candidates to trash.");
         } finally {
-          setActionLoading(false);
+          setIsDeleting(false);
         }
       }
     });
@@ -346,10 +356,10 @@ export default function CandidatesAdmin() {
       message: "Are you sure you want to regenerate the certificate for this candidate?",
       confirmText: "Regenerate",
       onConfirm: async () => {
-        setActionLoading(true);
+        setIsRegenerating(true);
         try {
           await regenerateCertificate(id);
-          alert("Certificate regenerated successfully.");
+          showToast("Certificate regenerated successfully.", "success");
           // Refresh selected candidate detail
           if (selectedCandidateId === id) {
             const updated = await getCandidateById(id);
@@ -361,7 +371,7 @@ export default function CandidatesAdmin() {
           const detail = err.response?.data?.detail || "Failed to regenerate certificate.";
           alert(detail);
         } finally {
-          setActionLoading(false);
+          setIsRegenerating(false);
         }
       }
     });
@@ -395,21 +405,6 @@ export default function CandidatesAdmin() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleAddNote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedCandidate || !newNoteContent.trim()) return;
-    setActionLoading(true);
-    try {
-      await addCandidateNote(selectedCandidate.id, newNoteContent);
-      setNewNoteContent("");
-      await loadSelectedCandidate(selectedCandidate.id);
-    } catch (err) {
-      console.error("Failed to add note:", err);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const handleStatusChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCandidate) return;
@@ -423,7 +418,7 @@ export default function CandidatesAdmin() {
         return;
       }
     }
-    setActionLoading(true);
+    setIsUpdatingStatus(true);
     try {
       await updateCandidateStatus(
         selectedCandidate.id,
@@ -437,12 +432,13 @@ export default function CandidatesAdmin() {
       );
       await loadSelectedCandidate(selectedCandidate.id);
       await loadCandidates();
+      showToast("Admission status updated successfully!", "success");
     } catch (err: any) {
       console.error("Failed to update status:", err);
       const detail = err.response?.data?.detail || "Failed to update status.";
       alert(detail);
     } finally {
-      setActionLoading(false);
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -459,6 +455,22 @@ export default function CandidatesAdmin() {
 
   return (
     <div style={styles.adminContainer}>
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: toast.type === 'success' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          zIndex: 99999,
+          fontWeight: '600'
+        }}>
+          {toast.message}
+        </div>
+      )}
       {/* Top Navigation & Notifications bar */}
       <div style={styles.topHeader}>
         <div style={styles.tabButtons}>
@@ -596,7 +608,7 @@ export default function CandidatesAdmin() {
                   <>
                     <button
                       onClick={handleBulkRegenerateCertificates}
-                      disabled={actionLoading}
+                      disabled={isRegenerating}
                       style={{
                         background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                         color: '#fff',
@@ -605,18 +617,19 @@ export default function CandidatesAdmin() {
                         borderRadius: '6px',
                         fontSize: '13px',
                         fontWeight: 600,
-                        cursor: 'pointer',
+                        cursor: isRegenerating ? 'not-allowed' : 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px'
+                        gap: '4px',
+                        opacity: isRegenerating ? 0.7 : 1
                       }}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>workspace_premium</span>
-                      {actionLoading ? "Regenerating..." : "Regenerate Certificates"}
+                      {isRegenerating ? "Regenerating..." : "Regenerate Certificates"}
                     </button>
                     <button
                       onClick={handleBulkSoftDelete}
-                      disabled={actionLoading}
+                      disabled={isDeleting}
                       style={{
                         background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                         color: '#fff',
@@ -625,14 +638,15 @@ export default function CandidatesAdmin() {
                         borderRadius: '6px',
                         fontSize: '13px',
                         fontWeight: 600,
-                        cursor: 'pointer',
+                        cursor: isDeleting ? 'not-allowed' : 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px'
+                        gap: '4px',
+                        opacity: isDeleting ? 0.7 : 1
                       }}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
-                      {actionLoading ? "Deleting..." : "Move to Trash"}
+                      {isDeleting ? "Deleting..." : "Move to Trash"}
                     </button>
                   </>
                 )}
@@ -640,7 +654,7 @@ export default function CandidatesAdmin() {
                 {activeTab === 'trash' && (
                   <button
                     onClick={handleBulkPermanentDelete}
-                    disabled={actionLoading}
+                    disabled={isDeleting}
                     style={{
                       background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                       color: '#fff',
@@ -649,14 +663,15 @@ export default function CandidatesAdmin() {
                       borderRadius: '6px',
                       fontSize: '13px',
                       fontWeight: 600,
-                      cursor: 'pointer',
+                      cursor: isDeleting ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px'
+                      gap: '4px',
+                      opacity: isDeleting ? 0.7 : 1
                     }}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete_forever</span>
-                    {actionLoading ? "Deleting..." : "Delete Permanently"}
+                    {isDeleting ? "Deleting..." : "Delete Permanently"}
                   </button>
                 )}
 
@@ -769,6 +784,7 @@ export default function CandidatesAdmin() {
                           <th>App Number</th>
                           <th>Full Name</th>
                           <th>Course</th>
+                          <th>Program</th>
                           <th>Status</th>
                           <th>Documents</th>
                           <th>Source</th>
@@ -797,6 +813,7 @@ export default function CandidatesAdmin() {
                               <div style={{ fontSize: "12px", color: "#64748b" }}>{c.email} • {c.phone}</div>
                             </td>
                             <td>{c.courseApplied}</td>
+                            <td>{c.programType || "-"}</td>
                             <td>
                               <span
                                 style={{
@@ -858,7 +875,22 @@ export default function CandidatesAdmin() {
                         </div>
                         <div style={styles.cardName}>{c.fullName}</div>
                         <div style={styles.cardInfo}>{c.email} | {c.phone}</div>
-                        <div style={styles.cardCourse}>{c.courseApplied}</div>
+                        <div style={styles.cardCourse}>
+                          {c.courseApplied}
+                          {c.programType && (
+                            <span style={{
+                              marginLeft: '8px',
+                              padding: '2px 6px',
+                              background: 'rgba(255,255,255,0.06)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              color: '#94a3b8'
+                            }}>
+                              {c.programType}
+                            </span>
+                          )}
+                        </div>
                         <div style={styles.cardFooter}>
                           <span
                             style={{
@@ -1189,15 +1221,15 @@ export default function CandidatesAdmin() {
                                         type="button"
                                         className="doc-upload-label"
                                         onClick={() => handleRegenerateSingle(selectedCandidate.id)}
-                                        disabled={actionLoading}
+                                        disabled={isRegenerating}
                                         style={{
                                           background: "rgba(59, 130, 246, 0.1)",
                                           border: "1px solid rgba(59, 130, 246, 0.2)",
                                           color: "#3b82f6",
-                                          cursor: "pointer"
+                                          cursor: isRegenerating ? "not-allowed" : "pointer"
                                         }}
                                       >
-                                        {actionLoading ? "Regenerating..." : "🔄 Regenerate"}
+                                        {isRegenerating ? "Regenerating..." : "🔄 Regenerate"}
                                       </button>
                                     )
                                   ) : (
@@ -1233,36 +1265,38 @@ export default function CandidatesAdmin() {
                           <button
                             type="button"
                             onClick={handleRestore}
-                            disabled={actionLoading}
+                            disabled={isDeleting}
                             style={{
                               background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                               border: "none",
                               color: "white",
                               padding: "10px",
                               borderRadius: "8px",
-                              cursor: "pointer",
+                              cursor: isDeleting ? "not-allowed" : "pointer",
                               fontWeight: "600",
-                              transition: "all 0.2s"
+                              transition: "all 0.2s",
+                              opacity: isDeleting ? 0.7 : 1
                             }}
                           >
-                            {actionLoading ? "Restoring..." : "✨ Restore Candidate"}
+                            {isDeleting ? "Restoring..." : "✨ Restore Candidate"}
                           </button>
                           <button
                             type="button"
                             onClick={handlePermanentDelete}
-                            disabled={actionLoading}
+                            disabled={isDeleting}
                             style={{
                               background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
                               border: "none",
                               color: "white",
                               padding: "10px",
                               borderRadius: "8px",
-                              cursor: "pointer",
+                              cursor: isDeleting ? "not-allowed" : "pointer",
                               fontWeight: "600",
-                              transition: "all 0.2s"
+                              transition: "all 0.2s",
+                              opacity: isDeleting ? 0.7 : 1
                             }}
                           >
-                            {actionLoading ? "Deleting..." : "🚨 Permanent Delete"}
+                            {isDeleting ? "Deleting..." : "🚨 Permanent Delete"}
                           </button>
                         </div>
                       </div>
@@ -1279,12 +1313,12 @@ export default function CandidatesAdmin() {
                                 width: "100%",
                               }}
                             >
-                              <option value="Submitted">Submitted</option>
-                              <option value="Under Review">Under Review</option>
-                              <option value="Approved">Approved</option>
-                              <option value="Rejected">Rejected</option>
-                              <option value="Enrolled">Enrolled</option>
-                              <option value="Completed">Completed</option>
+                              <option value="submitted">Submitted</option>
+                              <option value="under review">Under Review</option>
+                              <option value="approved">Approved</option>
+                              <option value="rejected">Rejected</option>
+                              <option value="enrolled">Enrolled</option>
+                              <option value="completed">Completed</option>
                             </select>
                             
                             <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course Applied For</label>
@@ -1403,56 +1437,66 @@ export default function CandidatesAdmin() {
                             </select>
 
 
-                            <button
-                              type="submit"
-                              disabled={actionLoading}
-                              style={{
-                                ...styles.actionBtn,
-                                width: "100%",
-                              }}
-                            >
-                              {actionLoading ? "Updating..." : "Update Status"}
-                            </button>
+                            {(() => {
+                              const isStatusChanged = statusUpdateVal.toLowerCase() !== (selectedCandidate?.applicationStatus || "").toLowerCase();
+                              const isDisabled = isUpdatingStatus || !isStatusChanged;
+                              return (
+                                <button
+                                  type="submit"
+                                  disabled={isDisabled}
+                                  style={{
+                                    ...styles.actionBtn,
+                                    width: "100%",
+                                    opacity: isDisabled ? 0.5 : 1,
+                                    cursor: isDisabled ? "not-allowed" : "pointer"
+                                  }}
+                                >
+                                  {isUpdatingStatus ? "Saving..." : "Save Status"}
+                                </button>
+                              );
+                            })()}
                           </div>
                         </form>
                         <button
                           type="button"
                           onClick={handleSoftDelete}
-                          disabled={actionLoading}
+                          disabled={isDeleting}
                           style={{
                             background: "rgba(239, 68, 68, 0.08)",
                             border: "1px solid rgba(239, 68, 68, 0.2)",
                             color: "#ef4444",
                             padding: "10px",
                             borderRadius: "8px",
-                            cursor: "pointer",
+                            cursor: isDeleting ? "not-allowed" : "pointer",
                             fontWeight: "600",
                             width: "100%",
                             marginTop: "12px",
-                            transition: "all 0.2s"
+                            transition: "all 0.2s",
+                            opacity: isDeleting ? 0.7 : 1
                           }}
                         >
-                          {actionLoading ? "Moving to Trash..." : "🗑️ Move to Trash"}
+                          {isDeleting ? "Moving to Trash..." : "🗑️ Move to Trash"}
                         </button>
-                        {selectedCandidate.applicationStatus === "Completed" && (
+                        {(selectedCandidate.applicationStatus || "").toLowerCase() === "completed" && (
                           <button
                             type="button"
                             onClick={() => handleRegenerateSingle(selectedCandidate.id)}
-                            disabled={actionLoading}
+                            disabled={isRegenerating}
                             style={{
                               background: "rgba(59, 130, 246, 0.08)",
                               border: "1px solid rgba(59, 130, 246, 0.2)",
                               color: "#3b82f6",
                               padding: "10px",
                               borderRadius: "8px",
-                              cursor: "pointer",
+                              cursor: isRegenerating ? "not-allowed" : "pointer",
                               fontWeight: "600",
                               width: "100%",
                               marginTop: "12px",
-                              transition: "all 0.2s"
+                              transition: "all 0.2s",
+                              opacity: isRegenerating ? 0.7 : 1
                             }}
                           >
-                            {actionLoading ? "Regenerating..." : "🎓 Regenerate Certificate"}
+                            {isRegenerating ? "Regenerating..." : "🎓 Regenerate Certificate"}
                           </button>
                         )}
                       </div>
@@ -1460,48 +1504,7 @@ export default function CandidatesAdmin() {
 
 
 
-                    {/* Counselor Notes */}
-                    <div className="info-card-section">
-                      <h4>Counselor Remarks & Notes</h4>
-                      {activeTab !== "trash" && (
-                        <form onSubmit={handleAddNote} style={styles.noteForm}>
-                          <textarea
-                            required
-                            placeholder="Add counselor remark/note..."
-                            value={newNoteContent}
-                            onChange={(e) => setNewNoteContent(e.target.value)}
-                            rows={2}
-                            style={{
-                              ...styles.textareaInput,
-                              width: "100%",
-                              boxSizing: "border-box",
-                            }}
-                          />
-                          <button
-                            type="submit"
-                            disabled={actionLoading}
-                            style={{
-                              ...styles.actionBtn,
-                              width: "100%",
-                            }}
-                          >
-                            {actionLoading ? "Adding..." : "Add Note"}
-                          </button>
-                        </form>
-                      )}
 
-                      <div style={styles.notesList}>
-                        {selectedCandidate.notes?.map((n) => (
-                          <div key={n.id} style={styles.noteItem}>
-                            <div style={styles.noteHeader}>
-                              <strong>{n.createdBy}</strong>
-                              <span>{new Date(n.createdAt).toLocaleString()}</span>
-                            </div>
-                            <div style={styles.noteBody}>{n.content}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
