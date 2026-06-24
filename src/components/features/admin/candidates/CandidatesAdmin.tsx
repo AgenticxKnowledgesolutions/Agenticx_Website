@@ -46,6 +46,7 @@ export default function CandidatesAdmin() {
   const [programTypeVal, setProgramTypeVal] = useState("");
   const [courseAppliedVal, setCourseAppliedVal] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -226,7 +227,7 @@ export default function CandidatesAdmin() {
 
   const handleRestore = async () => {
     if (!selectedCandidate) return;
-    setIsDeleting(true);
+    setIsRestoring(true);
     try {
       await restoreCandidate(selectedCandidate.id);
       setSelectedCandidateId(null);
@@ -236,7 +237,7 @@ export default function CandidatesAdmin() {
       console.error("Failed to restore candidate:", err);
       alert("Failed to restore candidate.");
     } finally {
-      setIsDeleting(false);
+      setIsRestoring(false);
     }
   };
 
@@ -1265,35 +1266,35 @@ export default function CandidatesAdmin() {
                           <button
                             type="button"
                             onClick={handleRestore}
-                            disabled={isDeleting}
+                            disabled={isRestoring || isDeleting}
                             style={{
                               background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
                               border: "none",
                               color: "white",
                               padding: "10px",
                               borderRadius: "8px",
-                              cursor: isDeleting ? "not-allowed" : "pointer",
+                              cursor: (isRestoring || isDeleting) ? "not-allowed" : "pointer",
                               fontWeight: "600",
                               transition: "all 0.2s",
-                              opacity: isDeleting ? 0.7 : 1
+                              opacity: (isRestoring || isDeleting) ? 0.7 : 1
                             }}
                           >
-                            {isDeleting ? "Restoring..." : "✨ Restore Candidate"}
+                            {isRestoring ? "Restoring..." : "✨ Restore Candidate"}
                           </button>
                           <button
                             type="button"
                             onClick={handlePermanentDelete}
-                            disabled={isDeleting}
+                            disabled={isDeleting || isRestoring}
                             style={{
                               background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
                               border: "none",
                               color: "white",
                               padding: "10px",
                               borderRadius: "8px",
-                              cursor: isDeleting ? "not-allowed" : "pointer",
+                              cursor: (isDeleting || isRestoring) ? "not-allowed" : "pointer",
                               fontWeight: "600",
                               transition: "all 0.2s",
-                              opacity: isDeleting ? 0.7 : 1
+                              opacity: (isDeleting || isRestoring) ? 0.7 : 1
                             }}
                           >
                             {isDeleting ? "Deleting..." : "🚨 Permanent Delete"}
@@ -1438,8 +1439,36 @@ export default function CandidatesAdmin() {
 
 
                             {(() => {
+                              const getDbPerformance = (p?: string) => {
+                                if (!p) return "";
+                                const lower = p.toLowerCase();
+                                if (lower === "excellent") return "Excellent";
+                                if (lower === "good") return "Good";
+                                if (lower === "average") return "Average";
+                                if (lower === "satisfactory") return "Satisfactory";
+                                return p;
+                              };
+                              const getDbProgramType = (pt?: string) => {
+                                if (!pt) return "";
+                                const lower = pt.toLowerCase();
+                                if (lower === "course") return "Course";
+                                if (lower === "internship") return "Internship";
+                                if (lower === "crash course") return "Crash Course";
+                                if (lower === "webinar") return "Webinar";
+                                if (lower === "workshop") return "Workshop";
+                                return pt;
+                              };
+
                               const isStatusChanged = statusUpdateVal.toLowerCase() !== (selectedCandidate?.applicationStatus || "").toLowerCase();
-                              const isDisabled = isUpdatingStatus || !isStatusChanged;
+                              const isCourseAppliedChanged = courseAppliedVal !== (selectedCandidate?.courseApplied || "");
+                              const isCourseStartDateChanged = courseStartDateVal !== (selectedCandidate?.courseStartDate ? selectedCandidate.courseStartDate.split("T")[0] : "");
+                              const isCompletedAtChanged = completedAtVal !== (selectedCandidate?.completedAt ? selectedCandidate.completedAt.split("T")[0] : "");
+                              const isCourseDurationChanged = courseDurationVal !== (selectedCandidate?.courseDuration || "");
+                              const isPerformanceChanged = performanceVal !== getDbPerformance(selectedCandidate?.performance);
+                              const isProgramTypeChanged = programTypeVal !== getDbProgramType(selectedCandidate?.programType);
+
+                              const isAnyFieldChanged = isStatusChanged || isCourseAppliedChanged || isCourseStartDateChanged || isCompletedAtChanged || isCourseDurationChanged || isPerformanceChanged || isProgramTypeChanged;
+                              const isDisabled = isUpdatingStatus || !isAnyFieldChanged;
                               return (
                                 <button
                                   type="submit"
