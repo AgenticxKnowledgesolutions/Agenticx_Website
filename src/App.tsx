@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useSettingsStore } from './store/useSettingsStore'
 import AppLoader from './components/ui/AppLoader'
 import RootLayout from './components/layout/RootLayout'
+import ScrollToTop from './components/layout/ScrollToTop'
 import ProtectedRoute from './routes/ProtectedRoute'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 import { PageSkeleton, AdminSkeleton, CourseDetailSkeleton } from './components/ui/Skeletons'
@@ -94,6 +95,7 @@ function App() {
     <>
       {showLoader && <AppLoader isFadeOut={bootstrapFinished} />}
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* Main Public Website */}
           <Route path="/" element={<RootLayout />}>
