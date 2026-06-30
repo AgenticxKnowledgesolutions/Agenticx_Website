@@ -4,6 +4,7 @@ import { getCourseBySlug, type Course } from '@/services/courseService'
 import { createLead } from '@/services/leadService'
 import { CourseDetailSkeleton } from '@/components/ui/Skeletons'
 import SEO from '@/components/seo/SEO'
+import CertificateNotice from '@/components/ui/CertificateNotice'
 import '../styles/course-detail.css'
 
 export default function CourseDetail() {
@@ -140,6 +141,12 @@ export default function CourseDetail() {
           </div>
           <h1 className="cd-title">{course.title}</h1>
           <p className="cd-description">{course.description}</p>
+
+          <CertificateNotice 
+            title="🎓 Secure QR-Verified Certificate"
+            description="This program includes a secure QR-verified digital certificate upon successful completion. Certificates can be downloaded anytime. Employers and organizations can instantly verify authenticity using the embedded QR code."
+            ctaText="Open Certificate Portal →"
+          />
 
           {/* Stats Grid */}
           <div className="cd-stats-grid">

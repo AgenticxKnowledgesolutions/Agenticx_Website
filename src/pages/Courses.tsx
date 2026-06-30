@@ -7,6 +7,7 @@ import NeuralCanvas from '@/components/ui/NeuralCanvas'
 import { getCourses } from '@/services/courseService'
 import { CourseCardSkeleton } from '@/components/ui/Skeletons'
 import SEO from '@/components/seo/SEO'
+import CertificateNotice from '@/components/ui/CertificateNotice'
 
 export interface CourseData {
   id: string
@@ -68,6 +69,12 @@ export default function Courses() {
             <h1>Our Courses</h1>
             <p>Career Training Programs at AgenticX Knowledge Solutions</p>
           </div>
+
+          <CertificateNotice 
+            title="🎓 QR-Verified Digital Certificates"
+            description="Every eligible AgenticX Course, Internship, Workshop, and Webinar includes a secure QR-verified digital certificate upon successful completion. Already completed your program?"
+            ctaText="Download & Verify Your Certificate →"
+          />
 
           {loading || courses.length === 0 ? (
             <CourseGrid>
