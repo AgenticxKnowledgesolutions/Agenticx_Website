@@ -17,6 +17,8 @@ import {
   recordCandidatePayment,
 } from "../../../../services/candidateService";
 import type { Candidate, AdminNotification } from "../../../../services/candidateService";
+import { getCourses } from "../../../../services/courseService";
+import type { Course } from "../../../../services/courseService";
 import CandidatesImport from "./CandidatesImport";
 import CandidatesImportHistory from "./CandidatesImportHistory";
 
@@ -60,6 +62,7 @@ export default function CandidatesAdmin() {
   const [admissionFeeAmountVal, setAdmissionFeeAmountVal] = useState(250);
   const [autoEnrollEnabledVal, setAutoEnrollEnabledVal] = useState(true);
   const [isUpdatingOffer, setIsUpdatingOffer] = useState(false);
+  const [coursesList, setCoursesList] = useState<Course[]>([]);
 
   // Manual payment fields
   const [paymentAmountVal, setPaymentAmountVal] = useState("");
@@ -439,6 +442,18 @@ export default function CandidatesAdmin() {
     loadNotifications();
     const timer = setInterval(loadNotifications, 30000); // refresh notifications every 30 seconds
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const list = await getCourses();
+        setCoursesList(list || []);
+      } catch (err) {
+        console.error("Failed to fetch courses for prefilling:", err);
+      }
+    };
+    fetchCourses();
   }, []);
 
   const handleStatusChange = async (e: React.FormEvent) => {
@@ -1538,13 +1553,17 @@ export default function CandidatesAdmin() {
                               <option value="enrolled">Enrolled</option>
                               <option value="completed">Completed</option>
                             </select>
-                            
                             <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course Applied For</label>
-                            <input
-                              type="text"
-                              placeholder="e.g. MERN Stack, Webinar on Generative AI"
+                            <select
                               value={courseAppliedVal}
-                              onChange={(e) => setCourseAppliedVal(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCourseAppliedVal(val);
+                                const matched = coursesList.find(c => c.title === val);
+                                if (matched) {
+                                  setStandardCourseFeeVal(matched.price);
+                                }
+                              }}
                               style={{
                                 ...styles.remarksInput,
                                 width: "100%",
@@ -1553,9 +1572,20 @@ export default function CandidatesAdmin() {
                                 background: "#1e293b",
                                 border: "1px solid rgba(255,255,255,0.1)",
                                 borderRadius: "6px",
-                                color: "#fff"
+                                color: "#fff",
+                                cursor: "pointer"
                               }}
-                            />
+                            >
+                              <option value="">-- Select Course --</option>
+                              {coursesList.map((c) => (
+                                <option key={c.id} value={c.title}>
+                                  {c.title} (₹{c.price})
+                                </option>
+                              ))}
+                              {courseAppliedVal && !coursesList.some((c) => c.title === courseAppliedVal) && (
+                                <option value={courseAppliedVal}>{courseAppliedVal}</option>
+                              )}
+                            </select>
                             
                             <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course Start Date</label>
                             <input
@@ -1757,10 +1787,10 @@ export default function CandidatesAdmin() {
                             <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Standard Course Fee</label>
                             <input
                               type="number"
-                              disabled={activeTab === "trash"}
+                              disabled={true}
                               value={standardCourseFeeVal}
                               onChange={(e) => setStandardCourseFeeVal(Number(e.target.value))}
-                              style={styles.formInput}
+                              style={{ ...styles.formInput, opacity: 0.6, cursor: "not-allowed" }}
                             />
                           </div>
                           <div>
