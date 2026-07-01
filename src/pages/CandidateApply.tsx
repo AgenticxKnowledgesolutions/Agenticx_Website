@@ -268,13 +268,15 @@ export default function CandidateApply() {
             <h3 style={styles.sectionTitle}>1. Personal Information</h3>
             <div style={styles.grid}>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Full Name *</label>
+                <label style={styles.label}>
+                  Full Name <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "normal" }}>(Name as per Aadhaar)</span> *
+                </label>
                 <input
                   type="text"
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your full name"
+                  placeholder="Enter your full name as per Aadhaar"
                   style={styles.input}
                 />
               </div>
