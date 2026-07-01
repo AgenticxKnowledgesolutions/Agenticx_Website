@@ -68,6 +68,30 @@ export interface Candidate {
   updatedAt: string;
   notes?: CandidateNote[];
   timelineEvents?: CandidateTimelineEvent[];
+  standardCourseFee?: number;
+  scholarshipAmount?: number;
+  specialDiscount?: number;
+  corporateDiscount?: number;
+  promoDiscount?: number;
+  bookingAmount?: number;
+  finalPayableAmount?: number;
+  offerRemarks?: string;
+  offerExpiryDate?: string;
+  admissionFeeAmount?: number;
+  admissionFeePaid?: boolean;
+  autoEnrollEnabled?: boolean;
+  payments?: CandidatePayment[];
+}
+
+export interface CandidatePayment {
+  id: string;
+  amount: number;
+  paymentType: string;
+  paymentMethod: string;
+  status: string;
+  transactionId?: string;
+  paymentDate?: string;
+  createdAt: string;
 }
 
 export interface ImportBatch {
@@ -139,6 +163,18 @@ const mapCandidate = (c: any): Candidate => {
     programType: c.program_type || undefined,
     createdAt: c.created_at,
     updatedAt: c.updated_at,
+    standardCourseFee: c.standard_course_fee,
+    scholarshipAmount: c.scholarship_amount,
+    specialDiscount: c.special_discount,
+    corporateDiscount: c.corporate_discount,
+    promoDiscount: c.promo_discount,
+    bookingAmount: c.booking_amount,
+    finalPayableAmount: c.final_payable_amount,
+    offerRemarks: c.offer_remarks || undefined,
+    offerExpiryDate: c.offer_expiry_date || undefined,
+    admissionFeeAmount: c.admission_fee_amount,
+    admissionFeePaid: c.admission_fee_paid,
+    autoEnrollEnabled: c.auto_enroll_enabled,
     notes: Array.isArray(c.notes)
       ? c.notes.map((n: any) => ({
           id: n.id,
@@ -156,6 +192,18 @@ const mapCandidate = (c: any): Candidate => {
           description: t.description,
           createdBy: t.created_by || undefined,
           createdAt: t.created_at,
+        }))
+      : [],
+    payments: Array.isArray(c.payments)
+      ? c.payments.map((p: any) => ({
+          id: p.id,
+          amount: p.amount,
+          paymentType: p.payment_type,
+          paymentMethod: p.payment_method,
+          status: p.status,
+          transactionId: p.transaction_id || undefined,
+          paymentDate: p.payment_date || undefined,
+          createdAt: p.created_at,
         }))
       : [],
   };
@@ -399,5 +447,37 @@ export const validateConversionToken = async (
     params: { token },
   });
   return res.data as ConversionTokenDetails;
+};
+
+export const updateCandidateOffer = async (
+  id: string,
+  offerData: {
+    standard_course_fee: number;
+    scholarship_amount?: number;
+    special_discount?: number;
+    corporate_discount?: number;
+    promo_discount?: number;
+    booking_amount?: number;
+    offer_remarks?: string;
+    offer_expiry_date?: string;
+    admission_fee_amount?: number;
+    auto_enroll_enabled?: boolean;
+  }
+): Promise<Candidate> => {
+  const res = await api.put(`/candidates/${id}/offer`, offerData);
+  return mapCandidate(res.data);
+};
+
+export const recordCandidatePayment = async (
+  id: string,
+  paymentData: {
+    amount: number;
+    payment_type: string;
+    payment_method: string;
+    transaction_id?: string;
+  }
+): Promise<Candidate> => {
+  const res = await api.post(`/candidates/${id}/record-payment`, paymentData);
+  return mapCandidate(res.data);
 };
 

@@ -13,6 +13,8 @@ import {
   bulkRegenerateCertificates,
   bulkHardDeleteCandidates,
   bulkSoftDeleteCandidates,
+  updateCandidateOffer,
+  recordCandidatePayment,
 } from "../../../../services/candidateService";
 import type { Candidate, AdminNotification } from "../../../../services/candidateService";
 import CandidatesImport from "./CandidatesImport";
@@ -45,6 +47,27 @@ export default function CandidatesAdmin() {
   const [performanceVal, setPerformanceVal] = useState("");
   const [programTypeVal, setProgramTypeVal] = useState("");
   const [courseAppliedVal, setCourseAppliedVal] = useState("");
+
+  // Offer Configuration fields
+  const [standardCourseFeeVal, setStandardCourseFeeVal] = useState(0);
+  const [scholarshipAmountVal, setScholarshipAmountVal] = useState(0);
+  const [specialDiscountVal, setSpecialDiscountVal] = useState(0);
+  const [corporateDiscountVal, setCorporateDiscountVal] = useState(0);
+  const [promoDiscountVal, setPromoDiscountVal] = useState(0);
+  const [bookingAmountVal, setBookingAmountVal] = useState(0);
+  const [offerRemarksVal, setOfferRemarksVal] = useState("");
+  const [offerExpiryDateVal, setOfferExpiryDateVal] = useState("");
+  const [admissionFeeAmountVal, setAdmissionFeeAmountVal] = useState(250);
+  const [autoEnrollEnabledVal, setAutoEnrollEnabledVal] = useState(true);
+  const [isUpdatingOffer, setIsUpdatingOffer] = useState(false);
+
+  // Manual payment fields
+  const [paymentAmountVal, setPaymentAmountVal] = useState("");
+  const [paymentTypeVal, setPaymentTypeVal] = useState("Admission Fee");
+  const [paymentMethodVal, setPaymentMethodVal] = useState("Cash");
+  const [paymentTransactionIdVal, setPaymentTransactionIdVal] = useState("");
+  const [isRecordingPayment, setIsRecordingPayment] = useState(false);
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -170,6 +193,18 @@ export default function CandidatesAdmin() {
       setPerformanceVal(normalizePerformance(c.performance));
       setProgramTypeVal(normalizeProgramType(c.programType));
       setCourseAppliedVal(c.courseApplied || "");
+
+      // Pre-fill offer details
+      setStandardCourseFeeVal(c.standardCourseFee || 0);
+      setScholarshipAmountVal(c.scholarshipAmount || 0);
+      setSpecialDiscountVal(c.specialDiscount || 0);
+      setCorporateDiscountVal(c.corporateDiscount || 0);
+      setPromoDiscountVal(c.promoDiscount || 0);
+      setBookingAmountVal(c.bookingAmount || 0);
+      setOfferRemarksVal(c.offerRemarks || "");
+      setOfferExpiryDateVal(c.offerExpiryDate ? c.offerExpiryDate.split("T")[0] : "");
+      setAdmissionFeeAmountVal(c.admissionFeeAmount || 250);
+      setAutoEnrollEnabledVal(c.autoEnrollEnabled !== false);
     } catch (err) {
       console.error("Failed to load candidate detail:", err);
     } finally {
@@ -440,6 +475,65 @@ export default function CandidatesAdmin() {
       alert(detail);
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleOfferUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCandidate) return;
+    setIsUpdatingOffer(true);
+    try {
+      const updated = await updateCandidateOffer(selectedCandidate.id, {
+        standard_course_fee: standardCourseFeeVal,
+        scholarship_amount: scholarshipAmountVal,
+        special_discount: specialDiscountVal,
+        corporate_discount: corporateDiscountVal,
+        promo_discount: promoDiscountVal,
+        booking_amount: bookingAmountVal,
+        offer_remarks: offerRemarksVal || undefined,
+        offer_expiry_date: offerExpiryDateVal ? new Date(offerExpiryDateVal).toISOString() : undefined,
+        admission_fee_amount: admissionFeeAmountVal,
+        auto_enroll_enabled: autoEnrollEnabledVal,
+      });
+      setSelectedCandidate(updated);
+      await loadCandidates();
+      showToast("Offer configuration updated successfully!", "success");
+    } catch (err: any) {
+      console.error("Failed to update offer:", err);
+      const detail = err.response?.data?.detail || "Failed to update offer.";
+      alert(detail);
+    } finally {
+      setIsUpdatingOffer(false);
+    }
+  };
+
+  const handleRecordPaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCandidate) return;
+    const amountNum = parseFloat(paymentAmountVal);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      alert("Please enter a valid positive payment amount.");
+      return;
+    }
+    setIsRecordingPayment(true);
+    try {
+      const updated = await recordCandidatePayment(selectedCandidate.id, {
+        amount: amountNum,
+        payment_type: paymentTypeVal,
+        payment_method: paymentMethodVal,
+        transaction_id: paymentTransactionIdVal || undefined,
+      });
+      setSelectedCandidate(updated);
+      setPaymentAmountVal("");
+      setPaymentTransactionIdVal("");
+      await loadCandidates();
+      showToast("Payment recorded successfully!", "success");
+    } catch (err: any) {
+      console.error("Failed to record payment:", err);
+      const detail = err.response?.data?.detail || "Failed to record payment.";
+      alert(detail);
+    } finally {
+      setIsRecordingPayment(false);
     }
   };
 
@@ -1117,6 +1211,129 @@ export default function CandidatesAdmin() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Payment History & Manual Entry */}
+                    <div className="info-card-section">
+                      <h4 style={{ color: "#10b981" }}>Payment History & Manual Entry</h4>
+                      
+                      {/* Payments List */}
+                      <div style={{ marginBottom: "15px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {(!selectedCandidate.payments || selectedCandidate.payments.length === 0) ? (
+                          <div style={{ color: "#64748b", fontSize: "13px", fontStyle: "italic" }}>
+                            No payments recorded yet.
+                          </div>
+                        ) : (
+                          <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "6px" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
+                              <thead>
+                                <tr style={{ background: "#1e293b", color: "#94a3b8" }}>
+                                  <th style={{ padding: "8px" }}>Type</th>
+                                  <th style={{ padding: "8px" }}>Method</th>
+                                  <th style={{ padding: "8px" }}>Amount</th>
+                                  <th style={{ padding: "8px" }}>Status</th>
+                                  <th style={{ padding: "8px" }}>Txn ID / Date</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedCandidate.payments.map((p) => (
+                                  <tr key={p.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.01)" }}>
+                                    <td style={{ padding: "8px", fontWeight: "600" }}>{p.paymentType}</td>
+                                    <td style={{ padding: "8px" }}>{p.paymentMethod}</td>
+                                    <td style={{ padding: "8px", color: "#10b981", fontWeight: "600" }}>₹{p.amount}</td>
+                                    <td style={{ padding: "8px" }}>
+                                      <span style={{
+                                        padding: "2px 6px",
+                                        borderRadius: "4px",
+                                        fontSize: "10px",
+                                        fontWeight: "700",
+                                        background: p.status === "Paid" ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
+                                        color: p.status === "Paid" ? "#10b981" : "#f59e0b"
+                                      }}>
+                                        {p.status}
+                                      </span>
+                                    </td>
+                                    <td style={{ padding: "8px", color: "#94a3b8", fontSize: "11px" }}>
+                                      <div>{p.transactionId || "N/A"}</div>
+                                      <div style={{ fontSize: "9px" }}>{p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : ""}</div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Record Payment Form */}
+                      {activeTab !== "trash" && (
+                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "15px" }}>
+                          <h5 style={{ color: "#fff", marginBottom: "10px", fontSize: "14px" }}>Record Offline Payment</h5>
+                          <form onSubmit={handleRecordPaymentSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                              <div>
+                                <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Payment Type</label>
+                                <select
+                                  value={paymentTypeVal}
+                                  onChange={(e) => setPaymentTypeVal(e.target.value)}
+                                  style={{ ...styles.selectInput, width: "100%", height: "38px", padding: "6px 10px" }}
+                                >
+                                  <option value="Admission Fee">Admission Fee</option>
+                                  <option value="Booking Amount">Booking Amount</option>
+                                  <option value="Installment">Installment</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Payment Method</label>
+                                <select
+                                  value={paymentMethodVal}
+                                  onChange={(e) => setPaymentMethodVal(e.target.value)}
+                                  style={{ ...styles.selectInput, width: "100%", height: "38px", padding: "6px 10px" }}
+                                >
+                                  <option value="Cash">Cash</option>
+                                  <option value="UPI">UPI</option>
+                                  <option value="Bank Transfer">Bank Transfer</option>
+                                  <option value="Razorpay">Razorpay (Manual)</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Amount (₹)</label>
+                                <input
+                                  type="number"
+                                  placeholder="e.g. 250"
+                                  value={paymentAmountVal}
+                                  onChange={(e) => setPaymentAmountVal(e.target.value)}
+                                  style={styles.formInput}
+                                />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Transaction / Receipt ID</label>
+                                <input
+                                  type="text"
+                                  placeholder="Optional receipt #"
+                                  value={paymentTransactionIdVal}
+                                  onChange={(e) => setPaymentTransactionIdVal(e.target.value)}
+                                  style={styles.formInput}
+                                />
+                              </div>
+                            </div>
+                            <button
+                              type="submit"
+                              disabled={isRecordingPayment}
+                              style={{
+                                ...styles.actionBtn,
+                                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                width: "100%",
+                                marginTop: "5px",
+                                opacity: isRecordingPayment ? 0.5 : 1,
+                                cursor: isRecordingPayment ? "not-allowed" : "pointer"
+                              }}
+                            >
+                              {isRecordingPayment ? "Recording Payment..." : "Record Payment"}
+                            </button>
+                          </form>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Right Column */}
@@ -1531,8 +1748,180 @@ export default function CandidatesAdmin() {
                       </div>
                     )}
 
+                    {/* Offer Configuration */}
+                    <div className="info-card-section">
+                      <h4 style={{ color: "#8b5cf6" }}>Offer & Fee Structure</h4>
+                      <form onSubmit={handleOfferUpdateSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Standard Course Fee</label>
+                            <input
+                              type="number"
+                              disabled={activeTab === "trash"}
+                              value={standardCourseFeeVal}
+                              onChange={(e) => setStandardCourseFeeVal(Number(e.target.value))}
+                              style={styles.formInput}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Scholarship Amount</label>
+                            <input
+                              type="number"
+                              disabled={activeTab === "trash"}
+                              value={scholarshipAmountVal}
+                              onChange={(e) => setScholarshipAmountVal(Number(e.target.value))}
+                              style={styles.formInput}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Special Discount</label>
+                            <input
+                              type="number"
+                              disabled={activeTab === "trash"}
+                              value={specialDiscountVal}
+                              onChange={(e) => setSpecialDiscountVal(Number(e.target.value))}
+                              style={styles.formInput}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Corporate Discount</label>
+                            <input
+                              type="number"
+                              disabled={activeTab === "trash"}
+                              value={corporateDiscountVal}
+                              onChange={(e) => setCorporateDiscountVal(Number(e.target.value))}
+                              style={styles.formInput}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Promo Discount</label>
+                            <input
+                              type="number"
+                              disabled={activeTab === "trash"}
+                              value={promoDiscountVal}
+                              onChange={(e) => setPromoDiscountVal(Number(e.target.value))}
+                              style={styles.formInput}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Booking Amount</label>
+                            <input
+                              type="number"
+                              disabled={activeTab === "trash"}
+                              value={bookingAmountVal}
+                              onChange={(e) => setBookingAmountVal(Number(e.target.value))}
+                              style={styles.formInput}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Admission Fee Amount</label>
+                            <input
+                              type="number"
+                              disabled={activeTab === "trash"}
+                              value={admissionFeeAmountVal}
+                              onChange={(e) => setAdmissionFeeAmountVal(Number(e.target.value))}
+                              style={styles.formInput}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Offer Expiry Date</label>
+                            <input
+                              type="date"
+                              disabled={activeTab === "trash"}
+                              value={offerExpiryDateVal}
+                              onChange={(e) => setOfferExpiryDateVal(e.target.value)}
+                              style={styles.formInput}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Offer Remarks</label>
+                          <textarea
+                            disabled={activeTab === "trash"}
+                            value={offerRemarksVal}
+                            onChange={(e) => setOfferRemarksVal(e.target.value)}
+                            rows={2}
+                            style={{
+                              width: "100%",
+                              boxSizing: "border-box",
+                              padding: "8px 12px",
+                              background: "#1e293b",
+                              border: "1px solid rgba(255,255,255,0.1)",
+                              borderRadius: "6px",
+                              color: "#fff",
+                              fontSize: "13px",
+                              resize: "none"
+                            }}
+                          />
+                        </div>
 
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: "5px 0" }}>
+                          <input
+                            type="checkbox"
+                            id="autoEnrollToggle"
+                            disabled={activeTab === "trash"}
+                            checked={autoEnrollEnabledVal}
+                            onChange={(e) => setAutoEnrollEnabledVal(e.target.checked)}
+                            style={{ cursor: activeTab === "trash" ? "not-allowed" : "pointer" }}
+                          />
+                          <label htmlFor="autoEnrollToggle" style={{ fontSize: "13px", color: "#fff", cursor: activeTab === "trash" ? "not-allowed" : "pointer" }}>
+                            Auto-Enroll on Admission Fee Payment
+                          </label>
+                        </div>
 
+                        {/* Financial Summary */}
+                        <div style={{ background: "rgba(139, 92, 246, 0.05)", border: "1px solid rgba(139, 92, 246, 0.15)", borderRadius: "6px", padding: "10px", marginTop: "5px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}>
+                            <span style={{ color: "#94a3b8" }}>Standard Course Fee:</span>
+                            <span style={{ fontWeight: "600", color: "#fff" }}>₹{standardCourseFeeVal}</span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}>
+                            <span style={{ color: "#94a3b8" }}>Total Deductions (Scholarship + Discounts):</span>
+                            <span style={{ fontWeight: "600", color: "#ef4444" }}>
+                              -₹{(scholarshipAmountVal || 0) + (specialDiscountVal || 0) + (corporateDiscountVal || 0) + (promoDiscountVal || 0)}
+                            </span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "6px", fontWeight: "700" }}>
+                            <span style={{ color: "#fff" }}>Final Payable Amount:</span>
+                            <span style={{ color: "#10b981" }}>
+                              ₹{Math.max(0, standardCourseFeeVal - ((scholarshipAmountVal || 0) + (specialDiscountVal || 0) + (corporateDiscountVal || 0) + (promoDiscountVal || 0)))}
+                            </span>
+                          </div>
+                        </div>
+
+                        {activeTab !== "trash" && (() => {
+                          const isFeeChanged = standardCourseFeeVal !== (selectedCandidate.standardCourseFee || 0);
+                          const isScholarshipChanged = scholarshipAmountVal !== (selectedCandidate.scholarshipAmount || 0);
+                          const isSpecialChanged = specialDiscountVal !== (selectedCandidate.specialDiscount || 0);
+                          const isCorporateChanged = corporateDiscountVal !== (selectedCandidate.corporateDiscount || 0);
+                          const isPromoChanged = promoDiscountVal !== (selectedCandidate.promoDiscount || 0);
+                          const isBookingChanged = bookingAmountVal !== (selectedCandidate.bookingAmount || 0);
+                          const isRemarksChanged = offerRemarksVal !== (selectedCandidate.offerRemarks || "");
+                          const isExpiryChanged = offerExpiryDateVal !== (selectedCandidate.offerExpiryDate ? selectedCandidate.offerExpiryDate.split("T")[0] : "");
+                          const isAdmissionFeeChanged = admissionFeeAmountVal !== (selectedCandidate.admissionFeeAmount || 250);
+                          const isAutoEnrollChanged = autoEnrollEnabledVal !== (selectedCandidate.autoEnrollEnabled !== false);
+
+                          const isAnyOfferFieldChanged = isFeeChanged || isScholarshipChanged || isSpecialChanged || isCorporateChanged || isPromoChanged || isBookingChanged || isRemarksChanged || isExpiryChanged || isAdmissionFeeChanged || isAutoEnrollChanged;
+                          const isDisabled = isUpdatingOffer || !isAnyOfferFieldChanged;
+
+                          return (
+                            <button
+                              type="submit"
+                              disabled={isDisabled}
+                              style={{
+                                ...styles.actionBtn,
+                                width: "100%",
+                                opacity: isDisabled ? 0.5 : 1,
+                                cursor: isDisabled ? "not-allowed" : "pointer"
+                              }}
+                            >
+                              {isUpdatingOffer ? "Saving Offer..." : "Save Offer Configuration"}
+                            </button>
+                          );
+                        })()}
+                      </form>
+                    </div>
 
                   </div>
                 </div>
@@ -2133,5 +2522,16 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "13px",
     color: "#cbd5e1",
     whiteSpace: "pre-line",
+  },
+  formInput: {
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "8px 12px",
+    background: "#1e293b",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    borderRadius: "6px",
+    color: "#fff",
+    fontSize: "13px",
+    outline: "none",
   },
 };
