@@ -1787,10 +1787,10 @@ export default function CandidatesAdmin() {
                             <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Standard Course Fee</label>
                             <input
                               type="number"
-                              disabled={true}
+                              disabled={activeTab === "trash"}
                               value={standardCourseFeeVal}
                               onChange={(e) => setStandardCourseFeeVal(Number(e.target.value))}
-                              style={{ ...styles.formInput, opacity: 0.6, cursor: "not-allowed" }}
+                              style={styles.formInput}
                             />
                           </div>
                           <div>
