@@ -107,33 +107,43 @@ export default function TrashAdmin() {
         }
       } else {
         // hard-delete
-        let success = false;
         if (itemType === 'lead') {
-          success = await hardDeleteLead(itemId);
-          if (success) {
+          const result = await hardDeleteLead(itemId);
+          if (result.success) {
             invalidateTrashLeads();
+            invalidateSummary();
+            toast('Lead permanently deleted.', 'success');
+          } else {
+            // 409 Conflict: lead is linked to a Candidate Application
+            toast(result.message, 'error');
           }
         } else if (itemType === 'course') {
-          success = await hardDeleteCourse(itemId);
+          const success = await hardDeleteCourse(itemId);
           if (success) {
             invalidateTrashCourses();
+            invalidateSummary();
+            toast('Course permanently deleted.', 'success');
+          } else {
+            toast('Failed to permanently delete course.', 'error');
           }
         } else if (itemType === 'activity') {
-          success = await hardDeleteActivity(itemId);
+          const success = await hardDeleteActivity(itemId);
           if (success) {
             invalidateTrashActivities();
+            invalidateSummary();
+            toast('Activity permanently deleted.', 'success');
+          } else {
+            toast('Failed to permanently delete activity.', 'error');
           }
         } else if (itemType === 'review') {
-          success = await hardDeleteReview(itemId);
+          const success = await hardDeleteReview(itemId);
           if (success) {
             invalidateTrashReviews();
+            invalidateSummary();
+            toast('Review permanently deleted.', 'success');
+          } else {
+            toast('Failed to permanently delete review.', 'error');
           }
-        }
-
-        if (success) {
-          toast(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} permanently deleted.`, 'success');
-        } else {
-          toast(`Failed to permanently delete ${itemType}.`, 'error');
         }
       }
     } catch (err) {
@@ -325,7 +335,7 @@ export default function TrashAdmin() {
                       <td style={{ padding: '16px 8px', color: '#64748b', fontSize: '13px' }}>{formatDate(lead.deletedAt)}</td>
                       <td style={{ padding: '16px 8px', color: '#64748b', fontSize: '13px' }}>{lead.deletedBy || 'System'}</td>
                       <td style={{ padding: '16px 8px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
                           <button
                             onClick={() => setConfirmModal({ show: true, type: 'restore', itemType: 'lead', itemId: lead.id, itemName: lead.name })}
                             style={{ background: 'none', border: '1px solid #0284c7', color: '#0284c7', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600 }}
@@ -333,13 +343,36 @@ export default function TrashAdmin() {
                             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>restore</span>
                             Restore
                           </button>
-                          <button
-                            onClick={() => setConfirmModal({ show: true, type: 'delete', itemType: 'lead', itemId: lead.id, itemName: lead.name })}
-                            style={{ background: 'none', border: '1px solid #ef4444', color: '#ef4444', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600 }}
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete_forever</span>
-                            Delete Forever
-                          </button>
+
+                          {lead.hasCandidate ? (
+                            // Lead is linked to a Candidate — disable hard delete, show info badge
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{
+                                background: '#fef3c7',
+                                color: '#92400e',
+                                border: '1px solid #fcd34d',
+                                padding: '4px 10px',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                whiteSpace: 'nowrap',
+                              }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>person_check</span>
+                                Converted · Delete Candidate First
+                              </span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmModal({ show: true, type: 'delete', itemType: 'lead', itemId: lead.id, itemName: lead.name })}
+                              style={{ background: 'none', border: '1px solid #ef4444', color: '#ef4444', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 600 }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete_forever</span>
+                              Delete Forever
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

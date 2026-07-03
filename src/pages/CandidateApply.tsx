@@ -17,6 +17,7 @@ export default function CandidateApply() {
   const [bloodGroup, setBloodGroup] = useState("");
   const [courseApplied, setCourseApplied] = useState("");
   const [customCourseApplied, setCustomCourseApplied] = useState("");
+  const [programmeDomain, setProgrammeDomain] = useState("");
   const [modeOfLearning, setModeOfLearning] = useState("Offline");
   const [collegeName, setCollegeName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
@@ -125,6 +126,19 @@ export default function CandidateApply() {
       return;
     }
 
+    if (courseApplied === "Faculty Development Programme (FDP)") {
+      if (!collegeName || !collegeName.trim()) {
+        setError("College / Institution Name is required for Faculty Development Programme.");
+        setLoading(false);
+        return;
+      }
+      if (!programmeDomain || !programmeDomain.trim()) {
+        setError("Programme Domain is required for Faculty Development Programme.");
+        setLoading(false);
+        return;
+      }
+    }
+
     const cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.length < 10 || cleanPhone.length > 15) {
       setError("Please enter a valid mobile number (10-15 digits)");
@@ -150,6 +164,8 @@ export default function CandidateApply() {
         qualification,
         bloodGroup,
         courseApplied: courseApplied === "Custom Webinar / Other" ? customCourseApplied : courseApplied,
+        programType: courseApplied === "Faculty Development Programme (FDP)" ? "Faculty Development Programme" : undefined,
+        programmeDomain: courseApplied === "Faculty Development Programme (FDP)" ? programmeDomain : undefined,
         modeOfLearning,
         collegeName,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : undefined,
@@ -192,6 +208,7 @@ export default function CandidateApply() {
       setBloodGroup("");
       setCourseApplied("");
       setCustomCourseApplied("");
+      setProgrammeDomain("");
       setCollegeName("");
       setDateOfBirth("");
       setGender("");
@@ -424,6 +441,7 @@ export default function CandidateApply() {
                         {course.title}
                       </option>
                     ))}
+                    <option value="Faculty Development Programme (FDP)">Faculty Development Programme (FDP)</option>
                     <option value="Custom Webinar / Other">Custom Webinar / Other Course</option>
                   </select>
                 </div>
@@ -455,6 +473,20 @@ export default function CandidateApply() {
                 </div>
               )}
 
+              {courseApplied === "Faculty Development Programme (FDP)" && (
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Programme Domain *</label>
+                  <input
+                    type="text"
+                    required
+                    value={programmeDomain}
+                    onChange={(e) => setProgrammeDomain(e.target.value)}
+                    placeholder="e.g. Cyber Security, Artificial Intelligence, Python"
+                    style={styles.input}
+                  />
+                </div>
+              )}
+
               <div style={styles.grid2}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Highest Qualification</label>
@@ -467,9 +499,12 @@ export default function CandidateApply() {
                   />
                 </div>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>College / Institution Name</label>
+                  <label style={styles.label}>
+                    College / Institution Name {courseApplied === "Faculty Development Programme (FDP)" ? "*" : ""}
+                  </label>
                   <input
                     type="text"
+                    required={courseApplied === "Faculty Development Programme (FDP)"}
                     value={collegeName}
                     onChange={(e) => setCollegeName(e.target.value)}
                     placeholder="Enter college name"

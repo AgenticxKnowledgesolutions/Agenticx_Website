@@ -59,6 +59,8 @@ export interface Lead {
   duplicateHits?: number;
   leadScore?: number;
   interactions?: LeadInteraction[];
+  /** True when this lead has been converted to a Candidate Application */
+  hasCandidate?: boolean;
 }
 
 // Map FastAPI snake_case response to frontend camelCase interfaces
@@ -127,6 +129,7 @@ function mapLead(r: Record<string, unknown>): Lead {
     duplicateHits: (r.duplicate_hits as number | undefined) ?? 0,
     leadScore: (r.lead_score as number | undefined) ?? 0,
     interactions: Array.isArray(r.interactions) ? r.interactions.map(mapInteraction) : [],
+    hasCandidate: (r.has_candidate as boolean | undefined) ?? false,
   };
 }
 
@@ -309,13 +312,25 @@ export const restoreLead = async (id: string): Promise<Lead | null> => {
   }
 };
 
-export const hardDeleteLead = async (id: string): Promise<boolean> => {
+export interface HardDeleteResult {
+  success: boolean;
+  message: string;
+}
+
+export const hardDeleteLead = async (id: string): Promise<HardDeleteResult> => {
   try {
     await api.delete(`/leads/${id}/hard-delete`);
-    return true;
-  } catch (err) {
+    return { success: true, message: "Lead permanently deleted." };
+  } catch (err: any) {
+    const detail: string =
+      err?.response?.data?.detail ??
+      "Failed to permanently delete lead.";
+    const status: number = err?.response?.status ?? 500;
+    if (status === 409) {
+      return { success: false, message: detail };
+    }
     console.error("Failed to hard delete lead:", err);
-    return false;
+    return { success: false, message: detail };
   }
 };
 

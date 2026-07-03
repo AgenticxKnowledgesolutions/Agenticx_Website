@@ -64,6 +64,7 @@ export interface Candidate {
   courseDuration?: string;
   performance?: string;
   programType?: string;
+  programmeDomain?: string;
   createdAt: string;
   updatedAt: string;
   notes?: CandidateNote[];
@@ -161,6 +162,7 @@ const mapCandidate = (c: any): Candidate => {
     courseDuration: c.course_duration || undefined,
     performance: c.performance || undefined,
     programType: c.program_type || undefined,
+    programmeDomain: c.programme_domain || undefined,
     createdAt: c.created_at,
     updatedAt: c.updated_at,
     standardCourseFee: c.standard_course_fee,
@@ -245,6 +247,8 @@ export const applyCandidate = async (
     lead_id: candidateData.leadId || null,
     next_followup_at: candidateData.nextFollowupAt || null,
     token: candidateData.token || null,
+    programme_domain: candidateData.programmeDomain || null,
+    program_type: candidateData.programType || null,
   };
   const res = await api.post("/candidates/apply", payload);
   return res.data;
@@ -292,7 +296,9 @@ export const updateCandidateStatus = async (
   courseDuration?: string,
   performance?: string,
   programType?: string,
-  courseApplied?: string
+  courseApplied?: string,
+  programmeDomain?: string,
+  collegeName?: string
 ): Promise<any> => {
   const res = await api.put(`/candidates/${id}/status`, {
     status,
@@ -302,6 +308,8 @@ export const updateCandidateStatus = async (
     performance: performance || null,
     program_type: programType || null,
     course_applied: courseApplied || null,
+    programme_domain: programmeDomain || null,
+    college_name: collegeName || null,
   });
   return res.data;
 };

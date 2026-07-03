@@ -49,6 +49,8 @@ export default function CandidatesAdmin() {
   const [performanceVal, setPerformanceVal] = useState("");
   const [programTypeVal, setProgramTypeVal] = useState("");
   const [courseAppliedVal, setCourseAppliedVal] = useState("");
+  const [programmeDomainVal, setProgrammeDomainVal] = useState("");
+  const [collegeNameVal, setCollegeNameVal] = useState("");
 
   // Offer Configuration fields
   const [standardCourseFeeVal, setStandardCourseFeeVal] = useState(0);
@@ -191,11 +193,14 @@ export default function CandidatesAdmin() {
         if (lower === "crash course") return "Crash Course";
         if (lower === "webinar") return "Webinar";
         if (lower === "workshop") return "Workshop";
+        if (lower === "faculty development programme" || lower === "faculty development program" || lower === "fdp") return "Faculty Development Programme";
         return pt;
       };
       setPerformanceVal(normalizePerformance(c.performance));
       setProgramTypeVal(normalizeProgramType(c.programType));
       setCourseAppliedVal(c.courseApplied || "");
+      setProgrammeDomainVal(c.programmeDomain || "");
+      setCollegeNameVal(c.collegeName || "");
 
       // Pre-fill offer details
       setStandardCourseFeeVal(c.standardCourseFee || 0);
@@ -464,9 +469,19 @@ export default function CandidatesAdmin() {
         alert("Program Type is required before marking status as Completed.");
         return;
       }
-      if (!performanceVal) {
+      if (programTypeVal !== "Faculty Development Programme" && !performanceVal) {
         alert("Performance is required before marking status as Completed.");
         return;
+      }
+      if (programTypeVal === "Faculty Development Programme") {
+        if (!programmeDomainVal || !programmeDomainVal.trim()) {
+          alert("Programme Domain is required for Faculty Development Programme.");
+          return;
+        }
+        if (!collegeNameVal || !collegeNameVal.trim()) {
+          alert("College / Institution Name is required for Faculty Development Programme.");
+          return;
+        }
       }
     }
     setIsUpdatingStatus(true);
@@ -479,7 +494,9 @@ export default function CandidatesAdmin() {
         courseDurationVal || undefined,
         performanceVal || undefined,
         programTypeVal || undefined,
-        courseAppliedVal || undefined
+        courseAppliedVal || undefined,
+        programmeDomainVal || undefined,
+        collegeNameVal || undefined
       );
       await loadSelectedCandidate(selectedCandidate.id);
       await loadCandidates();
@@ -1660,7 +1677,48 @@ export default function CandidatesAdmin() {
                               <option value="Crash Course">Crash Course</option>
                               <option value="Webinar">Webinar</option>
                               <option value="Workshop">Workshop</option>
+                              <option value="Faculty Development Programme">Faculty Development Programme</option>
                             </select>
+
+                            {programTypeVal === "Faculty Development Programme" && (
+                              <>
+                                <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Programme Domain *</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Cyber Security, AI, Python"
+                                  value={programmeDomainVal}
+                                  onChange={(e) => setProgrammeDomainVal(e.target.value)}
+                                  style={{
+                                    ...styles.remarksInput,
+                                    width: "100%",
+                                    boxSizing: "border-box",
+                                    padding: "8px 12px",
+                                    background: "#1e293b",
+                                    border: "1px solid rgba(255,255,255,0.1)",
+                                    borderRadius: "6px",
+                                    color: "#fff"
+                                  }}
+                                />
+
+                                <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>College / Institution Name *</label>
+                                <input
+                                  type="text"
+                                  placeholder="Enter college name"
+                                  value={collegeNameVal}
+                                  onChange={(e) => setCollegeNameVal(e.target.value)}
+                                  style={{
+                                    ...styles.remarksInput,
+                                    width: "100%",
+                                    boxSizing: "border-box",
+                                    padding: "8px 12px",
+                                    background: "#1e293b",
+                                    border: "1px solid rgba(255,255,255,0.1)",
+                                    borderRadius: "6px",
+                                    color: "#fff"
+                                  }}
+                                />
+                              </>
+                            )}
 
                             <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Performance</label>
                             <select
@@ -1703,6 +1761,7 @@ export default function CandidatesAdmin() {
                                 if (lower === "crash course") return "Crash Course";
                                 if (lower === "webinar") return "Webinar";
                                 if (lower === "workshop") return "Workshop";
+                                if (lower === "faculty development programme" || lower === "faculty development program" || lower === "fdp") return "Faculty Development Programme";
                                 return pt;
                               };
 
@@ -1713,8 +1772,10 @@ export default function CandidatesAdmin() {
                               const isCourseDurationChanged = courseDurationVal !== (selectedCandidate?.courseDuration || "");
                               const isPerformanceChanged = performanceVal !== getDbPerformance(selectedCandidate?.performance);
                               const isProgramTypeChanged = programTypeVal !== getDbProgramType(selectedCandidate?.programType);
+                              const isProgrammeDomainChanged = programmeDomainVal !== (selectedCandidate?.programmeDomain || "");
+                              const isCollegeNameChanged = collegeNameVal !== (selectedCandidate?.collegeName || "");
 
-                              const isAnyFieldChanged = isStatusChanged || isCourseAppliedChanged || isCourseStartDateChanged || isCompletedAtChanged || isCourseDurationChanged || isPerformanceChanged || isProgramTypeChanged;
+                              const isAnyFieldChanged = isStatusChanged || isCourseAppliedChanged || isCourseStartDateChanged || isCompletedAtChanged || isCourseDurationChanged || isPerformanceChanged || isProgramTypeChanged || isProgrammeDomainChanged || isCollegeNameChanged;
                               const isDisabled = isUpdatingStatus || !isAnyFieldChanged;
                               return (
                                 <button
