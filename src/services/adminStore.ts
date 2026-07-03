@@ -44,7 +44,12 @@ interface AdminState {
   loadingTrashActivities: boolean;
   loadingTrashReviews: boolean;
   
+  leadsSkip: number;
+  leadsHasMore: boolean;
+  loadingMoreLeads: boolean;
+
   fetchLeads: (force?: boolean) => Promise<Lead[]>;
+  fetchMoreLeads: () => Promise<Lead[]>;
   fetchSummary: (force?: boolean) => Promise<DashboardSummary | null>;
   fetchCourses: (force?: boolean) => Promise<Course[]>;
   fetchActivities: (force?: boolean) => Promise<Activity[]>;
@@ -92,6 +97,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   trashActivitiesLoaded: false,
   trashReviewsLoaded: false,
 
+  leadsSkip: 0,
+  leadsHasMore: true,
+  loadingMoreLeads: false,
   loadingLeads: false,
   loadingSummary: false,
   loadingCourses: false,
@@ -107,15 +115,44 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     if (get().leadsLoaded && !force && !get().loadingLeads) {
       return get().leads;
     }
-    set({ loadingLeads: true });
+    set({ loadingLeads: true, leadsSkip: 0, leadsHasMore: true });
     try {
-      const data = await getLeads();
-      set({ leads: data, leadsLoaded: true, loadingLeads: false });
+      const data = await getLeads(0, 50);
+      set({ 
+        leads: data, 
+        leadsLoaded: true, 
+        loadingLeads: false,
+        leadsSkip: data.length,
+        leadsHasMore: data.length === 50
+      });
       return data;
     } catch (err) {
       console.error("Store failed to fetch leads:", err);
       set({ loadingLeads: false });
       return [];
+    }
+  },
+
+  fetchMoreLeads: async () => {
+    const { loadingLeads, loadingMoreLeads, leadsHasMore, leadsSkip, leads } = get();
+    if (loadingLeads || loadingMoreLeads || !leadsHasMore) {
+      return leads;
+    }
+    set({ loadingMoreLeads: true });
+    try {
+      const data = await getLeads(leadsSkip, 50);
+      const newLeads = [...leads, ...data];
+      set({
+        leads: newLeads,
+        loadingMoreLeads: false,
+        leadsSkip: leadsSkip + data.length,
+        leadsHasMore: data.length === 50
+      });
+      return newLeads;
+    } catch (err) {
+      console.error("Store failed to fetch more leads:", err);
+      set({ loadingMoreLeads: false });
+      return leads;
     }
   },
 
@@ -248,7 +285,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   },
 
   invalidateLeads: () => {
-    set({ leadsLoaded: false });
+    set({ leadsLoaded: false, leadsSkip: 0, leadsHasMore: true });
   },
 
   invalidateSummary: () => {
@@ -294,7 +331,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       trashLeadsLoaded: false,
       trashCoursesLoaded: false,
       trashActivitiesLoaded: false,
-      trashReviewsLoaded: false
+      trashReviewsLoaded: false,
+      leadsSkip: 0,
+      leadsHasMore: true
     });
     invalidateCourseCache();
   }

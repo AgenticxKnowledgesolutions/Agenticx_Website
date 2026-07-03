@@ -133,9 +133,9 @@ function mapLead(r: Record<string, unknown>): Lead {
   };
 }
 
-export const getLeads = async (): Promise<Lead[]> => {
+export const getLeads = async (skip = 0, limit = 50): Promise<Lead[]> => {
   try {
-    const res = await api.get("/leads/");
+    const res = await api.get("/leads/", { params: { skip, limit } });
     return (res.data as Record<string, unknown>[]).map(mapLead);
   } catch (err) {
     console.error("Failed to fetch leads:", err);

@@ -21,7 +21,17 @@ import { useAdminStore } from '@/services/adminStore';
 import './Admin.css';
 
 export default function LeadsAdmin() {
-  const { leads, loadingLeads, fetchLeads, invalidateAll, courses, fetchCourses } = useAdminStore();
+  const { 
+    leads, 
+    loadingLeads, 
+    fetchLeads, 
+    invalidateAll, 
+    courses, 
+    fetchCourses,
+    leadsHasMore,
+    loadingMoreLeads,
+    fetchMoreLeads
+  } = useAdminStore();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   
   // Selected IDs for bulk operations
@@ -99,6 +109,45 @@ export default function LeadsAdmin() {
       document.body.classList.remove('modal-open-lock');
     };
   }, [showAddModal, selectedLead, showDuplicateWarning, showDeleteConfirm, showBulkDeleteConfirm]);
+
+  // Infinite scroll listener
+  useEffect(() => {
+    const container = document.querySelector('.admin-content-area');
+    
+    const handleScroll = () => {
+      let shouldLoad = false;
+      
+      if (container) {
+        // Scroll inside .admin-content-area
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        if (scrollHeight - scrollTop <= clientHeight + 150) {
+          shouldLoad = true;
+        }
+      } else {
+        // Fallback to window scroll
+        const { scrollTop, scrollHeight } = document.documentElement;
+        if (window.innerHeight + scrollTop >= scrollHeight - 150) {
+          shouldLoad = true;
+        }
+      }
+      
+      if (shouldLoad && leadsHasMore && !loadingMoreLeads && !loadingLeads && leads.length > 0) {
+        fetchMoreLeads();
+      }
+    };
+
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+    }
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [leadsHasMore, loadingMoreLeads, loadingLeads, leads.length, fetchMoreLeads]);
 
 
 
@@ -673,6 +722,44 @@ export default function LeadsAdmin() {
             </tbody>
           </table>
         </div>
+
+        {/* Infinite Scroll Loading/Status Indicator */}
+        {(loadingMoreLeads || !leadsHasMore) && leads.length > 0 && (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '16px 0', 
+            color: '#64748b', 
+            fontSize: '13px', 
+            borderTop: '1px solid #f1f5f9',
+            marginTop: '8px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            {loadingMoreLeads ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid #e2e8f0',
+                  borderTop: '2px solid #2563eb',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                <style>{`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}</style>
+                <span>Loading more leads...</span>
+              </div>
+            ) : (
+              <span>All leads loaded ({leads.length})</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Manual Add Lead Modal */}
