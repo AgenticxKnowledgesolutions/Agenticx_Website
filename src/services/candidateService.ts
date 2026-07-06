@@ -92,6 +92,8 @@ export interface CandidatePayment {
   status: string;
   transactionId?: string;
   paymentDate?: string;
+  receiptNumber?: string;
+  receiptUrl?: string;
   createdAt: string;
 }
 
@@ -205,6 +207,8 @@ const mapCandidate = (c: any): Candidate => {
           status: p.status,
           transactionId: p.transaction_id || undefined,
           paymentDate: p.payment_date || undefined,
+          receiptNumber: p.receipt_number || undefined,
+          receiptUrl: p.receipt_url || undefined,
           createdAt: p.created_at,
         }))
       : [],

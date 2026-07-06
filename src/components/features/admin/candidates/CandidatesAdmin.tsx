@@ -1264,6 +1264,7 @@ export default function CandidatesAdmin() {
                                   <th style={{ padding: "8px" }}>Amount</th>
                                   <th style={{ padding: "8px" }}>Status</th>
                                   <th style={{ padding: "8px" }}>Txn ID / Date</th>
+                                  <th style={{ padding: "8px" }}>Receipt</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1287,6 +1288,25 @@ export default function CandidatesAdmin() {
                                     <td style={{ padding: "8px", color: "#94a3b8", fontSize: "11px" }}>
                                       <div>{p.transactionId || "N/A"}</div>
                                       <div style={{ fontSize: "9px" }}>{p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : ""}</div>
+                                    </td>
+                                    <td style={{ padding: "8px" }}>
+                                      {p.status === "Paid" && p.receiptUrl ? (
+                                        <a
+                                          href={p.receiptUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          style={{
+                                            color: "#3b82f6",
+                                            textDecoration: "none",
+                                            fontWeight: "500",
+                                            fontSize: "11px"
+                                          }}
+                                        >
+                                          {p.receiptNumber || "Download"}
+                                        </a>
+                                      ) : (
+                                        <span style={{ color: "#475569" }}>—</span>
+                                      )}
                                     </td>
                                   </tr>
                                 ))}
