@@ -163,6 +163,7 @@ export default function DemoModal({ isOpen, onClose }: DemoModalProps) {
                       <option key={course.id} value={course.title}>{course.title}</option>
                     ))
                   ) : null}
+                  <option value="Faculty Development Programme (FDP)">Faculty Development Programme (FDP)</option>
                   <option value="General Inquiry">General Enquiry</option>
                 </select>
                 {errors.course && <span className="error-text">{errors.course}</span>}
