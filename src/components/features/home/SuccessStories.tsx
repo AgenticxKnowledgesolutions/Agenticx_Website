@@ -36,6 +36,9 @@ export default function SuccessStories() {
   // Duplicate array for seamless infinite CSS scroll
   const carouselItems = [...reviews, ...reviews];
 
+  // Dynamically calculate animation duration so speed remains constant & extremely slow regardless of the number of reviews
+  const scrollDuration = `${Math.max(120, reviews.length * 45)}s`;
+
   if (reviews.length === 0) {
     return (
       <section className="success-section">
@@ -64,7 +67,7 @@ export default function SuccessStories() {
       </div>
 
       <div className="carousel-container">
-        <div className="carousel-track">
+        <div className="carousel-track" style={{ animationDuration: scrollDuration }}>
           {carouselItems.map((item, index) => {
             if (!item) return null;
             const reviewId = item.id || `review-${index}`;
