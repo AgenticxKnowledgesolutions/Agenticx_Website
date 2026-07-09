@@ -184,4 +184,16 @@ export function ChartSkeleton() {
   );
 }
 
+export function CollaboratorCardSkeleton() {
+  return (
+    <div className="collaborator-card collaborator-card-skeleton" aria-hidden="true">
+      <div className="collaborator-logo-wrapper">
+        <div className="skeleton-pulse" style={{ width: '64px', height: '64px', borderRadius: '50%' }} />
+      </div>
+      <div className="skeleton-pulse" style={{ width: '70%', height: '14px', marginTop: '16px', marginInline: 'auto' }} />
+    </div>
+  );
+}
+
+
 

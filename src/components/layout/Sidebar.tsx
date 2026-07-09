@@ -12,6 +12,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [isActivitiesOpen, setIsActivitiesOpen] = useState(false);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [isJobsOpen, setIsJobsOpen] = useState(false);
+  const [isCollaboratorsOpen, setIsCollaboratorsOpen] = useState(false);
   const navigate = useNavigate();
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
@@ -169,6 +170,35 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onMouseEnter={() => import('@/components/features/admin/reviews/ReviewAdd')}
               >
                 Add Review
+              </NavLink>
+            </div>
+          </div>
+
+          {/* Collaborators Collapsible Group */}
+          <div className="admin-nav-group">
+            <button className="admin-nav-link dropdown-toggle" onClick={() => setIsCollaboratorsOpen(!isCollaboratorsOpen)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined">handshake</span> Collaborators
+              </div>
+              <span className={`material-symbols-outlined chevron ${isCollaboratorsOpen ? 'rotated' : ''}`}>expand_more</span>
+            </button>
+            <div className={`admin-submenu ${isCollaboratorsOpen ? 'open' : ''}`}>
+              <NavLink 
+                to="/admin/collaborators" 
+                onClick={onClose} 
+                end 
+                className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/collaborators/CollaboratorList')}
+              >
+                View Collaborators
+              </NavLink>
+              <NavLink 
+                to="/admin/collaborators/add" 
+                onClick={onClose} 
+                className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/collaborators/CollaboratorAdd')}
+              >
+                Add Collaborator
               </NavLink>
             </div>
           </div>

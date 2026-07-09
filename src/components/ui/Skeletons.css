@@ -19,12 +19,12 @@
 /* Disable Hover Animations/Styles on Skeleton Cards */
 .course-card-skeleton:hover,
 .activity-card-skeleton:hover,
-.review-card-skeleton:hover {
+.review-card-skeleton:hover,
+.collaborator-card-skeleton:hover {
   transform: none !important;
-  border-color: rgba(0, 82, 254, 0.15) !important;
-  background-color: rgba(0, 25, 67, 0.2) !important;
-  box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(0, 82, 254, 0.1) !important;
+  border-color: rgba(0, 25, 67, 0.05) !important;
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 25, 67, 0.02) !important;
 }
 
 /* Table Row Skeleton in Company Light/Blue Accent Theme */

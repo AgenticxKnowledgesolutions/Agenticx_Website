@@ -33,6 +33,9 @@ const ActivityEdit = lazy(() => import('./components/features/admin/activities/A
 const ReviewList = lazy(() => import('./components/features/admin/reviews/ReviewList'))
 const ReviewAdd = lazy(() => import('./components/features/admin/reviews/ReviewAdd'))
 const ReviewEdit = lazy(() => import('./components/features/admin/reviews/ReviewEdit'))
+const CollaboratorList = lazy(() => import('./components/features/admin/collaborators/CollaboratorList'))
+const CollaboratorAdd = lazy(() => import('./components/features/admin/collaborators/CollaboratorAdd'))
+const CollaboratorEdit = lazy(() => import('./components/features/admin/collaborators/CollaboratorEdit'))
 const LeadsAdmin = lazy(() => import('./components/features/admin/LeadsAdmin'))
 const TrashAdmin = lazy(() => import('./components/features/admin/trash/TrashAdmin'))
 const CompanySettingsAdmin = lazy(() => import('./components/features/admin/settings/CompanySettingsAdmin'))
@@ -128,6 +131,9 @@ function App() {
               <Route path="reviews" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ReviewList /></Suspense></ErrorBoundary>} />
               <Route path="reviews/add" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ReviewAdd /></Suspense></ErrorBoundary>} />
               <Route path="reviews/edit/:id" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><ReviewEdit /></Suspense></ErrorBoundary>} />
+              <Route path="collaborators" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CollaboratorList /></Suspense></ErrorBoundary>} />
+              <Route path="collaborators/add" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CollaboratorAdd /></Suspense></ErrorBoundary>} />
+              <Route path="collaborators/edit/:id" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CollaboratorEdit /></Suspense></ErrorBoundary>} />
               <Route path="leads" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><LeadsAdmin /></Suspense></ErrorBoundary>} />
               <Route path="candidates" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CandidatesAdmin /></Suspense></ErrorBoundary>} />
               <Route path="trash" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><TrashAdmin /></Suspense></ErrorBoundary>} />

@@ -7,6 +7,7 @@ import WhyChooseUs from '@/components/features/home/WhyChooseUs'
 import WhyAgenticX from '@/components/features/about/WhyAgenticX'
 import SuccessStories from '@/components/features/home/SuccessStories'
 import LiveActivities from '@/components/features/home/LiveActivities'
+import CollaboratorsSection from '@/components/features/home/CollaboratorsSection'
 import CtaSection from '@/components/features/home/CtaSection'
 import DemoModal from '@/components/features/home/DemoModal'
 import SEO from '@/components/seo/SEO'
@@ -64,6 +65,7 @@ export default function Home() {
       <WhyAgenticX />
       <SuccessStories />
       <LiveActivities />
+      <CollaboratorsSection />
       <CtaSection onOpenDemo={() => setIsDemoModalOpen(true)} />
 
       
