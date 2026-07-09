@@ -1,0 +1,161 @@
+.placed-students-section {
+  padding: 80px 0;
+  background: #f8fafc; /* Alternates beautifully with CollaboratorsSection */
+  overflow: hidden;
+}
+
+.placed-students-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.placed-students-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #001943;
+  letter-spacing: -0.5px;
+}
+
+.placed-students-subtitle {
+  color: #64748b;
+  margin-top: 16px;
+  font-size: 16px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.placed-students-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+/* Responsive grid layouts */
+@media (min-width: 480px) {
+  .placed-students-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .placed-students-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .placed-students-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+  }
+}
+
+/* Card Styling */
+.placed-student-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 24px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 25, 67, 0.06);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px -5px rgba(0, 25, 67, 0.02),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  text-align: center;
+}
+
+.placed-student-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  background: #ffffff;
+  border-color: rgba(0, 82, 254, 0.25);
+  box-shadow: 0 20px 40px -15px rgba(0, 25, 67, 0.08);
+}
+
+/* Photo */
+.placed-student-photo-wrapper {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 20px;
+  border: 3px solid rgba(0, 82, 254, 0.15);
+  box-shadow: 0 8px 16px rgba(0, 25, 67, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  transition: border-color 0.3s ease;
+}
+
+.placed-student-card:hover .placed-student-photo-wrapper {
+  border-color: rgba(0, 82, 254, 0.4);
+}
+
+.placed-student-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.placed-student-card:hover .placed-student-photo {
+  transform: scale(1.06);
+}
+
+.placed-student-photo-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #001943, #0052fe);
+  color: #ffffff;
+}
+
+.fallback-person-icon {
+  font-size: 40px;
+}
+
+/* Typography & Info */
+.placed-student-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #001943;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.placed-student-company {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.placed-student-role {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0052fe;
+  letter-spacing: -0.1px;
+}
+
+/* Animations */
+.fade-in-hidden {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.fade-in-visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}

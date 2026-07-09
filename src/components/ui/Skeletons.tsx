@@ -195,5 +195,17 @@ export function CollaboratorCardSkeleton() {
   );
 }
 
+export function PlacedStudentCardSkeleton() {
+  return (
+    <div className="placed-student-card placed-student-card-skeleton" aria-hidden="true" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px', background: 'rgba(255, 255, 255, 0.65)', borderRadius: '20px', border: '1px solid rgba(0, 25, 67, 0.06)' }}>
+      <div className="skeleton-pulse" style={{ width: '96px', height: '96px', borderRadius: '50%', marginBottom: '16px' }} />
+      <div className="skeleton-pulse" style={{ width: '60%', height: '18px', marginBottom: '12px', borderRadius: '4px' }} />
+      <div className="skeleton-pulse" style={{ width: '80%', height: '14px', marginBottom: '8px', borderRadius: '4px' }} />
+      <div className="skeleton-pulse" style={{ width: '40%', height: '12px', borderRadius: '4px' }} />
+    </div>
+  );
+}
+
+
 
 

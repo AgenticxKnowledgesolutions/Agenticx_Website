@@ -13,6 +13,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [isJobsOpen, setIsJobsOpen] = useState(false);
   const [isCollaboratorsOpen, setIsCollaboratorsOpen] = useState(false);
+  const [isPlacedStudentsOpen, setIsPlacedStudentsOpen] = useState(false);
   const navigate = useNavigate();
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
@@ -199,6 +200,35 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onMouseEnter={() => import('@/components/features/admin/collaborators/CollaboratorAdd')}
               >
                 Add Collaborator
+              </NavLink>
+            </div>
+          </div>
+
+          {/* Placed Students Collapsible Group */}
+          <div className="admin-nav-group">
+            <button className="admin-nav-link dropdown-toggle" onClick={() => setIsPlacedStudentsOpen(!isPlacedStudentsOpen)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined">group</span> Placed Students
+              </div>
+              <span className={`material-symbols-outlined chevron ${isPlacedStudentsOpen ? 'rotated' : ''}`}>expand_more</span>
+            </button>
+            <div className={`admin-submenu ${isPlacedStudentsOpen ? 'open' : ''}`}>
+              <NavLink 
+                to="/admin/placed-students" 
+                onClick={onClose} 
+                end 
+                className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/placedStudents/PlacedStudentList')}
+              >
+                View Placed Students
+              </NavLink>
+              <NavLink 
+                to="/admin/placed-students/add" 
+                onClick={onClose} 
+                className={({ isActive }) => isActive ? "admin-sub-link active" : "admin-sub-link"}
+                onMouseEnter={() => import('@/components/features/admin/placedStudents/PlacedStudentAdd')}
+              >
+                Add Placed Student
               </NavLink>
             </div>
           </div>
