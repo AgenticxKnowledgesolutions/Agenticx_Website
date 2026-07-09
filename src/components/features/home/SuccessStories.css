@@ -52,7 +52,7 @@
   display: flex;
   gap: 28px;
   width: max-content;
-  animation: scroll 45s linear infinite;
+  animation: scroll 75s linear infinite;
   padding: 0 14px;
 }
 

@@ -132,15 +132,22 @@
 
 /* Name */
 .collaborator-name {
-  margin-top: 16px;
-  font-size: 14px;
+  margin-top: 12px;
+  font-size: 13.5px;
   font-weight: 500;
   color: #001943;
   text-align: center;
   width: 100%;
-  white-space: nowrap;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
+  height: 2.6em;
   flex-shrink: 0;
 }
 
