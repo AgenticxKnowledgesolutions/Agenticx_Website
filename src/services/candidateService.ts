@@ -91,6 +91,17 @@ export interface Candidate {
   certificateId?: string;
   certificateUrl?: string;
   certificateStatus?: string;
+  certificateProgramType?: string;
+  certificateCourseName?: string;
+  certificatePartner?: string;
+  certificateTopics?: string;
+  certificateDomain?: string;
+  certificateDuration?: string;
+  certificateMode?: string;
+  certificateBodyOverride?: string;
+  certificateTitleOverride?: string;
+  certificateCompletionDate?: string;
+  certificateIssueDate?: string;
   importBatchId?: string;
   importTag?: string;
   completedAt?: string;
@@ -221,6 +232,17 @@ const mapCandidate = (c: any): Candidate => {
     certificateId: c.certificate_id || undefined,
     certificateUrl: c.certificate_url || undefined,
     certificateStatus: c.certificate_status || undefined,
+    certificateProgramType: c.certificate_program_type || undefined,
+    certificateCourseName: c.certificate_course_name || undefined,
+    certificatePartner: c.certificate_partner || undefined,
+    certificateTopics: c.certificate_topics || undefined,
+    certificateDomain: c.certificate_domain || undefined,
+    certificateDuration: c.certificate_duration || undefined,
+    certificateMode: c.certificate_mode || undefined,
+    certificateBodyOverride: c.certificate_body_override || undefined,
+    certificateTitleOverride: c.certificate_title_override || undefined,
+    certificateCompletionDate: c.certificate_completion_date || undefined,
+    certificateIssueDate: c.certificate_issue_date || undefined,
     importBatchId: c.import_batch_id || undefined,
     importTag: c.import_tag || undefined,
     completedAt: c.completed_at || undefined,
@@ -490,6 +512,11 @@ export const hardDeleteCandidate = async (id: string): Promise<any> => {
 export const regenerateCertificate = async (id: string): Promise<any> => {
   const res = await api.post(`/candidates/${id}/regenerate-certificate`);
   return res.data;
+};
+
+export const updateCandidateCertificateInfo = async (id: string, data: any): Promise<Candidate> => {
+  const res = await api.put(`/candidates/${id}/certificate-info`, data);
+  return mapCandidate(res.data);
 };
 
 export const bulkRegenerateCertificates = async (candidateIds: string[]): Promise<any> => {

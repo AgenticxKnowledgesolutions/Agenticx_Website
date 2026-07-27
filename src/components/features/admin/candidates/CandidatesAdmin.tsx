@@ -20,6 +20,7 @@ import {
   updateCandidateProfessionalInfo,
   updateCandidateProgramInfo,
   updateCandidateFeeInfo,
+  updateCandidateCertificateInfo,
 } from "../../../../services/candidateService";
 import type { Candidate, AdminNotification } from "../../../../services/candidateService";
 import { getCourses } from "../../../../services/courseService";
@@ -100,6 +101,10 @@ export default function CandidatesAdmin() {
   const [feeForm, setFeeForm] = useState<any>({});
   const [savingFee, setSavingFee] = useState(false);
 
+  const [editingCertMeta, setEditingCertMeta] = useState(false);
+  const [certMetaForm, setCertMetaForm] = useState<any>({});
+  const [savingCertMeta, setSavingCertMeta] = useState(false);
+
   const initSectionForms = (c: Candidate) => {
     setPersonalForm({
       fullName: c.fullName || "",
@@ -179,6 +184,20 @@ export default function CandidatesAdmin() {
       offerExpiryDate: c.offerExpiryDate ? c.offerExpiryDate.split("T")[0] : "",
       admissionFeePaid: c.admissionFeePaid === true,
       autoEnrollEnabled: c.autoEnrollEnabled !== false,
+    });
+
+    setCertMetaForm({
+      certificateProgramType: c.certificateProgramType || "",
+      certificateCourseName: c.certificateCourseName || "",
+      certificatePartner: c.certificatePartner || "",
+      certificateTopics: c.certificateTopics || "",
+      certificateDomain: c.certificateDomain || "",
+      certificateDuration: c.certificateDuration || "",
+      certificateMode: c.certificateMode || "",
+      certificateTitleOverride: c.certificateTitleOverride || "",
+      certificateBodyOverride: c.certificateBodyOverride || "",
+      certificateCompletionDate: c.certificateCompletionDate ? c.certificateCompletionDate.split("T")[0] : "",
+      certificateIssueDate: c.certificateIssueDate ? c.certificateIssueDate.split("T")[0] : "",
     });
   };
 
@@ -496,6 +515,38 @@ export default function CandidatesAdmin() {
       alert(err.response?.data?.detail || "Failed to update fee info.");
     } finally {
       setSavingFee(false);
+    }
+  };
+
+  const handleSaveCertMetaSection = async () => {
+    if (!selectedCandidate) return;
+    setSavingCertMeta(true);
+    try {
+      const payload: any = {
+        certificate_program_type: certMetaForm.certificateProgramType || null,
+        certificate_course_name: certMetaForm.certificateCourseName || null,
+        certificate_partner: certMetaForm.certificatePartner || null,
+        certificate_topics: certMetaForm.certificateTopics || null,
+        certificate_domain: certMetaForm.certificateDomain || null,
+        certificate_duration: certMetaForm.certificateDuration || null,
+        certificate_mode: certMetaForm.certificateMode || null,
+        certificate_title_override: certMetaForm.certificateTitleOverride || null,
+        certificate_body_override: certMetaForm.certificateBodyOverride || null,
+        certificate_completion_date: certMetaForm.certificateCompletionDate ? new Date(certMetaForm.certificateCompletionDate).toISOString() : null,
+        certificate_issue_date: certMetaForm.certificateIssueDate ? new Date(certMetaForm.certificateIssueDate).toISOString() : null,
+      };
+
+      const updated = await updateCandidateCertificateInfo(selectedCandidate.id, payload);
+      setSelectedCandidate(updated);
+      initSectionForms(updated);
+      setEditingCertMeta(false);
+      showToast("Certificate overrides updated successfully!", "success");
+      await loadCandidates();
+    } catch (err: any) {
+      console.error("Failed to update certificate metadata overrides:", err);
+      alert(err.response?.data?.detail || "Failed to update certificate overrides.");
+    } finally {
+      setSavingCertMeta(false);
     }
   };
 
@@ -2298,6 +2349,180 @@ export default function CandidatesAdmin() {
                               </div>
                             );
                           })()}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 7. Certificate Overrides & Metadata Card */}
+                    <div className="info-card-section">
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                        <h4 style={{ color: "#a855f7", margin: 0 }}>Certificate Details & Overrides (V2)</h4>
+                        {activeTab !== "trash" && (
+                          !editingCertMeta ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditingCertMeta(true)}
+                              style={{ background: "rgba(168, 85, 247, 0.12)", border: "1px solid rgba(168, 85, 247, 0.3)", color: "#c084fc", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                            >
+                              ✏️ Edit Certificate Overrides
+                            </button>
+                          ) : (
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <button
+                                type="button"
+                                onClick={() => { setEditingCertMeta(false); initSectionForms(selectedCandidate); }}
+                                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#94a3b8", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSaveCertMetaSection}
+                                disabled={savingCertMeta}
+                                style={{ background: "linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)", border: "none", color: "white", padding: "4px 14px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: savingCertMeta ? "not-allowed" : "pointer" }}
+                              >
+                                {savingCertMeta ? "Saving..." : "Save Overrides"}
+                              </button>
+                            </div>
+                          )
+                        )}
+                      </div>
+
+                      {editingCertMeta ? (
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "4px" }}>Certificate Course Name</label>
+                            <input
+                              type="text"
+                              value={certMetaForm.certificateCourseName}
+                              onChange={(e) => setCertMetaForm({ ...certMetaForm, certificateCourseName: e.target.value })}
+                              placeholder="e.g. Artificial Intelligence & Agentic Systems"
+                              style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "#1e293b", color: "#f8fafc", fontSize: "13px" }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "4px" }}>Program Type</label>
+                            <input
+                              type="text"
+                              value={certMetaForm.certificateProgramType}
+                              onChange={(e) => setCertMetaForm({ ...certMetaForm, certificateProgramType: e.target.value })}
+                              placeholder="e.g. Faculty Development Programme (FDP)"
+                              style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "#1e293b", color: "#f8fafc", fontSize: "13px" }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "4px" }}>In Association With (Partner)</label>
+                            <input
+                              type="text"
+                              value={certMetaForm.certificatePartner}
+                              onChange={(e) => setCertMetaForm({ ...certMetaForm, certificatePartner: e.target.value })}
+                              placeholder="e.g. Younus College of Engineering"
+                              style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "#1e293b", color: "#f8fafc", fontSize: "13px" }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "4px" }}>Topics Covered</label>
+                            <input
+                              type="text"
+                              value={certMetaForm.certificateTopics}
+                              onChange={(e) => setCertMetaForm({ ...certMetaForm, certificateTopics: e.target.value })}
+                              placeholder="e.g. Machine Learning, LLMs, RAG, Agentic AI"
+                              style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "#1e293b", color: "#f8fafc", fontSize: "13px" }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "4px" }}>Domain</label>
+                            <input
+                              type="text"
+                              value={certMetaForm.certificateDomain}
+                              onChange={(e) => setCertMetaForm({ ...certMetaForm, certificateDomain: e.target.value })}
+                              placeholder="e.g. Artificial Intelligence"
+                              style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "#1e293b", color: "#f8fafc", fontSize: "13px" }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "4px" }}>Duration</label>
+                            <input
+                              type="text"
+                              value={certMetaForm.certificateDuration}
+                              onChange={(e) => setCertMetaForm({ ...certMetaForm, certificateDuration: e.target.value })}
+                              placeholder="e.g. 5 Hours / 4 Weeks"
+                              style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "#1e293b", color: "#f8fafc", fontSize: "13px" }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "4px" }}>Mode of Learning</label>
+                            <input
+                              type="text"
+                              value={certMetaForm.certificateMode}
+                              onChange={(e) => setCertMetaForm({ ...certMetaForm, certificateMode: e.target.value })}
+                              placeholder="e.g. Online / Hybrid / On-Campus"
+                              style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "#1e293b", color: "#f8fafc", fontSize: "13px" }}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "4px" }}>Title Override</label>
+                            <input
+                              type="text"
+                              value={certMetaForm.certificateTitleOverride}
+                              onChange={(e) => setCertMetaForm({ ...certMetaForm, certificateTitleOverride: e.target.value })}
+                              placeholder="e.g. CERTIFICATE OF EXCELLENCE"
+                              style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "#1e293b", color: "#f8fafc", fontSize: "13px" }}
+                            />
+                          </div>
+
+                          <div style={{ gridColumn: "span 2" }}>
+                            <label style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "4px" }}>Custom Body Template Override</label>
+                            <textarea
+                              rows={3}
+                              value={certMetaForm.certificateBodyOverride}
+                              onChange={(e) => setCertMetaForm({ ...certMetaForm, certificateBodyOverride: e.target.value })}
+                              placeholder="Optional custom paragraph text..."
+                              style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.15)", background: "#1e293b", color: "#f8fafc", fontSize: "13px" }}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="info-grid">
+                          <div>
+                            <span className="info-label">Cert Course Name</span>
+                            <span className="info-value">{selectedCandidate.certificateCourseName || selectedCandidate.courseApplied || "Default"}</span>
+                          </div>
+                          <div>
+                            <span className="info-label">Cert Program Type</span>
+                            <span className="info-value">{selectedCandidate.certificateProgramType || selectedCandidate.programType || "Default"}</span>
+                          </div>
+                          <div>
+                            <span className="info-label">In Association With</span>
+                            <span className="info-value">{selectedCandidate.certificatePartner || selectedCandidate.trainingLocation || "N/A"}</span>
+                          </div>
+                          <div>
+                            <span className="info-label">Topics Covered</span>
+                            <span className="info-value">{selectedCandidate.certificateTopics || selectedCandidate.programmeDomain || "Default"}</span>
+                          </div>
+                          <div>
+                            <span className="info-label">Domain</span>
+                            <span className="info-value">{selectedCandidate.certificateDomain || selectedCandidate.programmeDomain || "Default"}</span>
+                          </div>
+                          <div>
+                            <span className="info-label">Mode & Duration</span>
+                            <span className="info-value">{selectedCandidate.certificateMode || selectedCandidate.modeOfLearning || "Online"} ({selectedCandidate.certificateDuration || selectedCandidate.courseDuration || "N/A"})</span>
+                          </div>
+                          <div>
+                            <span className="info-label">Title Override</span>
+                            <span className="info-value">{selectedCandidate.certificateTitleOverride || "Standard Template Title"}</span>
+                          </div>
+                          <div>
+                            <span className="info-label">Body Override</span>
+                            <span className="info-value">{selectedCandidate.certificateBodyOverride ? "Custom Body Set" : "Standard Wording"}</span>
+                          </div>
                         </div>
                       )}
                     </div>
