@@ -39,6 +39,40 @@ export interface Candidate {
   languagesKnown?: string;
   parentGuardianName?: string;
   parentGuardianOccupation?: string;
+  preferredName?: string;
+  panNumber?: string;
+  city?: string;
+  district?: string;
+  state?: string;
+  country?: string;
+  pincode?: string;
+  parentGuardianPhone?: string;
+  parentGuardianRelationship?: string;
+  
+  // Extended Academic
+  sslcDetails?: string;
+  plusTwoDetails?: string;
+  diplomaDetails?: string;
+  ugDetails?: string;
+  pgDetails?: string;
+  universityName?: string;
+  academicPercentage?: number;
+  academicCgpa?: number;
+  passingYear?: string;
+  academicStatus?: string;
+
+  // Extended Professional
+  experienceYears?: string;
+  companyName?: string;
+  skills?: string;
+  linkedinUrl?: string;
+  portfolioUrl?: string;
+
+  // Extended Program
+  batchName?: string;
+  trainerName?: string;
+  trainingLocation?: string;
+
   aadhaarNumberEncrypted?: string;
   aadhaarNumberDecrypted?: string;
   aadhaarNumberMasked?: string;
@@ -75,6 +109,9 @@ export interface Candidate {
   corporateDiscount?: number;
   promoDiscount?: number;
   bookingAmount?: number;
+  gstPercentage?: number;
+  gstAmount?: number;
+  convenienceFee?: number;
   finalPayableAmount?: number;
   offerRemarks?: string;
   offerExpiryDate?: string;
@@ -140,6 +177,33 @@ const mapCandidate = (c: any): Candidate => {
     languagesKnown: c.languages_known || undefined,
     parentGuardianName: c.parent_guardian_name || undefined,
     parentGuardianOccupation: c.parent_guardian_occupation || undefined,
+    preferredName: c.preferred_name || undefined,
+    panNumber: c.pan_number || undefined,
+    city: c.city || undefined,
+    district: c.district || undefined,
+    state: c.state || undefined,
+    country: c.country || undefined,
+    pincode: c.pincode || undefined,
+    parentGuardianPhone: c.parent_guardian_phone || undefined,
+    parentGuardianRelationship: c.parent_guardian_relationship || undefined,
+    sslcDetails: c.sslc_details || undefined,
+    plusTwoDetails: c.plus_two_details || undefined,
+    diplomaDetails: c.diploma_details || undefined,
+    ugDetails: c.ug_details || undefined,
+    pgDetails: c.pg_details || undefined,
+    universityName: c.university_name || undefined,
+    academicPercentage: c.academic_percentage != null ? c.academic_percentage : undefined,
+    academicCgpa: c.academic_cgpa != null ? c.academic_cgpa : undefined,
+    passingYear: c.passing_year || undefined,
+    academicStatus: c.academic_status || undefined,
+    experienceYears: c.experience_years || undefined,
+    companyName: c.company_name || undefined,
+    skills: c.skills || undefined,
+    linkedinUrl: c.linkedin_url || undefined,
+    portfolioUrl: c.portfolio_url || undefined,
+    batchName: c.batch_name || undefined,
+    trainerName: c.trainer_name || undefined,
+    trainingLocation: c.training_location || undefined,
     aadhaarNumberEncrypted: c.aadhaar_number_encrypted || undefined,
     aadhaarNumberDecrypted: c.aadhaar_number_decrypted || undefined,
     aadhaarNumberMasked: c.aadhaar_number_masked || undefined,
@@ -173,6 +237,9 @@ const mapCandidate = (c: any): Candidate => {
     corporateDiscount: c.corporate_discount,
     promoDiscount: c.promo_discount,
     bookingAmount: c.booking_amount,
+    gstPercentage: c.gst_percentage != null ? c.gst_percentage : undefined,
+    gstAmount: c.gst_amount != null ? c.gst_amount : undefined,
+    convenienceFee: c.convenience_fee != null ? c.convenience_fee : undefined,
     finalPayableAmount: c.final_payable_amount,
     offerRemarks: c.offer_remarks || undefined,
     offerExpiryDate: c.offer_expiry_date || undefined,
@@ -490,6 +557,31 @@ export const recordCandidatePayment = async (
   }
 ): Promise<Candidate> => {
   const res = await api.post(`/candidates/${id}/record-payment`, paymentData);
+  return mapCandidate(res.data);
+};
+
+export const updateCandidatePersonalInfo = async (id: string, data: any): Promise<Candidate> => {
+  const res = await api.put(`/candidates/${id}/personal-info`, data);
+  return mapCandidate(res.data);
+};
+
+export const updateCandidateAcademicInfo = async (id: string, data: any): Promise<Candidate> => {
+  const res = await api.put(`/candidates/${id}/academic-info`, data);
+  return mapCandidate(res.data);
+};
+
+export const updateCandidateProfessionalInfo = async (id: string, data: any): Promise<Candidate> => {
+  const res = await api.put(`/candidates/${id}/professional-info`, data);
+  return mapCandidate(res.data);
+};
+
+export const updateCandidateProgramInfo = async (id: string, data: any): Promise<Candidate> => {
+  const res = await api.put(`/candidates/${id}/program-info`, data);
+  return mapCandidate(res.data);
+};
+
+export const updateCandidateFeeInfo = async (id: string, data: any): Promise<Candidate> => {
+  const res = await api.put(`/candidates/${id}/fee-info`, data);
   return mapCandidate(res.data);
 };
 

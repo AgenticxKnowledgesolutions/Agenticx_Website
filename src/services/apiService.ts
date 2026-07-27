@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useAuthStore } from "../store/useAuthStore";
+import { useAuthStore, decodeJwt } from "../store/useAuthStore";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "https://api.agenticx.co.in/api/v1";
@@ -12,7 +12,7 @@ export const api = axios.create({
   },
 });
 
-// Variables to handle token refresh queue
+// Variables to handle token refresh queue for response interceptor fallback
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value: any) => void;
@@ -30,11 +30,60 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
+// Variables to handle proactive token refresh in the request interceptor
+let proactiveRefreshPromise: Promise<string | null> | null = null;
+
+async function performProactiveTokenRefresh(refreshToken: string): Promise<string | null> {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+      refresh_token: refreshToken,
+    });
+    const { access_token, refresh_token } = response.data;
+    useAuthStore.getState().setAuth(access_token, refresh_token);
+    return access_token;
+  } catch (refreshError) {
+    console.error("Proactive token refresh failed:", refreshError);
+    useAuthStore.getState().clearAuth();
+    if (
+      typeof window !== "undefined" &&
+      !window.location.pathname.startsWith("/admin/login") &&
+      !window.location.pathname.startsWith("/apply")
+    ) {
+      window.location.href = "/admin/login?expired=true";
+    }
+    return null;
+  }
+}
+
 // Add request interceptor to automatically attach the access token to requests
 api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().accessToken || localStorage.getItem("admin_token");
+  async (config) => {
+    const url = config.url || "";
+    // Avoid checking token/expiration for login and refresh endpoints
+    if (url.includes("/auth/login") || url.includes("/auth/refresh")) {
+      return config;
+    }
+
+    let token = useAuthStore.getState().accessToken || localStorage.getItem("admin_token");
     if (token) {
+      const decoded = decodeJwt(token);
+      const isExpired = decoded && decoded.exp && (decoded.exp * 1000 - 10000 < Date.now());
+
+      if (isExpired) {
+        const refreshToken = localStorage.getItem("admin_refresh_token");
+        if (refreshToken) {
+          if (!proactiveRefreshPromise) {
+            proactiveRefreshPromise = performProactiveTokenRefresh(refreshToken).finally(() => {
+              proactiveRefreshPromise = null;
+            });
+          }
+          const newToken = await proactiveRefreshPromise;
+          if (newToken) {
+            token = newToken;
+          }
+        }
+      }
+
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;

@@ -15,6 +15,11 @@ import {
   bulkSoftDeleteCandidates,
   updateCandidateOffer,
   recordCandidatePayment,
+  updateCandidatePersonalInfo,
+  updateCandidateAcademicInfo,
+  updateCandidateProfessionalInfo,
+  updateCandidateProgramInfo,
+  updateCandidateFeeInfo,
 } from "../../../../services/candidateService";
 import type { Candidate, AdminNotification } from "../../../../services/candidateService";
 import { getCourses } from "../../../../services/courseService";
@@ -72,6 +77,106 @@ export default function CandidatesAdmin() {
   const [paymentMethodVal, setPaymentMethodVal] = useState("Cash");
   const [paymentTransactionIdVal, setPaymentTransactionIdVal] = useState("");
   const [isRecordingPayment, setIsRecordingPayment] = useState(false);
+
+  // Section-based Editing State & Form Data
+  const [editingPersonal, setEditingPersonal] = useState(false);
+  const [personalForm, setPersonalForm] = useState<any>({});
+  const [savingPersonal, setSavingPersonal] = useState(false);
+
+  const [editingAcademic, setEditingAcademic] = useState(false);
+  const [academicForm, setAcademicForm] = useState<any>({});
+  const [savingAcademic, setSavingAcademic] = useState(false);
+
+  const [editingProfessional, setEditingProfessional] = useState(false);
+  const [professionalForm, setProfessionalForm] = useState<any>({});
+  const [savingProfessional, setSavingProfessional] = useState(false);
+
+  const [editingProgram, setEditingProgram] = useState(false);
+  const [programForm, setProgramForm] = useState<any>({});
+  const [savingProgram, setSavingProgram] = useState(false);
+
+  const [editingFee, setEditingFee] = useState(false);
+  const [feeForm, setFeeForm] = useState<any>({});
+  const [savingFee, setSavingFee] = useState(false);
+
+  const initSectionForms = (c: Candidate) => {
+    setPersonalForm({
+      fullName: c.fullName || "",
+      preferredName: c.preferredName || "",
+      gender: c.gender || "",
+      dateOfBirth: c.dateOfBirth ? c.dateOfBirth.split("T")[0] : "",
+      email: c.email || "",
+      phone: c.phone || "",
+      whatsappNumber: c.whatsappNumber || "",
+      aadhaarNumber: "",
+      panNumber: c.panNumber || "",
+      address: c.address || "",
+      city: c.city || "",
+      district: c.district || "",
+      state: c.state || "",
+      country: c.country || "",
+      pincode: c.pincode || "",
+      emergencyContact: c.emergencyContact || "",
+      parentGuardianName: c.parentGuardianName || "",
+      parentGuardianOccupation: c.parentGuardianOccupation || "",
+      parentGuardianPhone: c.parentGuardianPhone || "",
+      parentGuardianRelationship: c.parentGuardianRelationship || "",
+    });
+
+    setAcademicForm({
+      sslcDetails: c.sslcDetails || "",
+      plusTwoDetails: c.plusTwoDetails || "",
+      diplomaDetails: c.diplomaDetails || "",
+      ugDetails: c.ugDetails || "",
+      pgDetails: c.pgDetails || "",
+      universityName: c.universityName || "",
+      collegeName: c.collegeName || "",
+      qualification: c.qualification || "",
+      academicPercentage: c.academicPercentage != null ? String(c.academicPercentage) : "",
+      academicCgpa: c.academicCgpa != null ? String(c.academicCgpa) : "",
+      passingYear: c.passingYear || "",
+      academicStatus: c.academicStatus || "Passed Out",
+    });
+
+    setProfessionalForm({
+      experienceYears: c.experienceYears || "",
+      companyName: c.companyName || "",
+      skills: c.skills || "",
+      cvUrl: c.cvUrl || "",
+      linkedinUrl: c.linkedinUrl || "",
+      portfolioUrl: c.portfolioUrl || "",
+    });
+
+    setProgramForm({
+      programType: c.programType || "",
+      courseApplied: c.courseApplied || "",
+      batchName: c.batchName || "",
+      trainerName: c.trainerName || "",
+      courseStartDate: c.courseStartDate ? c.courseStartDate.split("T")[0] : "",
+      completedAt: c.completedAt ? c.completedAt.split("T")[0] : "",
+      courseDuration: c.courseDuration || "",
+      modeOfLearning: c.modeOfLearning || "Offline",
+      trainingLocation: c.trainingLocation || "",
+      programmeDomain: c.programmeDomain || "",
+    });
+
+    setFeeForm({
+      standardCourseFee: c.standardCourseFee || 0,
+      scholarshipAmount: c.scholarshipAmount || 0,
+      specialDiscount: c.specialDiscount || 0,
+      corporateDiscount: c.corporateDiscount || 0,
+      promoDiscount: c.promoDiscount || 0,
+      gstPercentage: c.gstPercentage || 0,
+      gstAmount: c.gstAmount || 0,
+      convenienceFee: c.convenienceFee || 0,
+      bookingAmount: c.bookingAmount || 0,
+      admissionFeeAmount: c.admissionFeeAmount || 250,
+      offerRemarks: c.offerRemarks || "",
+      offerExpiryDate: c.offerExpiryDate ? c.offerExpiryDate.split("T")[0] : "",
+      admissionFeePaid: c.admissionFeePaid === true,
+      autoEnrollEnabled: c.autoEnrollEnabled !== false,
+    });
+  };
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -172,6 +277,7 @@ export default function CandidatesAdmin() {
     try {
       const c = await getCandidateById(id);
       setSelectedCandidate(c);
+      initSectionForms(c);
       setStatusUpdateVal((c.applicationStatus || "").toLowerCase());
       setCourseStartDateVal(c.courseStartDate ? c.courseStartDate.split("T")[0] : "");
       setCompletedAtVal(c.completedAt ? c.completedAt.split("T")[0] : "");
@@ -217,6 +323,175 @@ export default function CandidatesAdmin() {
       console.error("Failed to load candidate detail:", err);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleSavePersonalSection = async () => {
+    if (!selectedCandidate) return;
+    setSavingPersonal(true);
+    try {
+      const payload: any = {
+        full_name: personalForm.fullName,
+        preferred_name: personalForm.preferredName || null,
+        gender: personalForm.gender || null,
+        date_of_birth: personalForm.dateOfBirth ? new Date(personalForm.dateOfBirth).toISOString() : null,
+        email: personalForm.email,
+        phone: personalForm.phone,
+        whatsapp_number: personalForm.whatsappNumber || null,
+        pan_number: personalForm.panNumber || null,
+        address: personalForm.address || null,
+        city: personalForm.city || null,
+        district: personalForm.district || null,
+        state: personalForm.state || null,
+        country: personalForm.country || null,
+        pincode: personalForm.pincode || null,
+        emergency_contact: personalForm.emergencyContact || null,
+        parent_guardian_name: personalForm.parentGuardianName || null,
+        parent_guardian_occupation: personalForm.parentGuardianOccupation || null,
+        parent_guardian_phone: personalForm.parentGuardianPhone || null,
+        parent_guardian_relationship: personalForm.parentGuardianRelationship || null,
+      };
+      if (personalForm.aadhaarNumber && personalForm.aadhaarNumber.trim()) {
+        payload.aadhaar_number = personalForm.aadhaarNumber.trim();
+      }
+
+      const updated = await updateCandidatePersonalInfo(selectedCandidate.id, payload);
+      setSelectedCandidate(updated);
+      initSectionForms(updated);
+      setEditingPersonal(false);
+      showToast("Personal information updated successfully!", "success");
+      await loadCandidates();
+    } catch (err: any) {
+      console.error("Failed to update personal info:", err);
+      alert(err.response?.data?.detail || "Failed to update personal info.");
+    } finally {
+      setSavingPersonal(false);
+    }
+  };
+
+  const handleSaveAcademicSection = async () => {
+    if (!selectedCandidate) return;
+    setSavingAcademic(true);
+    try {
+      const payload: any = {
+        sslc_details: academicForm.sslcDetails || null,
+        plus_two_details: academicForm.plusTwoDetails || null,
+        diploma_details: academicForm.diplomaDetails || null,
+        ug_details: academicForm.ugDetails || null,
+        pg_details: academicForm.pgDetails || null,
+        university_name: academicForm.universityName || null,
+        college_name: academicForm.collegeName || null,
+        qualification: academicForm.qualification || null,
+        academic_percentage: academicForm.academicPercentage ? parseFloat(academicForm.academicPercentage) : null,
+        academic_cgpa: academicForm.academicCgpa ? parseFloat(academicForm.academicCgpa) : null,
+        passing_year: academicForm.passingYear || null,
+        academic_status: academicForm.academicStatus || null,
+      };
+
+      const updated = await updateCandidateAcademicInfo(selectedCandidate.id, payload);
+      setSelectedCandidate(updated);
+      initSectionForms(updated);
+      setEditingAcademic(false);
+      showToast("Academic information updated successfully!", "success");
+      await loadCandidates();
+    } catch (err: any) {
+      console.error("Failed to update academic info:", err);
+      alert(err.response?.data?.detail || "Failed to update academic info.");
+    } finally {
+      setSavingAcademic(false);
+    }
+  };
+
+  const handleSaveProfessionalSection = async () => {
+    if (!selectedCandidate) return;
+    setSavingProfessional(true);
+    try {
+      const payload: any = {
+        experience_years: professionalForm.experienceYears || null,
+        company_name: professionalForm.companyName || null,
+        skills: professionalForm.skills || null,
+        cv_url: professionalForm.cvUrl || null,
+        linkedin_url: professionalForm.linkedinUrl || null,
+        portfolio_url: professionalForm.portfolioUrl || null,
+      };
+
+      const updated = await updateCandidateProfessionalInfo(selectedCandidate.id, payload);
+      setSelectedCandidate(updated);
+      initSectionForms(updated);
+      setEditingProfessional(false);
+      showToast("Professional information updated successfully!", "success");
+      await loadCandidates();
+    } catch (err: any) {
+      console.error("Failed to update professional info:", err);
+      alert(err.response?.data?.detail || "Failed to update professional info.");
+    } finally {
+      setSavingProfessional(false);
+    }
+  };
+
+  const handleSaveProgramSection = async () => {
+    if (!selectedCandidate) return;
+    setSavingProgram(true);
+    try {
+      const payload: any = {
+        program_type: programForm.programType || null,
+        course_applied: programForm.courseApplied || null,
+        batch_name: programForm.batchName || null,
+        trainer_name: programForm.trainerName || null,
+        course_start_date: programForm.courseStartDate ? new Date(programForm.courseStartDate).toISOString() : null,
+        completed_at: programForm.completedAt ? new Date(programForm.completedAt).toISOString() : null,
+        course_duration: programForm.courseDuration || null,
+        mode_of_learning: programForm.modeOfLearning || null,
+        training_location: programForm.trainingLocation || null,
+        programme_domain: programForm.programmeDomain || null,
+      };
+
+      const updated = await updateCandidateProgramInfo(selectedCandidate.id, payload);
+      setSelectedCandidate(updated);
+      initSectionForms(updated);
+      setEditingProgram(false);
+      showToast("Program information updated successfully!", "success");
+      await loadCandidates();
+    } catch (err: any) {
+      console.error("Failed to update program info:", err);
+      alert(err.response?.data?.detail || "Failed to update program info.");
+    } finally {
+      setSavingProgram(false);
+    }
+  };
+
+  const handleSaveFeeSection = async () => {
+    if (!selectedCandidate) return;
+    setSavingFee(true);
+    try {
+      const payload: any = {
+        standard_course_fee: parseFloat(feeForm.standardCourseFee || 0),
+        scholarship_amount: parseFloat(feeForm.scholarshipAmount || 0),
+        special_discount: parseFloat(feeForm.specialDiscount || 0),
+        corporate_discount: parseFloat(feeForm.corporateDiscount || 0),
+        promo_discount: parseFloat(feeForm.promoDiscount || 0),
+        gst_percentage: parseFloat(feeForm.gstPercentage || 0),
+        gst_amount: parseFloat(feeForm.gstAmount || 0),
+        convenience_fee: parseFloat(feeForm.convenienceFee || 0),
+        booking_amount: parseFloat(feeForm.bookingAmount || 0),
+        admission_fee_amount: parseFloat(feeForm.admissionFeeAmount || 250),
+        offer_remarks: feeForm.offerRemarks || null,
+        offer_expiry_date: feeForm.offerExpiryDate ? new Date(feeForm.offerExpiryDate).toISOString() : null,
+        admission_fee_paid: feeForm.admissionFeePaid === true,
+        auto_enroll_enabled: feeForm.autoEnrollEnabled !== false,
+      };
+
+      const updated = await updateCandidateFeeInfo(selectedCandidate.id, payload);
+      setSelectedCandidate(updated);
+      initSectionForms(updated);
+      setEditingFee(false);
+      showToast("Fee details updated successfully!", "success");
+      await loadCandidates();
+    } catch (err: any) {
+      console.error("Failed to update fee info:", err);
+      alert(err.response?.data?.detail || "Failed to update fee info.");
+    } finally {
+      setSavingFee(false);
     }
   };
 
@@ -1168,80 +1443,211 @@ export default function CandidatesAdmin() {
                       </div>
                     </div>
 
-                    {/* Personal Info */}
+                    {/* 1. Personal Information Card */}
                     <div className="info-card-section">
-                      <h4>Personal Information</h4>
-                      <div className="details-grid-two-col">
-                        <div className="info-item">
-                          <span className="label">Full Name</span>
-                          <span className="value">{selectedCandidate.fullName}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Email</span>
-                          <span className="value">{selectedCandidate.email}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Phone</span>
-                          <span className="value">{selectedCandidate.phone}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">WhatsApp</span>
-                          <span className="value">{selectedCandidate.whatsappNumber || "N/A"}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Emergency Contact</span>
-                          <span className="value">{selectedCandidate.emergencyContact || "N/A"}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Date of Birth</span>
-                          <span className="value">
-                            {selectedCandidate.dateOfBirth ? new Date(selectedCandidate.dateOfBirth).toLocaleDateString() : "N/A"}
-                          </span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Gender</span>
-                          <span className="value">{selectedCandidate.gender || "N/A"}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Blood Group</span>
-                          <span className="value">{selectedCandidate.bloodGroup || "N/A"}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Aadhaar Number</span>
-                          <span className="value">{selectedCandidate.aadhaarNumberMasked || "N/A"}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Languages Known</span>
-                          <span className="value">{selectedCandidate.languagesKnown || "N/A"}</span>
-                        </div>
-                        <div className="info-item" style={{ gridColumn: "1 / -1" }}>
-                          <span className="label">Address</span>
-                          <span className="value">{selectedCandidate.address || "N/A"}</span>
-                        </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                        <h4 style={{ color: "#38bdf8", margin: 0 }}>Personal Information</h4>
+                        {activeTab !== "trash" && (
+                          !editingPersonal ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditingPersonal(true)}
+                              style={{ background: "rgba(56, 189, 248, 0.12)", border: "1px solid rgba(56, 189, 248, 0.3)", color: "#38bdf8", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                            >
+                              ✏️ Edit Section
+                            </button>
+                          ) : (
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <button
+                                type="button"
+                                onClick={() => { setEditingPersonal(false); initSectionForms(selectedCandidate); }}
+                                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#94a3b8", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSavePersonalSection}
+                                disabled={savingPersonal}
+                                style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", border: "none", color: "#fff", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                {savingPersonal ? "Saving..." : "Save Personal"}
+                              </button>
+                            </div>
+                          )
+                        )}
                       </div>
+
+                      {!editingPersonal ? (
+                        <div className="details-grid-two-col">
+                          <div className="info-item"><span className="label">Full Name</span><span className="value">{selectedCandidate.fullName}</span></div>
+                          <div className="info-item"><span className="label">Preferred Name</span><span className="value">{selectedCandidate.preferredName || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Email</span><span className="value">{selectedCandidate.email}</span></div>
+                          <div className="info-item"><span className="label">Mobile</span><span className="value">{selectedCandidate.phone}</span></div>
+                          <div className="info-item"><span className="label">WhatsApp / Alt Mobile</span><span className="value">{selectedCandidate.whatsappNumber || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Emergency Contact</span><span className="value">{selectedCandidate.emergencyContact || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Date of Birth</span><span className="value">{selectedCandidate.dateOfBirth ? new Date(selectedCandidate.dateOfBirth).toLocaleDateString() : "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Gender</span><span className="value">{selectedCandidate.gender || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Blood Group</span><span className="value">{selectedCandidate.bloodGroup || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Aadhaar Number</span><span className="value">{selectedCandidate.aadhaarNumberMasked || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">PAN Number</span><span className="value">{selectedCandidate.panNumber || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">City</span><span className="value">{selectedCandidate.city || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">District</span><span className="value">{selectedCandidate.district || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">State</span><span className="value">{selectedCandidate.state || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Country</span><span className="value">{selectedCandidate.country || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Pincode</span><span className="value">{selectedCandidate.pincode || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Guardian Name</span><span className="value">{selectedCandidate.parentGuardianName || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Guardian Occupation</span><span className="value">{selectedCandidate.parentGuardianOccupation || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Guardian Phone</span><span className="value">{selectedCandidate.parentGuardianPhone || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Guardian Relationship</span><span className="value">{selectedCandidate.parentGuardianRelationship || "N/A"}</span></div>
+                          <div className="info-item" style={{ gridColumn: "1 / -1" }}><span className="label">Address</span><span className="value">{selectedCandidate.address || "N/A"}</span></div>
+                        </div>
+                      ) : (
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Full Name *</label><input type="text" value={personalForm.fullName} onChange={e => setPersonalForm({...personalForm, fullName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Preferred Name</label><input type="text" value={personalForm.preferredName} onChange={e => setPersonalForm({...personalForm, preferredName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Email *</label><input type="email" value={personalForm.email} onChange={e => setPersonalForm({...personalForm, email: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Mobile Phone *</label><input type="text" value={personalForm.phone} onChange={e => setPersonalForm({...personalForm, phone: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>WhatsApp / Alt Mobile</label><input type="text" value={personalForm.whatsappNumber} onChange={e => setPersonalForm({...personalForm, whatsappNumber: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Emergency Contact</label><input type="text" value={personalForm.emergencyContact} onChange={e => setPersonalForm({...personalForm, emergencyContact: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Date of Birth</label><input type="date" value={personalForm.dateOfBirth} onChange={e => setPersonalForm({...personalForm, dateOfBirth: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Gender</label><select value={personalForm.gender} onChange={e => setPersonalForm({...personalForm, gender: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}><option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>New Aadhaar Number (12 Digits)</label><input type="text" placeholder="Update Aadhaar" value={personalForm.aadhaarNumber} onChange={e => setPersonalForm({...personalForm, aadhaarNumber: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>PAN Number</label><input type="text" placeholder="e.g. ABCDE1234F" value={personalForm.panNumber} onChange={e => setPersonalForm({...personalForm, panNumber: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>City</label><input type="text" value={personalForm.city} onChange={e => setPersonalForm({...personalForm, city: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>District</label><input type="text" value={personalForm.district} onChange={e => setPersonalForm({...personalForm, district: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>State</label><input type="text" value={personalForm.state} onChange={e => setPersonalForm({...personalForm, state: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Country</label><input type="text" value={personalForm.country} onChange={e => setPersonalForm({...personalForm, country: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Pincode</label><input type="text" value={personalForm.pincode} onChange={e => setPersonalForm({...personalForm, pincode: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Name</label><input type="text" value={personalForm.parentGuardianName} onChange={e => setPersonalForm({...personalForm, parentGuardianName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Occupation</label><input type="text" value={personalForm.parentGuardianOccupation} onChange={e => setPersonalForm({...personalForm, parentGuardianOccupation: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Phone</label><input type="text" value={personalForm.parentGuardianPhone} onChange={e => setPersonalForm({...personalForm, parentGuardianPhone: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Relationship</label><input type="text" value={personalForm.parentGuardianRelationship} onChange={e => setPersonalForm({...personalForm, parentGuardianRelationship: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div style={{ gridColumn: "1 / -1" }}><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Address</label><textarea rows={2} value={personalForm.address} onChange={e => setPersonalForm({...personalForm, address: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px", resize: "none" }} /></div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Parents & Reference */}
+                    {/* 2. Academic Information Card */}
                     <div className="info-card-section">
-                      <h4>Parent & Reference Info</h4>
-                      <div className="details-grid-two-col">
-                        <div className="info-item">
-                          <span className="label">Guardian Name</span>
-                          <span className="value">{selectedCandidate.parentGuardianName || "N/A"}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Guardian Occupation</span>
-                          <span className="value">{selectedCandidate.parentGuardianOccupation || "N/A"}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Source</span>
-                          <span className="value">{selectedCandidate.candidateSource || "N/A"}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Reference Details</span>
-                          <span className="value">{selectedCandidate.referenceDetails || "N/A"}</span>
-                        </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                        <h4 style={{ color: "#a855f7", margin: 0 }}>Academic Information</h4>
+                        {activeTab !== "trash" && (
+                          !editingAcademic ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditingAcademic(true)}
+                              style={{ background: "rgba(168, 85, 247, 0.12)", border: "1px solid rgba(168, 85, 247, 0.3)", color: "#c084fc", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                            >
+                              ✏️ Edit Section
+                            </button>
+                          ) : (
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <button
+                                type="button"
+                                onClick={() => { setEditingAcademic(false); initSectionForms(selectedCandidate); }}
+                                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#94a3b8", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSaveAcademicSection}
+                                disabled={savingAcademic}
+                                style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", border: "none", color: "#fff", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                {savingAcademic ? "Saving..." : "Save Academic"}
+                              </button>
+                            </div>
+                          )
+                        )}
                       </div>
+
+                      {!editingAcademic ? (
+                        <div className="details-grid-two-col">
+                          <div className="info-item"><span className="label">Qualification</span><span className="value">{selectedCandidate.qualification || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">College Name</span><span className="value">{selectedCandidate.collegeName || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">University</span><span className="value">{selectedCandidate.universityName || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">SSLC</span><span className="value">{selectedCandidate.sslcDetails || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Plus Two</span><span className="value">{selectedCandidate.plusTwoDetails || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Diploma</span><span className="value">{selectedCandidate.diplomaDetails || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Undergraduate (UG)</span><span className="value">{selectedCandidate.ugDetails || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Postgraduate (PG)</span><span className="value">{selectedCandidate.pgDetails || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Percentage (%)</span><span className="value">{selectedCandidate.academicPercentage != null ? `${selectedCandidate.academicPercentage}%` : "N/A"}</span></div>
+                          <div className="info-item"><span className="label">CGPA</span><span className="value">{selectedCandidate.academicCgpa != null ? selectedCandidate.academicCgpa : "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Passing Year</span><span className="value">{selectedCandidate.passingYear || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Academic Status</span><span className="value">{selectedCandidate.academicStatus || "N/A"}</span></div>
+                        </div>
+                      ) : (
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Highest Qualification</label><input type="text" value={academicForm.qualification} onChange={e => setAcademicForm({...academicForm, qualification: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>College / Institution Name</label><input type="text" value={academicForm.collegeName} onChange={e => setAcademicForm({...academicForm, collegeName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>University Name</label><input type="text" value={academicForm.universityName} onChange={e => setAcademicForm({...academicForm, universityName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>SSLC Details / %</label><input type="text" placeholder="e.g. 88%" value={academicForm.sslcDetails} onChange={e => setAcademicForm({...academicForm, sslcDetails: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Plus Two Details / %</label><input type="text" placeholder="e.g. 92%" value={academicForm.plusTwoDetails} onChange={e => setAcademicForm({...academicForm, plusTwoDetails: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Diploma Details</label><input type="text" value={academicForm.diplomaDetails} onChange={e => setAcademicForm({...academicForm, diplomaDetails: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>UG Degree & Major</label><input type="text" placeholder="e.g. B.Tech Computer Science" value={academicForm.ugDetails} onChange={e => setAcademicForm({...academicForm, ugDetails: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>PG Degree & Major</label><input type="text" placeholder="e.g. M.Tech AI" value={academicForm.pgDetails} onChange={e => setAcademicForm({...academicForm, pgDetails: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Percentage (%)</label><input type="number" step="0.1" value={academicForm.academicPercentage} onChange={e => setAcademicForm({...academicForm, academicPercentage: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>CGPA (out of 10)</label><input type="number" step="0.01" value={academicForm.academicCgpa} onChange={e => setAcademicForm({...academicForm, academicCgpa: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Passing Year</label><input type="text" placeholder="e.g. 2024" value={academicForm.passingYear} onChange={e => setAcademicForm({...academicForm, passingYear: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Academic Status</label><select value={academicForm.academicStatus} onChange={e => setAcademicForm({...academicForm, academicStatus: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}><option value="Passed Out">Passed Out</option><option value="Pursuing">Pursuing</option><option value="Discontinued">Discontinued</option></select></div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 3. Professional Information Card */}
+                    <div className="info-card-section">
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                        <h4 style={{ color: "#f59e0b", margin: 0 }}>Professional Information</h4>
+                        {activeTab !== "trash" && (
+                          !editingProfessional ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditingProfessional(true)}
+                              style={{ background: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(245, 158, 11, 0.3)", color: "#fbbf24", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                            >
+                              ✏️ Edit Section
+                            </button>
+                          ) : (
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <button
+                                type="button"
+                                onClick={() => { setEditingProfessional(false); initSectionForms(selectedCandidate); }}
+                                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#94a3b8", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSaveProfessionalSection}
+                                disabled={savingProfessional}
+                                style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", border: "none", color: "#fff", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                {savingProfessional ? "Saving..." : "Save Professional"}
+                              </button>
+                            </div>
+                          )
+                        )}
+                      </div>
+
+                      {!editingProfessional ? (
+                        <div className="details-grid-two-col">
+                          <div className="info-item"><span className="label">Experience</span><span className="value">{selectedCandidate.experienceYears || "Fresher"}</span></div>
+                          <div className="info-item"><span className="label">Current Company</span><span className="value">{selectedCandidate.companyName || "N/A"}</span></div>
+                          <div className="info-item" style={{ gridColumn: "1 / -1" }}><span className="label">Skills</span><span className="value">{selectedCandidate.skills || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">LinkedIn Profile</span><span className="value">{selectedCandidate.linkedinUrl ? <a href={selectedCandidate.linkedinUrl} target="_blank" rel="noreferrer" style={{ color: "#3b82f6" }}>View Profile</a> : "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Portfolio URL</span><span className="value">{selectedCandidate.portfolioUrl ? <a href={selectedCandidate.portfolioUrl} target="_blank" rel="noreferrer" style={{ color: "#3b82f6" }}>View Portfolio</a> : "N/A"}</span></div>
+                        </div>
+                      ) : (
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Experience (Years / Level)</label><input type="text" placeholder="e.g. 2 Years / Fresher" value={professionalForm.experienceYears} onChange={e => setProfessionalForm({...professionalForm, experienceYears: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Company Name</label><input type="text" value={professionalForm.companyName} onChange={e => setProfessionalForm({...professionalForm, companyName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>LinkedIn URL</label><input type="url" placeholder="https://linkedin.com/in/username" value={professionalForm.linkedinUrl} onChange={e => setProfessionalForm({...professionalForm, linkedinUrl: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Portfolio / Website URL</label><input type="url" placeholder="https://portfolio.dev" value={professionalForm.portfolioUrl} onChange={e => setProfessionalForm({...professionalForm, portfolioUrl: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div style={{ gridColumn: "1 / -1" }}><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Skills (Comma Separated)</label><textarea rows={2} placeholder="React, Node.js, Python..." value={professionalForm.skills} onChange={e => setProfessionalForm({...professionalForm, skills: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px", resize: "none" }} /></div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Payment History & Manual Entry */}
@@ -1390,47 +1796,98 @@ export default function CandidatesAdmin() {
 
                   {/* Right Column */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                    {/* Course & Education */}
+                    {/* 4. Program Information Card */}
                     <div className="info-card-section">
-                      <h4>Academics & Program</h4>
-                      <div className="details-grid-two-col">
-                        <div className="info-item">
-                          <span className="label">Course Applied</span>
-                          <span className="value">{selectedCandidate.courseApplied}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Mode of Learning</span>
-                          <span className="value">{selectedCandidate.modeOfLearning}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Qualification</span>
-                          <span className="value">{selectedCandidate.qualification || "N/A"}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">College Name</span>
-                          <span className="value">{selectedCandidate.collegeName || "N/A"}</span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Course Start Date</span>
-                          <span className="value">
-                            {selectedCandidate.courseStartDate ? new Date(selectedCandidate.courseStartDate).toLocaleDateString() : "N/A"}
-                          </span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Course End Date</span>
-                          <span className="value">
-                            {selectedCandidate.completedAt ? new Date(selectedCandidate.completedAt).toLocaleDateString() : "N/A"}
-                          </span>
-                        </div>
-                        <div className="info-item">
-                          <span className="label">Course Duration</span>
-                          <span className="value">{selectedCandidate.courseDuration || "N/A"}</span>
-                        </div>
-                        <div className="info-item" style={{ gridColumn: "1 / -1" }}>
-                          <span className="label">Registration Transaction ID</span>
-                          <span className="value" style={{ fontFamily: "monospace" }}>{selectedCandidate.registrationTransactionId || "N/A"}</span>
-                        </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                        <h4 style={{ color: "#ec4899", margin: 0 }}>Program & Course Details</h4>
+                        {activeTab !== "trash" && (
+                          !editingProgram ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditingProgram(true)}
+                              style={{ background: "rgba(236, 72, 153, 0.12)", border: "1px solid rgba(236, 72, 153, 0.3)", color: "#f472b6", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                            >
+                              ✏️ Edit Section
+                            </button>
+                          ) : (
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <button
+                                type="button"
+                                onClick={() => { setEditingProgram(false); initSectionForms(selectedCandidate); }}
+                                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#94a3b8", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSaveProgramSection}
+                                disabled={savingProgram}
+                                style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", border: "none", color: "#fff", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                {savingProgram ? "Saving..." : "Save Program"}
+                              </button>
+                            </div>
+                          )
+                        )}
                       </div>
+
+                      {!editingProgram ? (
+                        <div className="details-grid-two-col">
+                          <div className="info-item"><span className="label">Program Type</span><span className="value">{selectedCandidate.programType || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Course Applied</span><span className="value">{selectedCandidate.courseApplied || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Batch</span><span className="value">{selectedCandidate.batchName || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Trainer</span><span className="value">{selectedCandidate.trainerName || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Joining / Start Date</span><span className="value">{selectedCandidate.courseStartDate ? new Date(selectedCandidate.courseStartDate).toLocaleDateString() : "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Completion Date</span><span className="value">{selectedCandidate.completedAt ? new Date(selectedCandidate.completedAt).toLocaleDateString() : "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Duration</span><span className="value">{selectedCandidate.courseDuration || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Mode of Learning</span><span className="value">{selectedCandidate.modeOfLearning || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Location</span><span className="value">{selectedCandidate.trainingLocation || "N/A"}</span></div>
+                          <div className="info-item"><span className="label">Domain</span><span className="value">{selectedCandidate.programmeDomain || "N/A"}</span></div>
+                        </div>
+                      ) : (
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Program Type</label>
+                            <select value={programForm.programType} onChange={e => setProgramForm({...programForm, programType: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}>
+                              <option value="">-- Select --</option>
+                              <option value="Course">Course</option>
+                              <option value="Internship">Internship</option>
+                              <option value="Workshop">Workshop</option>
+                              <option value="Faculty Development Programme">Faculty Development Programme (FDP)</option>
+                              <option value="Bootcamp">Bootcamp</option>
+                              <option value="Certification">Certification</option>
+                              <option value="Custom">Custom</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Course Applied</label>
+                            <select value={programForm.courseApplied} onChange={e => setProgramForm({...programForm, courseApplied: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}>
+                              <option value="">-- Select Course --</option>
+                              {coursesList.map(c => (
+                                <option key={c.id} value={c.title}>{c.title}</option>
+                              ))}
+                              {programForm.courseApplied && !coursesList.some(c => c.title === programForm.courseApplied) && (
+                                <option value={programForm.courseApplied}>{programForm.courseApplied}</option>
+                              )}
+                            </select>
+                          </div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Batch Name</label><input type="text" placeholder="e.g. Batch #2026-A" value={programForm.batchName} onChange={e => setProgramForm({...programForm, batchName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Trainer Name</label><input type="text" value={programForm.trainerName} onChange={e => setProgramForm({...programForm, trainerName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Joining / Start Date</label><input type="date" value={programForm.courseStartDate} onChange={e => setProgramForm({...programForm, courseStartDate: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Completion Date</label><input type="date" value={programForm.completedAt} onChange={e => setProgramForm({...programForm, completedAt: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Duration</label><input type="text" placeholder="e.g. 3 Months" value={programForm.courseDuration} onChange={e => setProgramForm({...programForm, courseDuration: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Mode of Learning</label>
+                            <select value={programForm.modeOfLearning} onChange={e => setProgramForm({...programForm, modeOfLearning: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}>
+                              <option value="Offline">Offline</option>
+                              <option value="Online">Online</option>
+                              <option value="Hybrid">Hybrid</option>
+                            </select>
+                          </div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Training Location</label><input type="text" placeholder="e.g. Cochin Campus" value={programForm.trainingLocation} onChange={e => setProgramForm({...programForm, trainingLocation: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Programme Domain</label><input type="text" placeholder="e.g. Data Science" value={programForm.programmeDomain} onChange={e => setProgramForm({...programForm, programmeDomain: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Document Manager */}
@@ -1859,179 +2316,118 @@ export default function CandidatesAdmin() {
                       </div>
                     )}
 
-                    {/* Offer Configuration */}
+                    {/* 6. Fee Details Card */}
                     <div className="info-card-section">
-                      <h4 style={{ color: "#8b5cf6" }}>Offer & Fee Structure</h4>
-                      <form onSubmit={handleOfferUpdateSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                          <div>
-                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Standard Course Fee</label>
-                            <input
-                              type="number"
-                              disabled={activeTab === "trash"}
-                              value={standardCourseFeeVal}
-                              onChange={(e) => setStandardCourseFeeVal(Number(e.target.value))}
-                              style={styles.formInput}
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Scholarship Amount</label>
-                            <input
-                              type="number"
-                              disabled={activeTab === "trash"}
-                              value={scholarshipAmountVal}
-                              onChange={(e) => setScholarshipAmountVal(Number(e.target.value))}
-                              style={styles.formInput}
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Special Discount</label>
-                            <input
-                              type="number"
-                              disabled={activeTab === "trash"}
-                              value={specialDiscountVal}
-                              onChange={(e) => setSpecialDiscountVal(Number(e.target.value))}
-                              style={styles.formInput}
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Corporate Discount</label>
-                            <input
-                              type="number"
-                              disabled={activeTab === "trash"}
-                              value={corporateDiscountVal}
-                              onChange={(e) => setCorporateDiscountVal(Number(e.target.value))}
-                              style={styles.formInput}
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Promo Discount</label>
-                            <input
-                              type="number"
-                              disabled={activeTab === "trash"}
-                              value={promoDiscountVal}
-                              onChange={(e) => setPromoDiscountVal(Number(e.target.value))}
-                              style={styles.formInput}
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Booking Amount</label>
-                            <input
-                              type="number"
-                              disabled={activeTab === "trash"}
-                              value={bookingAmountVal}
-                              onChange={(e) => setBookingAmountVal(Number(e.target.value))}
-                              style={styles.formInput}
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Admission Fee Amount</label>
-                            <input
-                              type="number"
-                              disabled={activeTab === "trash"}
-                              value={admissionFeeAmountVal}
-                              onChange={(e) => setAdmissionFeeAmountVal(Number(e.target.value))}
-                              style={styles.formInput}
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Offer Expiry Date</label>
-                            <input
-                              type="date"
-                              disabled={activeTab === "trash"}
-                              value={offerExpiryDateVal}
-                              onChange={(e) => setOfferExpiryDateVal(e.target.value)}
-                              style={styles.formInput}
-                            />
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Offer Remarks</label>
-                          <textarea
-                            disabled={activeTab === "trash"}
-                            value={offerRemarksVal}
-                            onChange={(e) => setOfferRemarksVal(e.target.value)}
-                            rows={2}
-                            style={{
-                              width: "100%",
-                              boxSizing: "border-box",
-                              padding: "8px 12px",
-                              background: "#1e293b",
-                              border: "1px solid rgba(255,255,255,0.1)",
-                              borderRadius: "6px",
-                              color: "#fff",
-                              fontSize: "13px",
-                              resize: "none"
-                            }}
-                          />
-                        </div>
-
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: "5px 0" }}>
-                          <input
-                            type="checkbox"
-                            id="autoEnrollToggle"
-                            disabled={activeTab === "trash"}
-                            checked={autoEnrollEnabledVal}
-                            onChange={(e) => setAutoEnrollEnabledVal(e.target.checked)}
-                            style={{ cursor: activeTab === "trash" ? "not-allowed" : "pointer" }}
-                          />
-                          <label htmlFor="autoEnrollToggle" style={{ fontSize: "13px", color: "#fff", cursor: activeTab === "trash" ? "not-allowed" : "pointer" }}>
-                            Auto-Enroll on Admission Fee Payment
-                          </label>
-                        </div>
-
-                        {/* Financial Summary */}
-                        <div style={{ background: "rgba(139, 92, 246, 0.05)", border: "1px solid rgba(139, 92, 246, 0.15)", borderRadius: "6px", padding: "10px", marginTop: "5px" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}>
-                            <span style={{ color: "#94a3b8" }}>Standard Course Fee:</span>
-                            <span style={{ fontWeight: "600", color: "#fff" }}>₹{standardCourseFeeVal}</span>
-                          </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", marginBottom: "4px" }}>
-                            <span style={{ color: "#94a3b8" }}>Total Deductions (Scholarship + Discounts):</span>
-                            <span style={{ fontWeight: "600", color: "#ef4444" }}>
-                              -₹{(scholarshipAmountVal || 0) + (specialDiscountVal || 0) + (corporateDiscountVal || 0) + (promoDiscountVal || 0)}
-                            </span>
-                          </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "6px", fontWeight: "700" }}>
-                            <span style={{ color: "#fff" }}>Final Payable Amount:</span>
-                            <span style={{ color: "#10b981" }}>
-                              ₹{Math.max(0, standardCourseFeeVal - ((scholarshipAmountVal || 0) + (specialDiscountVal || 0) + (corporateDiscountVal || 0) + (promoDiscountVal || 0)))}
-                            </span>
-                          </div>
-                        </div>
-
-                        {activeTab !== "trash" && (() => {
-                          const isFeeChanged = standardCourseFeeVal !== (selectedCandidate.standardCourseFee || 0);
-                          const isScholarshipChanged = scholarshipAmountVal !== (selectedCandidate.scholarshipAmount || 0);
-                          const isSpecialChanged = specialDiscountVal !== (selectedCandidate.specialDiscount || 0);
-                          const isCorporateChanged = corporateDiscountVal !== (selectedCandidate.corporateDiscount || 0);
-                          const isPromoChanged = promoDiscountVal !== (selectedCandidate.promoDiscount || 0);
-                          const isBookingChanged = bookingAmountVal !== (selectedCandidate.bookingAmount || 0);
-                          const isRemarksChanged = offerRemarksVal !== (selectedCandidate.offerRemarks || "");
-                          const isExpiryChanged = offerExpiryDateVal !== (selectedCandidate.offerExpiryDate ? selectedCandidate.offerExpiryDate.split("T")[0] : "");
-                          const isAdmissionFeeChanged = admissionFeeAmountVal !== (selectedCandidate.admissionFeeAmount || 250);
-                          const isAutoEnrollChanged = autoEnrollEnabledVal !== (selectedCandidate.autoEnrollEnabled !== false);
-
-                          const isAnyOfferFieldChanged = isFeeChanged || isScholarshipChanged || isSpecialChanged || isCorporateChanged || isPromoChanged || isBookingChanged || isRemarksChanged || isExpiryChanged || isAdmissionFeeChanged || isAutoEnrollChanged;
-                          const isDisabled = isUpdatingOffer || !isAnyOfferFieldChanged;
-
-                          return (
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                        <h4 style={{ color: "#10b981", margin: 0 }}>Fee & Financial Structure</h4>
+                        {activeTab !== "trash" && (
+                          !editingFee ? (
                             <button
-                              type="submit"
-                              disabled={isDisabled}
-                              style={{
-                                ...styles.actionBtn,
-                                width: "100%",
-                                opacity: isDisabled ? 0.5 : 1,
-                                cursor: isDisabled ? "not-allowed" : "pointer"
-                              }}
+                              type="button"
+                              onClick={() => setEditingFee(true)}
+                              style={{ background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.3)", color: "#34d399", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
                             >
-                              {isUpdatingOffer ? "Saving Offer..." : "Save Offer Configuration"}
+                              ✏️ Edit Fee Details
                             </button>
-                          );
-                        })()}
-                      </form>
+                          ) : (
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <button
+                                type="button"
+                                onClick={() => { setEditingFee(false); initSectionForms(selectedCandidate); }}
+                                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#94a3b8", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", cursor: "pointer" }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSaveFeeSection}
+                                disabled={savingFee}
+                                style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", border: "none", color: "#fff", padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                              >
+                                {savingFee ? "Saving..." : "Save Fee Details"}
+                              </button>
+                            </div>
+                          )
+                        )}
+                      </div>
+
+                      {!editingFee ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                          <div className="details-grid-two-col">
+                            <div className="info-item"><span className="label">Standard Course Fee</span><span className="value">₹{selectedCandidate.standardCourseFee || 0}</span></div>
+                            <div className="info-item"><span className="label">Scholarship</span><span className="value" style={{ color: "#ef4444" }}>-₹{selectedCandidate.scholarshipAmount || 0}</span></div>
+                            <div className="info-item"><span className="label">Special Discount</span><span className="value" style={{ color: "#ef4444" }}>-₹{selectedCandidate.specialDiscount || 0}</span></div>
+                            <div className="info-item"><span className="label">Corporate Discount</span><span className="value" style={{ color: "#ef4444" }}>-₹{selectedCandidate.corporateDiscount || 0}</span></div>
+                            <div className="info-item"><span className="label">Promo Discount</span><span className="value" style={{ color: "#ef4444" }}>-₹{selectedCandidate.promoDiscount || 0}</span></div>
+                            <div className="info-item"><span className="label">GST (%)</span><span className="value">{selectedCandidate.gstPercentage || 0}% (₹{selectedCandidate.gstAmount || 0})</span></div>
+                            <div className="info-item"><span className="label">Convenience Fee</span><span className="value">+₹{selectedCandidate.convenienceFee || 0}</span></div>
+                            <div className="info-item"><span className="label">Admission Fee Amount</span><span className="value">₹{selectedCandidate.admissionFeeAmount || 250}</span></div>
+                            <div className="info-item"><span className="label">Booking Amount</span><span className="value">₹{selectedCandidate.bookingAmount || 0}</span></div>
+                            <div className="info-item"><span className="label">Admission Fee Status</span><span className="value" style={{ color: selectedCandidate.admissionFeePaid ? "#10b981" : "#f59e0b" }}>{selectedCandidate.admissionFeePaid ? "Paid" : "Pending"}</span></div>
+                            <div className="info-item"><span className="label">Offer Expiry Date</span><span className="value">{selectedCandidate.offerExpiryDate ? new Date(selectedCandidate.offerExpiryDate).toLocaleDateString() : "N/A"}</span></div>
+                            <div className="info-item"><span className="label">Offer Remarks</span><span className="value">{selectedCandidate.offerRemarks || "N/A"}</span></div>
+                          </div>
+                          <div style={{ background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "8px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                              <span style={{ fontSize: "12px", color: "#94a3b8", display: "block" }}>Net Final Payable Amount</span>
+                              <span style={{ fontSize: "20px", fontWeight: "800", color: "#10b981" }}>₹{selectedCandidate.finalPayableAmount || 0}</span>
+                            </div>
+                            <div style={{ textAlign: "right" }}>
+                              <span style={{ fontSize: "11px", color: "#94a3b8", display: "block" }}>Auto-Enroll Enabled</span>
+                              <span style={{ fontSize: "13px", fontWeight: "700", color: selectedCandidate.autoEnrollEnabled !== false ? "#10b981" : "#ef4444" }}>
+                                {selectedCandidate.autoEnrollEnabled !== false ? "Yes" : "No"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Standard Course Fee (₹)</label><input type="number" min="0" value={feeForm.standardCourseFee} onChange={e => setFeeForm({...feeForm, standardCourseFee: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Scholarship Amount (₹)</label><input type="number" min="0" value={feeForm.scholarshipAmount} onChange={e => setFeeForm({...feeForm, scholarshipAmount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Special Discount (₹)</label><input type="number" min="0" value={feeForm.specialDiscount} onChange={e => setFeeForm({...feeForm, specialDiscount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Corporate Discount (₹)</label><input type="number" min="0" value={feeForm.corporateDiscount} onChange={e => setFeeForm({...feeForm, corporateDiscount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Promo Discount (₹)</label><input type="number" min="0" value={feeForm.promoDiscount} onChange={e => setFeeForm({...feeForm, promoDiscount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>GST (%)</label><input type="number" min="0" max="100" value={feeForm.gstPercentage} onChange={e => setFeeForm({...feeForm, gstPercentage: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Convenience Fee (₹)</label><input type="number" min="0" value={feeForm.convenienceFee} onChange={e => setFeeForm({...feeForm, convenienceFee: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Booking Amount (₹)</label><input type="number" min="0" value={feeForm.bookingAmount} onChange={e => setFeeForm({...feeForm, bookingAmount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Admission Fee Amount (₹)</label><input type="number" min="0" value={feeForm.admissionFeeAmount} onChange={e => setFeeForm({...feeForm, admissionFeeAmount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Offer Expiry Date</label><input type="date" value={feeForm.offerExpiryDate} onChange={e => setFeeForm({...feeForm, offerExpiryDate: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          </div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Offer Remarks</label><textarea rows={2} value={feeForm.offerRemarks} onChange={e => setFeeForm({...feeForm, offerRemarks: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px", resize: "none" }} /></div>
+                          <div style={{ display: "flex", gap: "20px", alignItems: "center", margin: "5px 0" }}>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#fff", cursor: "pointer" }}>
+                              <input type="checkbox" checked={feeForm.admissionFeePaid} onChange={e => setFeeForm({...feeForm, admissionFeePaid: e.target.checked})} />
+                              Admission Fee Paid
+                            </label>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#fff", cursor: "pointer" }}>
+                              <input type="checkbox" checked={feeForm.autoEnrollEnabled} onChange={e => setFeeForm({...feeForm, autoEnrollEnabled: e.target.checked})} />
+                              Auto-Enroll on Admission Fee Payment
+                            </label>
+                          </div>
+
+                          {/* Live Recalculation Summary Box */}
+                          {(() => {
+                            const std = parseFloat(feeForm.standardCourseFee || 0);
+                            const disc = parseFloat(feeForm.scholarshipAmount || 0) + parseFloat(feeForm.specialDiscount || 0) + parseFloat(feeForm.corporateDiscount || 0) + parseFloat(feeForm.promoDiscount || 0);
+                            const taxable = Math.max(0, std - disc);
+                            const gstPct = parseFloat(feeForm.gstPercentage || 0);
+                            const gstAmt = gstPct > 0 ? Math.round(taxable * (gstPct / 100) * 100) / 100 : parseFloat(feeForm.gstAmount || 0);
+                            const conv = parseFloat(feeForm.convenienceFee || 0);
+                            const net = Math.round((taxable + gstAmt + conv) * 100) / 100;
+                            return (
+                              <div style={{ background: "rgba(139, 92, 246, 0.06)", border: "1px solid rgba(139, 92, 246, 0.2)", borderRadius: "8px", padding: "12px", marginTop: "5px" }}>
+                                <div style={{ fontSize: "12px", color: "#a78bfa", fontWeight: "700", marginBottom: "6px" }}>⚡ Dynamic Recalculation Preview</div>
+                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#cbd5e1" }}><span>Course Fee: ₹{std}</span><span>Total Discounts: -₹{disc}</span><span>GST: +₹{gstAmt}</span></div>
+                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: "800", color: "#10b981", marginTop: "6px", borderTop: "1px dashed rgba(255,255,255,0.1)", paddingTop: "6px" }}>
+                                  <span>Recalculated Payable Amount:</span>
+                                  <span>₹{net}</span>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </div>
 
                   </div>
