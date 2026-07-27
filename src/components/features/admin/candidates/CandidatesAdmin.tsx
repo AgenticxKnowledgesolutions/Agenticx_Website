@@ -94,6 +94,7 @@ export default function CandidatesAdmin() {
   const [editingProgram, setEditingProgram] = useState(false);
   const [programForm, setProgramForm] = useState<any>({});
   const [savingProgram, setSavingProgram] = useState(false);
+  const [isCustomCourseInProgram, setIsCustomCourseInProgram] = useState(false);
 
   const [editingFee, setEditingFee] = useState(false);
   const [feeForm, setFeeForm] = useState<any>({});
@@ -159,6 +160,9 @@ export default function CandidatesAdmin() {
       trainingLocation: c.trainingLocation || "",
       programmeDomain: c.programmeDomain || "",
     });
+    if (c.courseApplied && coursesList.length > 0) {
+      setIsCustomCourseInProgram(!coursesList.some(crs => crs.title === c.courseApplied));
+    }
 
     setFeeForm({
       standardCourseFee: c.standardCourseFee || 0,
@@ -1860,16 +1864,47 @@ export default function CandidatesAdmin() {
                             </select>
                           </div>
                           <div>
-                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Course Applied</label>
-                            <select value={programForm.courseApplied} onChange={e => setProgramForm({...programForm, courseApplied: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}>
-                              <option value="">-- Select Course --</option>
-                              {coursesList.map(c => (
-                                <option key={c.id} value={c.title}>{c.title}</option>
-                              ))}
-                              {programForm.courseApplied && !coursesList.some(c => c.title === programForm.courseApplied) && (
-                                <option value={programForm.courseApplied}>{programForm.courseApplied}</option>
-                              )}
-                            </select>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                              <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Course Applied</label>
+                              <button
+                                type="button"
+                                onClick={() => setIsCustomCourseInProgram(!isCustomCourseInProgram)}
+                                style={{ background: "none", border: "none", color: "#38bdf8", fontSize: "11px", cursor: "pointer", textDecoration: "underline", padding: 0 }}
+                              >
+                                {isCustomCourseInProgram ? "📋 Select from list" : "✏️ Type custom course"}
+                              </button>
+                            </div>
+                            {isCustomCourseInProgram ? (
+                              <input
+                                type="text"
+                                placeholder="Enter custom course name..."
+                                value={programForm.courseApplied || ""}
+                                onChange={(e) => setProgramForm({ ...programForm, courseApplied: e.target.value })}
+                                style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}
+                              />
+                            ) : (
+                              <select
+                                value={programForm.courseApplied || ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "__custom__") {
+                                    setIsCustomCourseInProgram(true);
+                                  } else {
+                                    setProgramForm({ ...programForm, courseApplied: val });
+                                  }
+                                }}
+                                style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}
+                              >
+                                <option value="">-- Select Course --</option>
+                                {coursesList.map((c) => (
+                                  <option key={c.id} value={c.title}>{c.title}</option>
+                                ))}
+                                {programForm.courseApplied && !coursesList.some((c) => c.title === programForm.courseApplied) && (
+                                  <option value={programForm.courseApplied}>{programForm.courseApplied}</option>
+                                )}
+                                <option value="__custom__">✏️ Custom / Other Course...</option>
+                              </select>
+                            )}
                           </div>
                           <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Batch Name</label><input type="text" placeholder="e.g. Batch #2026-A" value={programForm.batchName} onChange={e => setProgramForm({...programForm, batchName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
                           <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Trainer Name</label><input type="text" value={programForm.trainerName} onChange={e => setProgramForm({...programForm, trainerName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
@@ -2032,193 +2067,48 @@ export default function CandidatesAdmin() {
                         <h4>Update Admission Status</h4>
                         <form onSubmit={handleStatusChange} style={styles.inlineForm}>
                           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                            <select
-                              value={statusUpdateVal}
-                              onChange={(e) => setStatusUpdateVal(e.target.value)}
-                              style={{
-                                ...styles.selectInput,
-                                width: "100%",
-                              }}
-                            >
-                              <option value="submitted">Submitted</option>
-                              <option value="under review">Under Review</option>
-                              <option value="approved">Approved</option>
-                              <option value="rejected">Rejected</option>
-                              <option value="enrolled">Enrolled</option>
-                              <option value="completed">Completed</option>
-                            </select>
-                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course Applied For</label>
-                            <select
-                              value={courseAppliedVal}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setCourseAppliedVal(val);
-                                const matched = coursesList.find(c => c.title === val);
-                                if (matched) {
-                                  setStandardCourseFeeVal(matched.price);
-                                }
-                              }}
-                              style={{
-                                ...styles.remarksInput,
-                                width: "100%",
-                                boxSizing: "border-box",
-                                padding: "8px 12px",
-                                background: "#1e293b",
-                                border: "1px solid rgba(255,255,255,0.1)",
-                                borderRadius: "6px",
-                                color: "#fff",
-                                cursor: "pointer"
-                              }}
-                            >
-                              <option value="">-- Select Course --</option>
-                              {coursesList.map((c) => (
-                                <option key={c.id} value={c.title}>
-                                  {c.title} (₹{c.price})
-                                </option>
-                              ))}
-                              {courseAppliedVal && !coursesList.some((c) => c.title === courseAppliedVal) && (
-                                <option value={courseAppliedVal}>{courseAppliedVal}</option>
-                              )}
-                            </select>
-                            
-                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course Start Date</label>
-                            <input
-                              type="date"
-                              value={courseStartDateVal}
-                              onChange={(e) => setCourseStartDateVal(e.target.value)}
-                              style={{
-                                ...styles.remarksInput,
-                                width: "100%",
-                                boxSizing: "border-box",
-                                padding: "8px 12px",
-                                background: "#1e293b",
-                                border: "1px solid rgba(255,255,255,0.1)",
-                                borderRadius: "6px",
-                                color: "#fff"
-                              }}
-                            />
-                            
-                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course End Date (Completed Date)</label>
-                            <input
-                              type="date"
-                              value={completedAtVal}
-                              onChange={(e) => setCompletedAtVal(e.target.value)}
-                              style={{
-                                ...styles.remarksInput,
-                                width: "100%",
-                                boxSizing: "border-box",
-                                padding: "8px 12px",
-                                background: "#1e293b",
-                                border: "1px solid rgba(255,255,255,0.1)",
-                                borderRadius: "6px",
-                                color: "#fff"
-                              }}
-                            />
-                            
-                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Course Duration</label>
-                            <input
-                              type="text"
-                              placeholder="e.g. 3 Months, 6 Weeks"
-                              value={courseDurationVal}
-                              onChange={(e) => setCourseDurationVal(e.target.value)}
-                              style={{
-                                ...styles.remarksInput,
-                                width: "100%",
-                                boxSizing: "border-box",
-                                padding: "8px 12px",
-                                background: "#1e293b",
-                                border: "1px solid rgba(255,255,255,0.1)",
-                                borderRadius: "6px",
-                                color: "#fff"
-                              }}
-                            />
+                            <div>
+                              <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Application Status</label>
+                              <select
+                                value={statusUpdateVal}
+                                onChange={(e) => setStatusUpdateVal(e.target.value)}
+                                style={{
+                                  ...styles.selectInput,
+                                  width: "100%",
+                                }}
+                              >
+                                <option value="submitted">Submitted</option>
+                                <option value="under review">Under Review</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="enrolled">Enrolled</option>
+                                <option value="completed">Completed</option>
+                              </select>
+                            </div>
 
-                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Program Type</label>
-                            <select
-                              value={programTypeVal}
-                              onChange={(e) => setProgramTypeVal(e.target.value)}
-                              style={{
-                                ...styles.selectInput,
-                                width: "100%",
-                                boxSizing: "border-box",
-                                padding: "8px 12px",
-                                background: "#1e293b",
-                                border: "1px solid rgba(255,255,255,0.1)",
-                                borderRadius: "6px",
-                                color: "#fff"
-                              }}
-                            >
-                              <option value="">Select Program Type...</option>
-                              <option value="Course">Course</option>
-                              <option value="Internship">Internship</option>
-                              <option value="Crash Course">Crash Course</option>
-                              <option value="Webinar">Webinar</option>
-                              <option value="Workshop">Workshop</option>
-                              <option value="Faculty Development Programme">Faculty Development Programme</option>
-                            </select>
-
-                            {programTypeVal === "Faculty Development Programme" && (
-                              <>
-                                <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Programme Domain *</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. Cyber Security, AI, Python"
-                                  value={programmeDomainVal}
-                                  onChange={(e) => setProgrammeDomainVal(e.target.value)}
-                                  style={{
-                                    ...styles.remarksInput,
-                                    width: "100%",
-                                    boxSizing: "border-box",
-                                    padding: "8px 12px",
-                                    background: "#1e293b",
-                                    border: "1px solid rgba(255,255,255,0.1)",
-                                    borderRadius: "6px",
-                                    color: "#fff"
-                                  }}
-                                />
-
-                                <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>College / Institution Name *</label>
-                                <input
-                                  type="text"
-                                  placeholder="Enter college name"
-                                  value={collegeNameVal}
-                                  onChange={(e) => setCollegeNameVal(e.target.value)}
-                                  style={{
-                                    ...styles.remarksInput,
-                                    width: "100%",
-                                    boxSizing: "border-box",
-                                    padding: "8px 12px",
-                                    background: "#1e293b",
-                                    border: "1px solid rgba(255,255,255,0.1)",
-                                    borderRadius: "6px",
-                                    color: "#fff"
-                                  }}
-                                />
-                              </>
-                            )}
-
-                            <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginTop: "5px" }}>Performance</label>
-                            <select
-                              value={performanceVal}
-                              onChange={(e) => setPerformanceVal(e.target.value)}
-                              style={{
-                                ...styles.selectInput,
-                                width: "100%",
-                                boxSizing: "border-box",
-                                padding: "8px 12px",
-                                background: "#1e293b",
-                                border: "1px solid rgba(255,255,255,0.1)",
-                                borderRadius: "6px",
-                                color: "#fff"
-                              }}
-                            >
-                              <option value="">Select Performance...</option>
-                              <option value="Excellent">Excellent</option>
-                              <option value="Good">Good</option>
-                              <option value="Average">Average</option>
-                              <option value="Satisfactory">Satisfactory</option>
-                            </select>
-
+                            <div>
+                              <label style={{ fontSize: "12px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Performance Grade</label>
+                              <select
+                                value={performanceVal}
+                                onChange={(e) => setPerformanceVal(e.target.value)}
+                                style={{
+                                  ...styles.selectInput,
+                                  width: "100%",
+                                  boxSizing: "border-box",
+                                  padding: "8px 12px",
+                                  background: "#1e293b",
+                                  border: "1px solid rgba(255,255,255,0.1)",
+                                  borderRadius: "6px",
+                                  color: "#fff"
+                                }}
+                              >
+                                <option value="">Select Performance...</option>
+                                <option value="Excellent">Excellent</option>
+                                <option value="Good">Good</option>
+                                <option value="Average">Average</option>
+                                <option value="Satisfactory">Satisfactory</option>
+                              </select>
+                            </div>
 
                             {(() => {
                               const getDbPerformance = (p?: string) => {
@@ -2230,29 +2120,11 @@ export default function CandidatesAdmin() {
                                 if (lower === "satisfactory") return "Satisfactory";
                                 return p;
                               };
-                              const getDbProgramType = (pt?: string) => {
-                                if (!pt) return "";
-                                const lower = pt.toLowerCase();
-                                if (lower === "course") return "Course";
-                                if (lower === "internship") return "Internship";
-                                if (lower === "crash course") return "Crash Course";
-                                if (lower === "webinar") return "Webinar";
-                                if (lower === "workshop") return "Workshop";
-                                if (lower === "faculty development programme" || lower === "faculty development program" || lower === "fdp") return "Faculty Development Programme";
-                                return pt;
-                              };
 
                               const isStatusChanged = statusUpdateVal.toLowerCase() !== (selectedCandidate?.applicationStatus || "").toLowerCase();
-                              const isCourseAppliedChanged = courseAppliedVal !== (selectedCandidate?.courseApplied || "");
-                              const isCourseStartDateChanged = courseStartDateVal !== (selectedCandidate?.courseStartDate ? selectedCandidate.courseStartDate.split("T")[0] : "");
-                              const isCompletedAtChanged = completedAtVal !== (selectedCandidate?.completedAt ? selectedCandidate.completedAt.split("T")[0] : "");
-                              const isCourseDurationChanged = courseDurationVal !== (selectedCandidate?.courseDuration || "");
                               const isPerformanceChanged = performanceVal !== getDbPerformance(selectedCandidate?.performance);
-                              const isProgramTypeChanged = programTypeVal !== getDbProgramType(selectedCandidate?.programType);
-                              const isProgrammeDomainChanged = programmeDomainVal !== (selectedCandidate?.programmeDomain || "");
-                              const isCollegeNameChanged = collegeNameVal !== (selectedCandidate?.collegeName || "");
 
-                              const isAnyFieldChanged = isStatusChanged || isCourseAppliedChanged || isCourseStartDateChanged || isCompletedAtChanged || isCourseDurationChanged || isPerformanceChanged || isProgramTypeChanged || isProgrammeDomainChanged || isCollegeNameChanged;
+                              const isAnyFieldChanged = isStatusChanged || isPerformanceChanged;
                               const isDisabled = isUpdatingStatus || !isAnyFieldChanged;
                               return (
                                 <button
