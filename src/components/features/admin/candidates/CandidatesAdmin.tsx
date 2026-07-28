@@ -13,7 +13,6 @@ import {
   bulkRegenerateCertificates,
   bulkHardDeleteCandidates,
   bulkSoftDeleteCandidates,
-  updateCandidateOffer,
   recordCandidatePayment,
   updateCandidatePersonalInfo,
   updateCandidateAcademicInfo,
@@ -58,18 +57,6 @@ export default function CandidatesAdmin() {
   const [programmeDomainVal, setProgrammeDomainVal] = useState("");
   const [collegeNameVal, setCollegeNameVal] = useState("");
 
-  // Offer Configuration fields
-  const [standardCourseFeeVal, setStandardCourseFeeVal] = useState(0);
-  const [scholarshipAmountVal, setScholarshipAmountVal] = useState(0);
-  const [specialDiscountVal, setSpecialDiscountVal] = useState(0);
-  const [corporateDiscountVal, setCorporateDiscountVal] = useState(0);
-  const [promoDiscountVal, setPromoDiscountVal] = useState(0);
-  const [bookingAmountVal, setBookingAmountVal] = useState(0);
-  const [offerRemarksVal, setOfferRemarksVal] = useState("");
-  const [offerExpiryDateVal, setOfferExpiryDateVal] = useState("");
-  const [admissionFeeAmountVal, setAdmissionFeeAmountVal] = useState(250);
-  const [autoEnrollEnabledVal, setAutoEnrollEnabledVal] = useState(true);
-  const [isUpdatingOffer, setIsUpdatingOffer] = useState(false);
   const [coursesList, setCoursesList] = useState<Course[]>([]);
 
   // Manual payment fields
@@ -331,17 +318,7 @@ export default function CandidatesAdmin() {
       setProgrammeDomainVal(c.programmeDomain || "");
       setCollegeNameVal(c.collegeName || "");
 
-      // Pre-fill offer details
-      setStandardCourseFeeVal(c.standardCourseFee || 0);
-      setScholarshipAmountVal(c.scholarshipAmount || 0);
-      setSpecialDiscountVal(c.specialDiscount || 0);
-      setCorporateDiscountVal(c.corporateDiscount || 0);
-      setPromoDiscountVal(c.promoDiscount || 0);
-      setBookingAmountVal(c.bookingAmount || 0);
-      setOfferRemarksVal(c.offerRemarks || "");
-      setOfferExpiryDateVal(c.offerExpiryDate ? c.offerExpiryDate.split("T")[0] : "");
-      setAdmissionFeeAmountVal(c.admissionFeeAmount || 250);
-      setAutoEnrollEnabledVal(c.autoEnrollEnabled !== false);
+
     } catch (err) {
       console.error("Failed to load candidate detail:", err);
     } finally {
@@ -840,34 +817,7 @@ export default function CandidatesAdmin() {
     }
   };
 
-  const handleOfferUpdateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedCandidate) return;
-    setIsUpdatingOffer(true);
-    try {
-      const updated = await updateCandidateOffer(selectedCandidate.id, {
-        standard_course_fee: standardCourseFeeVal,
-        scholarship_amount: scholarshipAmountVal,
-        special_discount: specialDiscountVal,
-        corporate_discount: corporateDiscountVal,
-        promo_discount: promoDiscountVal,
-        booking_amount: bookingAmountVal,
-        offer_remarks: offerRemarksVal || undefined,
-        offer_expiry_date: offerExpiryDateVal ? new Date(offerExpiryDateVal).toISOString() : undefined,
-        admission_fee_amount: admissionFeeAmountVal,
-        auto_enroll_enabled: autoEnrollEnabledVal,
-      });
-      setSelectedCandidate(updated);
-      await loadCandidates();
-      showToast("Offer configuration updated successfully!", "success");
-    } catch (err: any) {
-      console.error("Failed to update offer:", err);
-      const detail = err.response?.data?.detail || "Failed to update offer.";
-      alert(detail);
-    } finally {
-      setIsUpdatingOffer(false);
-    }
-  };
+
 
   const handleRecordPaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
