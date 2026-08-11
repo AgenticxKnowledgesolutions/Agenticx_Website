@@ -75,6 +75,13 @@ export const previewFacultyCertificateUrl = (id: string): string => {
   return `${api.defaults.baseURL}/admin/certificates/fdp/${id}/preview`;
 };
 
+export const previewFacultyCertificate = async (id: string): Promise<Blob> => {
+  const res = await api.post(`/admin/certificates/fdp/${id}/preview`, {}, {
+    responseType: "blob",
+  });
+  return new Blob([res.data], { type: "application/pdf" });
+};
+
 export const downloadFacultyCertificate = async (id: string, certNumber: string): Promise<void> => {
   const res = await api.get(`/admin/certificates/fdp/${id}/download`, {
     responseType: "blob",

@@ -73,15 +73,41 @@ export default function FacultyCertificateForm({
       }
     }
 
+    // Clean empty optional strings to null before sending to API
+    const cleanData = { ...formData };
+    const optionalKeys: Array<keyof FacultyCertificateInput> = [
+      "faculty_email",
+      "designation",
+      "organization",
+      "mode",
+      "description",
+      "signatory_name",
+      "signatory_designation",
+    ];
+    optionalKeys.forEach((key) => {
+      if (cleanData[key] === "") {
+        cleanData[key] = null as any;
+      }
+    });
+
     try {
-      await onSubmit(formData);
+      await onSubmit(cleanData);
     } catch (err: any) {
-      setValidationError(err.response?.data?.detail || "An error occurred while saving the certificate.");
+      const detail = err.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        // Handle array of Pydantic validation errors
+        const errorMsg = detail.map((e: any) => `${e.loc.join('.')}: ${e.msg}`).join(", ");
+        setValidationError(errorMsg);
+      } else if (typeof detail === "string") {
+        setValidationError(detail);
+      } else {
+        setValidationError("An error occurred while saving the certificate.");
+      }
     }
   };
 
   return (
-    <div style={styles.card}>
+    <div style={styles.card} className="admin-kpi-card glass-panel">
       <div style={styles.header}>
         <h3 style={styles.title}>
           {initialData ? `Edit Certificate: ${initialData.certificate_number}` : "Create FDP Certificate"}
@@ -290,9 +316,9 @@ export default function FacultyCertificateForm({
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: "#1e293b",
-    border: "1px solid rgba(255, 255, 255, 0.08)",
-    borderRadius: "14px",
+    background: "#ffffff",
+    border: "1px solid #cbd5e1",
+    borderRadius: "12px",
     padding: "24px",
     width: "100%",
     boxSizing: "border-box",
@@ -303,12 +329,12 @@ const styles: Record<string, React.CSSProperties> = {
   title: {
     fontSize: "18px",
     fontWeight: "700",
-    color: "#f8fafc",
+    color: "#001943",
     margin: "0 0 4px 0",
   },
   subtitle: {
     fontSize: "13px",
-    color: "#94a3b8",
+    color: "#64748b",
     margin: 0,
   },
   form: {
@@ -317,9 +343,9 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "24px",
   },
   errorBox: {
-    background: "rgba(239, 68, 68, 0.15)",
-    border: "1px solid rgba(239, 68, 68, 0.3)",
-    color: "#fca5a5",
+    background: "#fef2f2",
+    border: "1px solid #fca5a5",
+    color: "#991b1b",
     padding: "10px 14px",
     borderRadius: "8px",
     fontSize: "13px",
@@ -329,12 +355,12 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     gap: "12px",
     paddingBottom: "16px",
-    borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+    borderBottom: "1px solid #e2e8f0",
   },
   sectionTitle: {
     fontSize: "13px",
     fontWeight: "600",
-    color: "#3b82f6",
+    color: "#2563eb",
     textTransform: "uppercase",
     letterSpacing: "0.5px",
     margin: "0 0 6px 0",
@@ -354,32 +380,32 @@ const styles: Record<string, React.CSSProperties> = {
   label: {
     fontSize: "12px",
     fontWeight: "600",
-    color: "#94a3b8",
+    color: "#475569",
   },
   input: {
-    background: "#0f172a",
-    border: "1px solid rgba(255, 255, 255, 0.12)",
+    background: "#f8fafc",
+    border: "1px solid #cbd5e1",
     borderRadius: "8px",
     padding: "8px 12px",
-    color: "#f8fafc",
+    color: "#001943",
     fontSize: "13px",
     outline: "none",
   },
   select: {
-    background: "#0f172a",
-    border: "1px solid rgba(255, 255, 255, 0.12)",
+    background: "#f8fafc",
+    border: "1px solid #cbd5e1",
     borderRadius: "8px",
     padding: "8px 12px",
-    color: "#f8fafc",
+    color: "#001943",
     fontSize: "13px",
     outline: "none",
   },
   textarea: {
-    background: "#0f172a",
-    border: "1px solid rgba(255, 255, 255, 0.12)",
+    background: "#f8fafc",
+    border: "1px solid #cbd5e1",
     borderRadius: "8px",
     padding: "8px 12px",
-    color: "#f8fafc",
+    color: "#001943",
     fontSize: "13px",
     outline: "none",
     resize: "vertical",
@@ -393,8 +419,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   cancelBtn: {
     background: "transparent",
-    border: "1px solid rgba(255, 255, 255, 0.15)",
-    color: "#94a3b8",
+    border: "1px solid #cbd5e1",
+    color: "#475569",
     padding: "10px 18px",
     borderRadius: "8px",
     fontSize: "13px",
@@ -402,7 +428,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   submitBtn: {
-    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+    background: "linear-gradient(135deg, #001943 0%, #002d7a 100%)",
     border: "none",
     color: "#ffffff",
     padding: "10px 22px",
@@ -410,6 +436,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "13px",
     fontWeight: "600",
     cursor: "pointer",
-    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
+    boxShadow: "0 4px 12px rgba(0, 25, 67, 0.2)",
   },
 };

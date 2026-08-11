@@ -6,7 +6,7 @@ import {
   deleteFacultyCertificate,
   generateFacultyCertificate,
   downloadFacultyCertificate,
-  previewFacultyCertificateUrl,
+  previewFacultyCertificate,
 } from "../../../../services/facultyCertificateService";
 import type {
   FacultyCertificate,
@@ -26,7 +26,7 @@ export default function FacultyCertificatesList() {
   const [isSaving, setIsSaving] = useState(false);
 
   // Preview State
-  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewNumber, setPreviewNumber] = useState<string | null>(null);
 
   // Notification Toast State
@@ -75,6 +75,27 @@ export default function FacultyCertificatesList() {
     }
   };
 
+  const handlePreview = async (id: string, certNumber: string) => {
+    try {
+      showToast("Loading preview PDF...");
+      const blob = await previewFacultyCertificate(id);
+      const url = window.URL.createObjectURL(blob);
+      setPreviewBlobUrl(url);
+      setPreviewNumber(certNumber);
+    } catch (err: any) {
+      console.error(err);
+      showToast("Failed to load certificate preview.", "error");
+    }
+  };
+
+  const closePreview = () => {
+    if (previewBlobUrl) {
+      window.URL.revokeObjectURL(previewBlobUrl);
+    }
+    setPreviewBlobUrl(null);
+    setPreviewNumber(null);
+  };
+
   const handleGenerate = async (id: string, certNumber: string) => {
     try {
       showToast("Generating certificate PDF...");
@@ -111,7 +132,7 @@ export default function FacultyCertificatesList() {
   };
 
   return (
-    <div style={styles.container} className="admin-fdp-certificates-list-container">
+    <div className="admin-page-container" style={{ padding: "24px" }}>
       {/* Toast Notification */}
       {toast && (
         <div
@@ -125,10 +146,12 @@ export default function FacultyCertificatesList() {
       )}
 
       {/* Header */}
-      <div style={styles.header}>
+      <div className="admin-page-header" style={styles.header}>
         <div>
-          <h2 style={styles.title}>Faculty Development Programme (FDP)</h2>
-          <p style={styles.subtitle}>Create, customize, preview, and generate appreciation certificates for FDP trainers.</p>
+          <h1 className="admin-page-title" style={{ color: "#001943" }}>Faculty Development Programme (FDP)</h1>
+          <p className="admin-page-subtitle" style={{ color: "#64748b", margin: 0 }}>
+            Create, customize, preview, and generate appreciation certificates for FDP trainers.
+          </p>
         </div>
         {!isFormOpen && (
           <button
@@ -136,11 +159,10 @@ export default function FacultyCertificatesList() {
               setEditingCert(null);
               setIsFormOpen(true);
             }}
+            className="activity-book-btn"
             style={styles.createBtn}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>
-              add
-            </span>
+            <span className="material-symbols-outlined">add</span>
             Create FDP Certificate
           </button>
         )}
@@ -175,14 +197,22 @@ export default function FacultyCertificatesList() {
 
           {/* List Table */}
           {loading ? (
-            <div style={styles.loadingPlaceholder}>Loading FDP certificate records...</div>
+            <div className="admin-kpi-card glass-panel" style={styles.loadingPlaceholder}>
+              <div className="admin-loading-spinner" />
+            </div>
           ) : error ? (
-            <div style={styles.errorBox}>{error}</div>
+            <div className="admin-kpi-card glass-panel" style={styles.errorBox}>{error}</div>
           ) : certs.length === 0 ? (
-            <div style={styles.emptyPlaceholder}>No FDP certificate records found. Click "Create FDP Certificate" to add one.</div>
+            <div className="admin-kpi-card glass-panel" style={styles.emptyPlaceholder}>
+              <span className="material-symbols-outlined" style={{ fontSize: "48px", color: "#94a3b8", marginBottom: "16px" }}>
+                workspace_premium
+              </span>
+              <h3 style={{ color: "#001943", margin: "0 0 8px 0" }}>No FDP Certificates Found</h3>
+              <p style={{ color: "#64748b", margin: 0 }}>Click "Create FDP Certificate" to add your first record.</p>
+            </div>
           ) : (
-            <div className="candidate-table-wrapper" style={{ overflowX: "auto" }}>
-              <table style={styles.table} className="candidates-table">
+            <div className="admin-kpi-card glass-panel" style={{ padding: "0", overflowX: "auto", display: "block" }}>
+              <table className="admin-table">
                 <thead>
                   <tr>
                     <th>Cert Number</th>
@@ -191,21 +221,21 @@ export default function FacultyCertificatesList() {
                     <th>Duration / Mode</th>
                     <th>Status</th>
                     <th>Last Updated</th>
-                    <th style={{ textAlign: "right" }}>Actions</th>
+                    <th style={{ textAlign: "center" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {certs.map((c) => (
                     <tr key={c.id}>
-                      <td style={{ fontWeight: "600", color: "#3b82f6" }}>{c.certificate_number}</td>
-                      <td style={{ fontWeight: "600" }}>{c.faculty_name}</td>
+                      <td style={{ fontWeight: "600", color: "#2563eb" }}>{c.certificate_number}</td>
+                      <td style={{ fontWeight: "600", color: "#001943" }}>{c.faculty_name}</td>
                       <td>
-                        <div style={{ fontWeight: "500", color: "#f8fafc" }}>{c.programme_title}</div>
-                        <div style={{ fontSize: "11px", color: "#94a3b8" }}>{c.topic}</div>
+                        <div style={{ fontWeight: "500", color: "#334155" }}>{c.programme_title}</div>
+                        <div style={{ fontSize: "11px", color: "#64748b" }}>{c.topic}</div>
                       </td>
                       <td>
-                        <div>{c.duration}</div>
-                        <div style={{ fontSize: "11px", color: "#94a3b8" }}>{c.mode || "Online"}</div>
+                        <div style={{ color: "#334155" }}>{c.duration}</div>
+                        <div style={{ fontSize: "11px", color: "#64748b" }}>{c.mode || "Online"}</div>
                       </td>
                       <td>
                         <span
@@ -217,20 +247,18 @@ export default function FacultyCertificatesList() {
                           {c.status}
                         </span>
                       </td>
-                      <td style={{ fontSize: "12px", color: "#94a3b8" }}>
+                      <td style={{ fontSize: "12px", color: "#64748b" }}>
                         {new Date(c.updated_at).toLocaleDateString()}
                       </td>
-                      <td style={{ textAlign: "right" }}>
+                      <td style={{ textAlign: "center" }}>
                         <div style={styles.actionsCell}>
                           <button
-                            onClick={() => {
-                              setPreviewId(c.id);
-                              setPreviewNumber(c.certificate_number);
-                            }}
+                            onClick={() => handlePreview(c.id, c.certificate_number)}
                             title="Preview Certificate"
-                            style={styles.actionBtn}
+                            className="admin-action-btn edit"
+                            style={{ display: "inline-flex", padding: "6px", borderRadius: "6px", background: "#f1f5f9", color: "#475569", border: "none", cursor: "pointer" }}
                           >
-                            <span className="material-symbols-outlined">visibility</span>
+                            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>visibility</span>
                           </button>
                           <button
                             onClick={() => {
@@ -238,32 +266,36 @@ export default function FacultyCertificatesList() {
                               setIsFormOpen(true);
                             }}
                             title="Edit Record"
-                            style={styles.actionBtn}
+                            className="admin-action-btn edit"
+                            style={{ display: "inline-flex", padding: "6px", borderRadius: "6px", background: "#f1f5f9", color: "#475569", border: "none", cursor: "pointer" }}
                           >
-                            <span className="material-symbols-outlined">edit</span>
+                            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>edit</span>
                           </button>
                           <button
                             onClick={() => handleGenerate(c.id, c.certificate_number)}
                             title="Generate PDF & Save"
-                            style={styles.actionBtn}
+                            className="admin-action-btn edit"
+                            style={{ display: "inline-flex", padding: "6px", borderRadius: "6px", background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", cursor: "pointer" }}
                           >
-                            <span className="material-symbols-outlined">settings_suggest</span>
+                            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>settings_suggest</span>
                           </button>
                           {c.status === "Generated" && (
                             <button
                               onClick={() => handleDownload(c.id, c.certificate_number)}
                               title="Download PDF File"
-                              style={{ ...styles.actionBtn, color: "#10b981" }}
+                              className="admin-action-btn edit"
+                              style={{ display: "inline-flex", padding: "6px", borderRadius: "6px", background: "#ecfdf5", color: "#059669", border: "none", cursor: "pointer" }}
                             >
-                              <span className="material-symbols-outlined">download</span>
+                              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>download</span>
                             </button>
                           )}
                           <button
                             onClick={() => handleDelete(c.id, c.certificate_number)}
                             title="Delete Record"
-                            style={{ ...styles.actionBtn, color: "#ef4444" }}
+                            className="admin-action-btn delete"
+                            style={{ display: "inline-flex", padding: "6px", borderRadius: "6px", background: "#fef2f2", color: "#dc2626", border: "none", cursor: "pointer" }}
                           >
-                            <span className="material-symbols-outlined">delete</span>
+                            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>delete</span>
                           </button>
                         </div>
                       </td>
@@ -277,21 +309,21 @@ export default function FacultyCertificatesList() {
       )}
 
       {/* PDF Inline Preview Modal */}
-      {previewId && (
-        <div style={styles.modalOverlay} onClick={() => { setPreviewId(null); setPreviewNumber(null); }}>
+      {previewBlobUrl && (
+        <div style={styles.modalOverlay} onClick={closePreview}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div style={styles.modalHeader}>
               <h3 style={styles.modalTitle}>Certificate Preview: {previewNumber}</h3>
               <button
                 style={styles.modalCloseBtn}
-                onClick={() => { setPreviewId(null); setPreviewNumber(null); }}
+                onClick={closePreview}
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
             <div style={styles.modalBody}>
               <iframe
-                src={previewFacultyCertificateUrl(previewId)}
+                src={previewBlobUrl}
                 title="Certificate PDF Preview"
                 style={styles.iframe}
               />
@@ -304,13 +336,6 @@ export default function FacultyCertificatesList() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    padding: "24px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "24px",
-    color: "#f8fafc",
-  },
   toast: {
     position: "fixed",
     top: "24px",
@@ -323,36 +348,16 @@ const styles: Record<string, React.CSSProperties> = {
     zIndex: 10000,
   },
   header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: "16px",
-  },
-  title: {
-    fontSize: "22px",
-    fontWeight: "700",
-    color: "#f8fafc",
-    margin: "0 0 4px 0",
-  },
-  subtitle: {
-    fontSize: "13px",
-    color: "#94a3b8",
-    margin: 0,
+    marginBottom: "24px",
   },
   createBtn: {
-    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-    border: "none",
-    color: "#ffffff",
-    padding: "10px 20px",
+    textDecoration: "none",
     borderRadius: "8px",
-    fontSize: "13px",
-    fontWeight: "600",
-    cursor: "pointer",
     display: "flex",
     alignItems: "center",
     gap: "8px",
-    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.25)",
+    border: "none",
+    cursor: "pointer",
   },
   content: {
     display: "flex",
@@ -360,8 +365,8 @@ const styles: Record<string, React.CSSProperties> = {
     gap: "20px",
   },
   searchBar: {
-    background: "#1e293b",
-    border: "1px solid rgba(255, 255, 255, 0.08)",
+    background: "#ffffff",
+    border: "1px solid #cbd5e1",
     borderRadius: "10px",
     padding: "10px 16px",
     display: "flex",
@@ -371,34 +376,33 @@ const styles: Record<string, React.CSSProperties> = {
   searchInput: {
     background: "transparent",
     border: "none",
-    color: "#f8fafc",
+    color: "#001943",
     fontSize: "13px",
     width: "100%",
     outline: "none",
   },
   loadingPlaceholder: {
-    padding: "40px",
-    textAlign: "center",
-    color: "#94a3b8",
+    padding: "60px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    background: "#ffffff",
+    border: "1px solid #cbd5e1",
+    borderRadius: "12px",
   },
   emptyPlaceholder: {
-    background: "#1e293b",
-    border: "1px dashed rgba(255, 255, 255, 0.15)",
-    borderRadius: "14px",
     padding: "60px 40px",
     textAlign: "center",
-    color: "#94a3b8",
-    fontSize: "14px",
+    background: "#ffffff",
+    border: "1px dashed #cbd5e1",
+    borderRadius: "12px",
   },
   errorBox: {
-    background: "rgba(239, 68, 68, 0.15)",
-    color: "#fca5a5",
     padding: "12px 16px",
+    background: "#fef2f2",
+    border: "1px solid #fca5a5",
+    color: "#991b1b",
     borderRadius: "8px",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
   },
   statusBadge: {
     fontSize: "11px",
@@ -408,30 +412,17 @@ const styles: Record<string, React.CSSProperties> = {
     textTransform: "uppercase",
   },
   statusDraft: {
-    background: "rgba(245, 158, 11, 0.15)",
-    color: "#f59e0b",
+    background: "#fef3c7",
+    color: "#d97706",
   },
   statusGenerated: {
-    background: "rgba(16, 185, 129, 0.15)",
-    color: "#10b981",
+    background: "#d1fae5",
+    color: "#059669",
   },
   actionsCell: {
     display: "flex",
-    justifyContent: "flex-end",
-    gap: "8px",
-  },
-  actionBtn: {
-    background: "rgba(255, 255, 255, 0.05)",
-    border: "none",
-    borderRadius: "6px",
-    width: "32px",
-    height: "32px",
-    display: "flex",
-    alignItems: "center",
     justifyContent: "center",
-    color: "#cbd5e1",
-    cursor: "pointer",
-    transition: "background-color 0.2s",
+    gap: "8px",
   },
   modalOverlay: {
     position: "fixed",
@@ -439,8 +430,8 @@ const styles: Record<string, React.CSSProperties> = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: "rgba(15, 23, 42, 0.8)",
-    backdropFilter: "blur(8px)",
+    background: "rgba(15, 23, 42, 0.4)",
+    backdropFilter: "blur(4px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -448,20 +439,20 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "16px",
   },
   modalContent: {
-    background: "#1e293b",
-    border: "1px solid rgba(255, 255, 255, 0.12)",
+    background: "#ffffff",
+    border: "1px solid #cbd5e1",
     borderRadius: "16px",
     width: "100%",
     maxWidth: "800px",
     height: "90%",
     maxHeight: "750px",
-    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
     display: "flex",
     flexDirection: "column",
   },
   modalHeader: {
     padding: "16px 24px",
-    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+    borderBottom: "1px solid #cbd5e1",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -469,13 +460,13 @@ const styles: Record<string, React.CSSProperties> = {
   modalTitle: {
     fontSize: "16px",
     fontWeight: "700",
-    color: "#f8fafc",
+    color: "#001943",
     margin: 0,
   },
   modalCloseBtn: {
     background: "none",
     border: "none",
-    color: "#94a3b8",
+    color: "#64748b",
     cursor: "pointer",
     padding: "4px",
     display: "flex",
@@ -484,7 +475,7 @@ const styles: Record<string, React.CSSProperties> = {
   modalBody: {
     flex: 1,
     padding: "16px",
-    background: "#0f172a",
+    background: "#f1f5f9",
   },
   iframe: {
     width: "100%",

@@ -36,12 +36,14 @@ export default function CertificatesCategoryPage() {
   ];
 
   return (
-    <div style={styles.container} className="admin-certificates-category-container">
-      <div style={styles.header}>
-        <h2 style={styles.title}>Faculty & Trainer Certificates</h2>
-        <p style={styles.subtitle}>
-          Create and manage appreciation certificates for faculty members, trainers, and external contributors.
-        </p>
+    <div className="admin-page-container" style={{ padding: "24px" }}>
+      <div className="admin-page-header" style={{ marginBottom: "28px" }}>
+        <div>
+          <h1 className="admin-page-title" style={{ color: "#001943" }}>Faculty & Trainer Certificates</h1>
+          <p className="admin-page-subtitle" style={{ color: "#64748b", margin: 0 }}>
+            Create and manage appreciation certificates for faculty members, trainers, and external contributors.
+          </p>
+        </div>
       </div>
 
       <div style={styles.grid}>
@@ -49,6 +51,7 @@ export default function CertificatesCategoryPage() {
           <div
             key={idx}
             onClick={() => cat.active && cat.path && navigate(cat.path)}
+            className="admin-kpi-card glass-panel"
             style={{
               ...styles.card,
               ...(cat.active ? styles.cardActive : styles.cardInactive),
@@ -57,15 +60,15 @@ export default function CertificatesCategoryPage() {
             <div style={styles.cardHeader}>
               <span className="material-symbols-outlined" style={{
                 fontSize: "36px",
-                color: cat.active ? "#3b82f6" : "#64748b",
+                color: cat.active ? "#2563eb" : "#94a3b8",
               }}>
                 {cat.icon}
               </span>
               {!cat.active && <span style={styles.badge}>Coming Soon</span>}
             </div>
 
-            <h3 style={styles.cardTitle}>{cat.title}</h3>
-            <p style={styles.cardDesc}>{cat.description}</p>
+            <h3 style={{ ...styles.cardTitle, color: "#001943" }}>{cat.title}</h3>
+            <p style={{ ...styles.cardDesc, color: "#475569" }}>{cat.description}</p>
 
             {cat.active && (
               <span style={styles.actionLink}>
@@ -80,49 +83,24 @@ export default function CertificatesCategoryPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    padding: "24px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "28px",
-    color: "#f8fafc",
-  },
-  header: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-  },
-  title: {
-    fontSize: "24px",
-    fontWeight: "700",
-    color: "#f8fafc",
-    margin: 0,
-  },
-  subtitle: {
-    fontSize: "14px",
-    color: "#94a3b8",
-    margin: 0,
-  },
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
     gap: "20px",
   },
   card: {
-    background: "#1e293b",
-    border: "1px solid rgba(255, 255, 255, 0.08)",
-    borderRadius: "16px",
-    padding: "24px",
     display: "flex",
     flexDirection: "column",
     gap: "14px",
     transition: "all 0.2s ease-in-out",
+    padding: "24px",
+    background: "#ffffff",
+    border: "1px solid #cbd5e1",
+    borderRadius: "12px",
   },
   cardActive: {
     cursor: "pointer",
-    borderColor: "rgba(59, 130, 246, 0.3)",
-    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-    background: "rgba(30, 41, 59, 0.7)",
+    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
   },
   cardInactive: {
     cursor: "not-allowed",
@@ -136,8 +114,8 @@ const styles: Record<string, React.CSSProperties> = {
   badge: {
     fontSize: "11px",
     fontWeight: "600",
-    background: "rgba(148, 163, 184, 0.15)",
-    color: "#94a3b8",
+    background: "#f1f5f9",
+    color: "#64748b",
     padding: "4px 10px",
     borderRadius: "20px",
     textTransform: "uppercase",
@@ -145,12 +123,10 @@ const styles: Record<string, React.CSSProperties> = {
   cardTitle: {
     fontSize: "18px",
     fontWeight: "600",
-    color: "#f8fafc",
     margin: 0,
   },
   cardDesc: {
     fontSize: "13px",
-    color: "#94a3b8",
     lineHeight: "1.5",
     margin: 0,
     flexGrow: 1,
@@ -158,7 +134,7 @@ const styles: Record<string, React.CSSProperties> = {
   actionLink: {
     fontSize: "13px",
     fontWeight: "600",
-    color: "#3b82f6",
+    color: "#2563eb",
     marginTop: "8px",
   },
 };
