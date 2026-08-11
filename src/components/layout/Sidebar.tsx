@@ -252,6 +252,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </NavLink>
 
           <NavLink 
+            to="/admin/certificates" 
+            onClick={onClose} 
+            className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}
+            onMouseEnter={() => import('@/components/features/admin/certificates/CertificatesCategoryPage')}
+          >
+            <span className="material-symbols-outlined">workspace_premium</span> Certificates
+          </NavLink>
+
+          <NavLink 
             to="/admin/trash" 
             onClick={onClose} 
             className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}
@@ -260,6 +269,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span className="material-symbols-outlined">delete</span> Trash
           </NavLink>
           
+          <NavLink 
+            to="/admin/profile" 
+            onClick={onClose} 
+            className={({ isActive }) => isActive ? "admin-nav-link active" : "admin-nav-link"}
+            onMouseEnter={() => import('@/components/features/admin/AdminProfile')}
+          >
+            <span className="material-symbols-outlined">person</span> Admin Profile
+          </NavLink>
+
           <NavLink 
             to="/admin/settings" 
             onClick={onClose} 

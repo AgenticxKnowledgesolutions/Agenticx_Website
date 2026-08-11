@@ -49,6 +49,8 @@ const JobAdd = lazy(() => import('./components/features/admin/jobs/JobAdd'))
 const JobEdit = lazy(() => import('./components/features/admin/jobs/JobEdit'))
 const ApplicationsAdmin = lazy(() => import('./components/features/admin/jobs/ApplicationsAdmin'))
 const AdminProfile = lazy(() => import('./components/features/admin/AdminProfile'))
+const CertificatesCategoryPage = lazy(() => import('./components/features/admin/certificates/CertificatesCategoryPage'))
+const FacultyCertificatesList = lazy(() => import('./components/features/admin/certificates/FacultyCertificatesList'))
 
 function App() {
   const fetchSettings = useSettingsStore(state => state.fetchSettings)
@@ -146,6 +148,8 @@ function App() {
               <Route path="trash" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><TrashAdmin /></Suspense></ErrorBoundary>} />
               <Route path="settings" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CompanySettingsAdmin /></Suspense></ErrorBoundary>} />
               <Route path="profile" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><AdminProfile /></Suspense></ErrorBoundary>} />
+              <Route path="certificates" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CertificatesCategoryPage /></Suspense></ErrorBoundary>} />
+              <Route path="certificates/fdp" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><FacultyCertificatesList /></Suspense></ErrorBoundary>} />
 
               {/* Jobs Admin routes */}
               <Route path="jobs" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><JobList /></Suspense></ErrorBoundary>} />
