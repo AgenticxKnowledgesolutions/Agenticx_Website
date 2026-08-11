@@ -27,7 +27,7 @@ import { getCourses } from "../../../../services/courseService";
 import type { Course } from "../../../../services/courseService";
 import CandidatesImport from "./CandidatesImport";
 import CandidatesImportHistory from "./CandidatesImportHistory";
-import CandidatesExportModal from "./CandidatesExportModal";
+import CandidatesExport from "./CandidatesExport";
 
 export default function CandidatesAdmin() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -44,7 +44,6 @@ export default function CandidatesAdmin() {
   const limit = 10;
 
   const [programOptions, setProgramOptions] = useState<ProgramOption[]>([]);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Selected Candidate for detail drawer
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
@@ -237,7 +236,7 @@ export default function CandidatesAdmin() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<"list" | "import" | "import-history" | "trash">("list");
+  const [activeTab, setActiveTab] = useState<"list" | "import" | "import-history" | "export" | "trash">("list");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
@@ -921,16 +920,16 @@ export default function CandidatesAdmin() {
             Excel Batch Import
           </button>
           <button
-            onClick={() => setIsExportModalOpen(true)}
+            onClick={() => {
+              setActiveTab("export");
+              setSelectedCandidateId(null);
+            }}
             style={{
               ...styles.tabBtn,
-              background: "rgba(59, 130, 246, 0.12)",
-              border: "1px solid rgba(59, 130, 246, 0.3)",
-              color: "#60a5fa",
-              fontWeight: 600,
+              ...(activeTab === "export" ? styles.activeTabBtn : {}),
             }}
           >
-            📥 Export Candidates
+            Export Candidates
           </button>
           <button
             onClick={() => {
@@ -1016,6 +1015,24 @@ export default function CandidatesAdmin() {
       )}
 
       {activeTab === "import-history" && <CandidatesImportHistory />}
+      {activeTab === "export" && (
+        <CandidatesExport
+          totalCandidates={total}
+          filteredCount={candidates.length}
+          selectedCandidateIds={selectedIds}
+          activeFilters={{
+            search,
+            statusFilter,
+            courseFilter,
+            startDate,
+            endDate,
+          }}
+          onExportSuccess={(msg) => {
+            setToast({ message: msg, type: "success" });
+            setTimeout(() => setToast(null), 4000);
+          }}
+        />
+      )}
       {(activeTab === "list" || activeTab === "trash") && (
         <div style={{ width: "100%" }}>
           {selectedIds.length > 0 && !selectedCandidateId && (
@@ -2613,26 +2630,6 @@ export default function CandidatesAdmin() {
           </div>
         </div>
       )}
-
-      {/* Candidates Export Modal */}
-      <CandidatesExportModal
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        totalCandidates={total}
-        filteredCount={candidates.length}
-        selectedCandidateIds={selectedIds}
-        activeFilters={{
-          search,
-          statusFilter,
-          courseFilter,
-          startDate,
-          endDate,
-        }}
-        onExportSuccess={(msg) => {
-          setToast({ message: msg, type: "success" });
-          setTimeout(() => setToast(null), 4000);
-        }}
-      />
     </div>
   );
 }
