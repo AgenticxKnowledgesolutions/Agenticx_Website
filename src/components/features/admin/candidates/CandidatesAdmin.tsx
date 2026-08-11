@@ -1116,9 +1116,10 @@ export default function CandidatesAdmin() {
             /* Main List Section */
             <div className="list-section" style={{ width: "100%", minWidth: 0 }}>
               {/* Filters Bar */}
-              <div style={styles.filterBar}>
+              <div className="admin-candidates-filter-bar" style={styles.filterBar}>
                 <input
                   type="text"
+                  className="admin-filter-search"
                   placeholder="Search name, email, phone or app number..."
                   value={search}
                   onChange={(e) => {
@@ -1128,6 +1129,7 @@ export default function CandidatesAdmin() {
                   style={styles.searchInput}
                 />
                 <select
+                  className="admin-filter-select"
                   value={statusFilter}
                   onChange={(e) => {
                     setStatusFilter(e.target.value);
@@ -1144,6 +1146,7 @@ export default function CandidatesAdmin() {
                 </select>
 
                 <select
+                  className="admin-filter-select admin-course-filter-select"
                   value={courseFilter}
                   onChange={(e) => {
                     setCourseFilter(e.target.value);
@@ -1159,9 +1162,10 @@ export default function CandidatesAdmin() {
                   ))}
                 </select>
 
-                <div style={styles.dateRange}>
+                <div className="admin-filter-date-range" style={styles.dateRange}>
                   <input
                     type="date"
+                    className="admin-filter-date-input"
                     value={startDate}
                     onChange={(e) => {
                       setStartDate(e.target.value);
@@ -1172,6 +1176,7 @@ export default function CandidatesAdmin() {
                   <span style={{ color: "#94a3b8" }}>to</span>
                   <input
                     type="date"
+                    className="admin-filter-date-input"
                     value={endDate}
                     onChange={(e) => {
                       setEndDate(e.target.value);
@@ -2819,6 +2824,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "14px",
     outline: "none",
     cursor: "pointer",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    textOverflow: "ellipsis",
   },
   dateRange: {
     display: "flex",
