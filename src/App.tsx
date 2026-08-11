@@ -48,6 +48,7 @@ const JobList = lazy(() => import('./components/features/admin/jobs/JobList'))
 const JobAdd = lazy(() => import('./components/features/admin/jobs/JobAdd'))
 const JobEdit = lazy(() => import('./components/features/admin/jobs/JobEdit'))
 const ApplicationsAdmin = lazy(() => import('./components/features/admin/jobs/ApplicationsAdmin'))
+const AdminProfile = lazy(() => import('./components/features/admin/AdminProfile'))
 
 function App() {
   const fetchSettings = useSettingsStore(state => state.fetchSettings)
@@ -144,6 +145,7 @@ function App() {
               <Route path="candidates" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CandidatesAdmin /></Suspense></ErrorBoundary>} />
               <Route path="trash" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><TrashAdmin /></Suspense></ErrorBoundary>} />
               <Route path="settings" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><CompanySettingsAdmin /></Suspense></ErrorBoundary>} />
+              <Route path="profile" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><AdminProfile /></Suspense></ErrorBoundary>} />
 
               {/* Jobs Admin routes */}
               <Route path="jobs" element={<ErrorBoundary><Suspense fallback={<AdminSkeleton />}><JobList /></Suspense></ErrorBoundary>} />

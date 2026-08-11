@@ -612,3 +612,14 @@ export const updateCandidateFeeInfo = async (id: string, data: any): Promise<Can
   return mapCandidate(res.data);
 };
 
+export interface ProgramOption {
+  name: string;
+  type: string;
+  count: number;
+}
+
+export const getProgramOptions = async (): Promise<ProgramOption[]> => {
+  const res = await api.get("/candidates/program-options");
+  return res.data;
+};
+

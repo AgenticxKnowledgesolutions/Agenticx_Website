@@ -20,8 +20,9 @@ import {
   updateCandidateProgramInfo,
   updateCandidateFeeInfo,
   updateCandidateCertificateInfo,
+  getProgramOptions,
 } from "../../../../services/candidateService";
-import type { Candidate, AdminNotification } from "../../../../services/candidateService";
+import type { Candidate, AdminNotification, ProgramOption } from "../../../../services/candidateService";
 import { getCourses } from "../../../../services/courseService";
 import type { Course } from "../../../../services/courseService";
 import CandidatesImport from "./CandidatesImport";
@@ -40,6 +41,8 @@ export default function CandidatesAdmin() {
   const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(1);
   const limit = 10;
+
+  const [programOptions, setProgramOptions] = useState<ProgramOption[]>([]);
 
   // Selected Candidate for detail drawer
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
@@ -257,6 +260,15 @@ export default function CandidatesAdmin() {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
+  const loadProgramOptions = async () => {
+    try {
+      const options = await getProgramOptions();
+      setProgramOptions(options);
+    } catch (err) {
+      console.error("Failed to load program options:", err);
+    }
+  };
+
   // Load candidate list
   const loadCandidates = async () => {
     setLoading(true);
@@ -274,6 +286,7 @@ export default function CandidatesAdmin() {
       });
       setCandidates(res.records);
       setTotal(res.total);
+      await loadProgramOptions();
     } catch (err) {
       console.error("Failed to load candidates:", err);
     } finally {
@@ -879,8 +892,8 @@ export default function CandidatesAdmin() {
         </div>
       )}
       {/* Top Navigation & Notifications bar */}
-      <div style={styles.topHeader}>
-        <div style={styles.tabButtons}>
+      <div className="admin-top-header">
+        <div className="admin-tab-buttons">
           <button
             onClick={() => {
               setActiveTab("list");
@@ -931,7 +944,7 @@ export default function CandidatesAdmin() {
           </button>
         </div>
 
-        <div style={styles.notificationWrapper}>
+        <div className="admin-notif-wrapper">
           <button
             onClick={() => {
               setShowNotifications(!showNotifications);
@@ -1138,12 +1151,12 @@ export default function CandidatesAdmin() {
                   }}
                   style={styles.selectInput}
                 >
-                  <option value="">All Courses</option>
-                  <option value="Artificial Intelligence & Machine Learning">AI & ML</option>
-                  <option value="Full Stack Web Development">Full Stack Web Dev</option>
-                  <option value="Data Science & Analytics">Data Science</option>
-                  <option value="Software Engineering & DevOps">Software Eng</option>
-                  <option value="Cyber Security">Cyber Security</option>
+                  <option value="">All Programs</option>
+                  {programOptions.map((opt) => (
+                    <option key={`${opt.name}-${opt.type}`} value={opt.name}>
+                      {opt.name} {opt.type ? `(${opt.type})` : ""}
+                    </option>
+                  ))}
                 </select>
 
                 <div style={styles.dateRange}>
