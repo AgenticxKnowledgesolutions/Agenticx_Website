@@ -1912,4 +1912,13 @@ body.modal-open-lock {
   }
 }
 
+/* Export Modal Responsiveness */
+@media (max-width: 600px) {
+  .admin-export-modal-container {
+    width: 95% !important;
+    max-width: 100% !important;
+    margin: 10px;
+  }
+}
+
 

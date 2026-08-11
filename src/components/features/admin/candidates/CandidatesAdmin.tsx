@@ -27,6 +27,7 @@ import { getCourses } from "../../../../services/courseService";
 import type { Course } from "../../../../services/courseService";
 import CandidatesImport from "./CandidatesImport";
 import CandidatesImportHistory from "./CandidatesImportHistory";
+import CandidatesExportModal from "./CandidatesExportModal";
 
 export default function CandidatesAdmin() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -43,6 +44,7 @@ export default function CandidatesAdmin() {
   const limit = 10;
 
   const [programOptions, setProgramOptions] = useState<ProgramOption[]>([]);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Selected Candidate for detail drawer
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
@@ -917,6 +919,18 @@ export default function CandidatesAdmin() {
             }}
           >
             Excel Batch Import
+          </button>
+          <button
+            onClick={() => setIsExportModalOpen(true)}
+            style={{
+              ...styles.tabBtn,
+              background: "rgba(59, 130, 246, 0.12)",
+              border: "1px solid rgba(59, 130, 246, 0.3)",
+              color: "#60a5fa",
+              fontWeight: 600,
+            }}
+          >
+            📥 Export Candidates
           </button>
           <button
             onClick={() => {
@@ -2599,6 +2613,26 @@ export default function CandidatesAdmin() {
           </div>
         </div>
       )}
+
+      {/* Candidates Export Modal */}
+      <CandidatesExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        totalCandidates={total}
+        filteredCount={candidates.length}
+        selectedCandidateIds={selectedIds}
+        activeFilters={{
+          search,
+          statusFilter,
+          courseFilter,
+          startDate,
+          endDate,
+        }}
+        onExportSuccess={(msg) => {
+          setToast({ message: msg, type: "success" });
+          setTimeout(() => setToast(null), 4000);
+        }}
+      />
     </div>
   );
 }
