@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { FacultyCertificateInput, FacultyCertificate } from "../../../../services/facultyCertificateService";
+import "../Admin.css";
 
 interface FacultyCertificateFormProps {
   initialData?: FacultyCertificate | null;
@@ -121,8 +122,8 @@ export default function FacultyCertificateForm({
         {/* Section: Faculty Details */}
         <div style={styles.section}>
           <h4 style={styles.sectionTitle}>1. Faculty / Instructor Details</h4>
-          <div style={styles.row}>
-            <div style={styles.col}>
+          <div className="admin-form-row">
+            <div className="admin-form-group">
               <label style={styles.label}>Faculty Name *</label>
               <input
                 type="text"
@@ -134,7 +135,7 @@ export default function FacultyCertificateForm({
                 style={styles.input}
               />
             </div>
-            <div style={styles.col}>
+            <div className="admin-form-group">
               <label style={styles.label}>Email Address</label>
               <input
                 type="email"
@@ -146,8 +147,8 @@ export default function FacultyCertificateForm({
               />
             </div>
           </div>
-          <div style={styles.row}>
-            <div style={styles.col}>
+          <div className="admin-form-row" style={{ marginTop: "12px" }}>
+            <div className="admin-form-group">
               <label style={styles.label}>Designation</label>
               <input
                 type="text"
@@ -158,7 +159,7 @@ export default function FacultyCertificateForm({
                 style={styles.input}
               />
             </div>
-            <div style={styles.col}>
+            <div className="admin-form-group">
               <label style={styles.label}>Organization / Institution</label>
               <input
                 type="text"
@@ -175,8 +176,8 @@ export default function FacultyCertificateForm({
         {/* Section: FDP Details */}
         <div style={styles.section}>
           <h4 style={styles.sectionTitle}>2. FDP Programme Details</h4>
-          <div style={styles.row}>
-            <div style={styles.col}>
+          <div className="admin-form-row">
+            <div className="admin-form-group">
               <label style={styles.label}>Programme Title *</label>
               <input
                 type="text"
@@ -188,7 +189,7 @@ export default function FacultyCertificateForm({
                 style={styles.input}
               />
             </div>
-            <div style={styles.col}>
+            <div className="admin-form-group">
               <label style={styles.label}>Topic Focus Area *</label>
               <input
                 type="text"
@@ -201,8 +202,8 @@ export default function FacultyCertificateForm({
               />
             </div>
           </div>
-          <div style={styles.row}>
-            <div style={styles.col}>
+          <div className="admin-form-row" style={{ marginTop: "12px" }}>
+            <div className="admin-form-group">
               <label style={styles.label}>Start Date *</label>
               <input
                 type="date"
@@ -213,7 +214,7 @@ export default function FacultyCertificateForm({
                 style={styles.input}
               />
             </div>
-            <div style={styles.col}>
+            <div className="admin-form-group">
               <label style={styles.label}>End Date *</label>
               <input
                 type="date"
@@ -225,8 +226,8 @@ export default function FacultyCertificateForm({
               />
             </div>
           </div>
-          <div style={styles.row}>
-            <div style={styles.col}>
+          <div className="admin-form-row" style={{ marginTop: "12px" }}>
+            <div className="admin-form-group">
               <label style={styles.label}>Duration *</label>
               <input
                 type="text"
@@ -238,7 +239,7 @@ export default function FacultyCertificateForm({
                 style={styles.input}
               />
             </div>
-            <div style={styles.col}>
+            <div className="admin-form-group">
               <label style={styles.label}>Training Mode</label>
               <select name="mode" value={formData.mode || "Online"} onChange={handleChange} style={styles.select}>
                 <option value="Online">Online</option>
@@ -247,7 +248,7 @@ export default function FacultyCertificateForm({
               </select>
             </div>
           </div>
-          <div style={styles.col}>
+          <div className="admin-form-group" style={{ marginTop: "12px" }}>
             <label style={styles.label}>Description / Syllabus details</label>
             <textarea
               name="description"
@@ -263,8 +264,8 @@ export default function FacultyCertificateForm({
         {/* Section: Organization & Signatory */}
         <div style={styles.section}>
           <h4 style={styles.sectionTitle}>3. Signature & Branding Details</h4>
-          <div style={styles.row}>
-            <div style={styles.col}>
+          <div className="admin-form-row">
+            <div className="admin-form-group">
               <label style={styles.label}>Awarding Organization *</label>
               <input
                 type="text"
@@ -275,7 +276,7 @@ export default function FacultyCertificateForm({
                 style={styles.input}
               />
             </div>
-            <div style={styles.col}>
+            <div className="admin-form-group">
               <label style={styles.label}>Signatory Name</label>
               <input
                 type="text"
@@ -287,7 +288,7 @@ export default function FacultyCertificateForm({
               />
             </div>
           </div>
-          <div style={styles.col}>
+          <div className="admin-form-group" style={{ marginTop: "12px" }}>
             <label style={styles.label}>Signatory Designation</label>
             <input
               type="text"
@@ -365,22 +366,12 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: "0.5px",
     margin: "0 0 6px 0",
   },
-  row: {
-    display: "flex",
-    gap: "16px",
-    flexWrap: "wrap",
-  },
-  col: {
-    flex: 1,
-    minWidth: "200px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-  },
   label: {
     fontSize: "12px",
     fontWeight: "600",
     color: "#475569",
+    marginBottom: "6px",
+    display: "block",
   },
   input: {
     background: "#f8fafc",
@@ -390,6 +381,8 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#001943",
     fontSize: "13px",
     outline: "none",
+    width: "100%",
+    boxSizing: "border-box",
   },
   select: {
     background: "#f8fafc",
@@ -399,6 +392,8 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#001943",
     fontSize: "13px",
     outline: "none",
+    width: "100%",
+    boxSizing: "border-box",
   },
   textarea: {
     background: "#f8fafc",
@@ -410,6 +405,8 @@ const styles: Record<string, React.CSSProperties> = {
     outline: "none",
     resize: "vertical",
     fontFamily: "inherit",
+    width: "100%",
+    boxSizing: "border-box",
   },
   actions: {
     display: "flex",
