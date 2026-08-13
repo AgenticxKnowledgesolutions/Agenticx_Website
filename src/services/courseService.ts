@@ -32,6 +32,7 @@ export interface Course {
   curriculum: CurriculumMonth[];
   nextCohort: string;
   isAiOptimized: boolean;
+  showAmountOnWebsite?: boolean;
   price: number;
   coverImageUrl?: string;
   brochureUrl?: string;
@@ -73,6 +74,7 @@ export const mapCourse = (data: any): Course => {
       : [],
     nextCohort: data?.nextCohort || data?.next_cohort || "",
     isAiOptimized: !!(data?.isAiOptimized || data?.is_ai_optimized),
+    showAmountOnWebsite: data?.showAmountOnWebsite !== undefined ? !!data.showAmountOnWebsite : (data?.show_amount_on_website !== undefined ? !!data.show_amount_on_website : true),
     price: data?.price !== null && data?.price !== undefined ? Number(data.price) : 0,
     coverImageUrl: data?.coverImageUrl || data?.cover_image_url || undefined,
     brochureUrl: data?.brochureUrl || data?.brochure_url || undefined,

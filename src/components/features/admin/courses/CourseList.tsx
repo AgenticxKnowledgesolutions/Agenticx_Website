@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { deleteCourse } from '@/services/courseService';
+import { deleteCourse, updateCourse } from '@/services/courseService';
 import { useToast } from '@/components/ui/Toast';
 import { formatCurrency } from '@/lib/utils';
 import { useAdminStore } from '@/services/adminStore';
@@ -37,6 +37,24 @@ export default function CourseList() {
     }
   };
 
+  const handleToggleVisibility = async (course: any) => {
+    try {
+      const success = await updateCourse(course.id, {
+        show_amount_on_website: !course.showAmountOnWebsite
+      });
+      if (success) {
+        toast(`Price visibility updated for "${course.title}".`, 'success');
+        invalidateCourses();
+        loadCourses(true);
+      } else {
+        toast('Failed to update price visibility.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      toast('Failed to update price visibility.', 'error');
+    }
+  };
+
   return (
     <div className="admin-page">
       <div className="admin-dashboard-header">
@@ -60,7 +78,7 @@ export default function CourseList() {
                 <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left', color: '#64748b' }}>
                   <th style={{ padding: '12px 8px' }}>Title</th>
                   <th style={{ padding: '12px 8px' }}>Duration</th>
-                  <th style={{ padding: '12px 8px' }}>Price</th>
+                  <th style={{ padding: '12px 8px' }}>Price / Visibility</th>
                   <th style={{ padding: '12px 8px', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
@@ -83,7 +101,21 @@ export default function CourseList() {
                     <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td style={{ padding: '16px 8px', fontWeight: 500, color: '#001943' }}>{c.title}</td>
                       <td style={{ padding: '16px 8px', color: '#64748b' }}>{c.stats?.duration || 'N/A'}</td>
-                      <td style={{ padding: '16px 8px', color: '#001943', fontWeight: 600 }}>{formatCurrency(c.price)}</td>
+                      <td style={{ padding: '16px 8px' }}>
+                        <div style={{ color: '#001943', fontWeight: 600 }}>{formatCurrency(c.price)}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                          <input 
+                            type="checkbox"
+                            checked={c.showAmountOnWebsite !== false}
+                            onChange={() => handleToggleVisibility(c)}
+                            id={`toggle-vis-${c.id}`}
+                            style={{ cursor: 'pointer', width: '14px', height: '14px' }}
+                          />
+                          <label htmlFor={`toggle-vis-${c.id}`} style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer', userSelect: 'none' }}>
+                            {c.showAmountOnWebsite !== false ? 'Show' : 'Hide'}
+                          </label>
+                        </div>
+                      </td>
                       <td style={{ padding: '16px 8px', textAlign: 'right' }}>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                           <button

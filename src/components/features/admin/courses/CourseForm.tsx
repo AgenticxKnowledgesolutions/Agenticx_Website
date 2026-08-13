@@ -31,6 +31,7 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
   const [careerSupport, setCareerSupport] = useState('');
   const [nextCohort, setNextCohort] = useState('');
   const [isAiOptimized, setIsAiOptimized] = useState(false);
+  const [showAmountOnWebsite, setShowAmountOnWebsite] = useState(true);
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [brochureUrl, setBrochureUrl] = useState('');
 
@@ -67,6 +68,7 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
             setCareerSupport(c.stats?.careerSupport || '');
             setNextCohort(c.nextCohort || '');
             setIsAiOptimized(c.isAiOptimized || false);
+            setShowAmountOnWebsite(c.showAmountOnWebsite !== undefined ? c.showAmountOnWebsite : true);
             setCoverImageUrl(c.coverImageUrl || '');
             setBrochureUrl(c.brochureUrl || '');
 
@@ -185,6 +187,7 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
       brochure_url: brochureUrl || null,
       next_cohort: nextCohort || 'TBD',
       is_ai_optimized: isAiOptimized,
+      show_amount_on_website: showAmountOnWebsite,
       stack: techStack
         .filter((item) => item.name.trim() !== '')
         .map((item, idx) => ({
@@ -389,6 +392,16 @@ export default function CourseForm({ mode, courseId }: CourseFormProps) {
               id="aiOptToggle" 
             />
             <label htmlFor="aiOptToggle" style={{ margin: 0, color: '#001943', cursor: 'pointer' }}>AI-Optimized Learning Path enabled?</label>
+          </div>
+          <div className="admin-form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
+            <input 
+              type="checkbox" 
+              checked={showAmountOnWebsite} 
+              onChange={e => { setShowAmountOnWebsite(e.target.checked); setIsDirty(true); }} 
+              style={{ width: 'auto', cursor: 'pointer' }} 
+              id="showAmountToggle" 
+            />
+            <label htmlFor="showAmountToggle" style={{ margin: 0, color: '#001943', cursor: 'pointer', userSelect: 'none' }}>Show pricing/amount on public website?</label>
           </div>
         </div>
 

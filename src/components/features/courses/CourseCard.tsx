@@ -48,10 +48,12 @@ export default function CourseCard({ course }: CourseCardProps) {
           <CollapsibleDescription description={course.description} />
 
           {/* Footer */}
-          <div className="course-card-footer">
-            <div className="course-price">
-              {formatCurrency(course.price)}
-            </div>
+          <div className="course-card-footer" style={course.showAmountOnWebsite === false ? { justifyContent: 'flex-end' } : {}}>
+            {course.showAmountOnWebsite !== false && (
+              <div className="course-price">
+                {formatCurrency(course.price)}
+              </div>
+            )}
 
             <div className="course-actions">
               <button 

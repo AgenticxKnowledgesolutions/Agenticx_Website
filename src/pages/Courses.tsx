@@ -20,6 +20,7 @@ export interface CourseData {
   slug: string
   coverImageUrl?: string
   brochureUrl?: string
+  showAmountOnWebsite?: boolean
 }
 
 export default function Courses() {
@@ -40,7 +41,8 @@ export default function Courses() {
           icon: '🎓',
           slug: c?.slug || '',
           coverImageUrl: c?.coverImageUrl || undefined,
-          brochureUrl: c?.brochureUrl || undefined
+          brochureUrl: c?.brochureUrl || undefined,
+          showAmountOnWebsite: c?.showAmountOnWebsite !== false
         }))
         setCourses(mappedData)
       } catch (err) {
