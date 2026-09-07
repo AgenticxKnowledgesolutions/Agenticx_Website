@@ -3,6 +3,7 @@ import NeuralCanvas from '@/components/ui/NeuralCanvas'
 import SolutionsWeBuild from '@/components/features/products/SolutionsWeBuild'
 import TechStack from '@/components/features/products/TechStack'
 import ProjectCta from '@/components/features/products/ProjectCta'
+import SEO from '@/components/seo/SEO'
 import '../styles/services.css'
 
 export default function Services() {
@@ -13,6 +14,11 @@ export default function Services() {
 
   return (
     <>
+      <SEO
+        title="Services | Training, HTD & Career Solutions - AgenticX"
+        description="Explore AgenticX Knowledge Solutions' core services: industry-ready training programs, internship support, Hire-Train-Deploy (HTD) hiring, and career guidance in Kollam, Kerala."
+        keywords="AgenticX services, Hire Train Deploy Kerala, internship support Kollam, career guidance Kerala, IT training services"
+      />
       <div className="services-page">
         <NeuralCanvas nodeCount={35} />
         <div className="srv-content-wrapper">

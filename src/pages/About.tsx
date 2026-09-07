@@ -3,6 +3,7 @@ import NeuralCanvas from '@/components/ui/NeuralCanvas'
 import '../styles/about.css'
 import WhyAgenticX from '../components/features/about/WhyAgenticX'
 import { useSettingsStore } from '@/store/useSettingsStore'
+import SEO from '@/components/seo/SEO'
 
 export default function About() {
   const settings = useSettingsStore(state => state.settings);
@@ -13,6 +14,11 @@ export default function About() {
 
   return (
     <div className="about-page">
+      <SEO
+        title="About AgenticX | Our Story & Mission - Kollam, Kerala"
+        description="Learn about AgenticX Knowledge Solutions - bridging the gap between education and industry with job-ready training, mentorship, and placement support in Kollam, Kerala."
+        keywords="About AgenticX, IT training institute Kollam, EdTech Kerala, AgenticX mission"
+      />
       <NeuralCanvas nodeCount={35} />
 
       <div className="abt-content-wrapper">
