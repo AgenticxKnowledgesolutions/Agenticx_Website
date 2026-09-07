@@ -1,0 +1,542 @@
+/* =========================================================
+   PARTNERS SECTION
+   ========================================================= */
+
+.partners-section {
+  padding: 45px 0;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.partners-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.partners-title {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 700;
+  color: #001943;
+  letter-spacing: -0.5px;
+}
+
+.partners-subtitle {
+  color: #64748b;
+  margin-top: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 16px;
+  max-width: 700px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   PARTNERS GRID
+   ========================================================= */
+
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+
+/* =========================================================
+   RESPONSIVE GRID
+   ========================================================= */
+
+@media (min-width: 640px) {
+  .partners-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .partners-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .partners-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 28px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .partners-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+
+/* =========================================================
+   PARTNER CARD
+   ========================================================= */
+
+.partner-card {
+  position: relative;
+
+  height: 150px;
+  min-height: 150px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  padding: 18px;
+
+  background: rgba(255, 255, 255, 0.65);
+
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  border: 1px solid rgba(0, 25, 67, 0.06);
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 10px 30px -5px rgba(0, 25, 67, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.4s ease,
+    box-shadow 0.4s ease;
+
+  overflow: hidden;
+
+  z-index: 0;
+}
+
+
+/* =========================================================
+   MOVING BLUE LIGHT
+   ONLY THIS LIGHT MOVES
+   ========================================================= */
+
+.partner-card::before {
+  content: "";
+
+  position: absolute;
+
+  width: 45px;
+  height: 3px;
+
+  border-radius: 999px;
+
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #007bff 25%,
+    #00cfff 50%,
+    #007bff 75%,
+    transparent 100%
+  );
+
+  box-shadow:
+    0 0 4px rgba(0, 123, 255, 0.9),
+    0 0 9px rgba(0, 123, 255, 0.7),
+    0 0 16px rgba(0, 207, 255, 0.45);
+
+  /*
+   * Makes the light follow the rounded
+   * rectangular card border.
+   */
+  offset-path: inset(1px round 20px);
+
+  offset-distance: 0%;
+
+  offset-rotate: auto;
+
+  animation:
+    partner-border-light 3.5s linear infinite;
+
+  pointer-events: none;
+
+  z-index: 10;
+}
+
+
+/* =========================================================
+   BLUE LIGHT TRAVEL ANIMATION
+   ========================================================= */
+
+@keyframes partner-border-light {
+
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+
+  3% {
+    opacity: 1;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  75% {
+    opacity: 1;
+  }
+
+  97% {
+    opacity: 1;
+  }
+
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+
+/* =========================================================
+   CARD HOVER
+   ========================================================= */
+
+.partner-card:hover {
+  transform: translateY(-6px) scale(1.02);
+
+  /* KEEP ORIGINAL CARD COLOR */
+  background: #ffffff;
+
+  box-shadow:
+    0 20px 40px -15px rgba(0, 25, 67, 0.08);
+}
+
+
+/* =========================================================
+   LOGO WRAPPER
+   ========================================================= */
+
+.partner-logo-wrapper {
+  position: relative;
+  z-index: 3;
+
+  width: 100%;
+  height: 65px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 8px;
+}
+
+
+/* =========================================================
+   PARTNER LOGO
+   ORIGINAL BLUE COLOR
+   ========================================================= */
+
+.partner-logo {
+  position: relative;
+  z-index: 3;
+
+  display: block;
+
+  max-width: 100%;
+  max-height: 65px;
+
+  width: auto;
+  height: auto;
+
+  object-fit: contain;
+
+  /*
+   * NO GRAYSCALE
+   * Logo keeps its original blue color.
+   */
+  filter: none;
+
+  transition:
+    transform 0.3s ease;
+}
+
+
+/* =========================================================
+   LOGO HOVER
+   NO COLOR CHANGE
+   ========================================================= */
+
+.partner-card:hover .partner-logo {
+  filter: none;
+  transform: none;
+}
+
+
+/* =========================================================
+   PARTNER NAME
+   ========================================================= */
+
+.partner-name {
+  position: relative;
+  z-index: 3;
+
+  width: 100%;
+
+  font-size: 13.5px;
+  font-weight: 500;
+
+  color: #001943;
+
+  text-align: center;
+
+  line-height: 1.4;
+
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+
+/* =========================================================
+   FALLBACK LOGO
+   ========================================================= */
+
+.partner-logo-fallback {
+  position: relative;
+  z-index: 3;
+
+  width: 65px;
+  height: 65px;
+
+  border-radius: 50%;
+
+  background: linear-gradient(
+    135deg,
+    #001943,
+    #0052fe
+  );
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow:
+    0 4px 12px rgba(0, 25, 67, 0.08);
+
+  transition:
+    transform 0.3s ease;
+}
+
+.partner-card:hover .partner-logo-fallback {
+  transform: none;
+}
+
+.partner-fallback-icon {
+  font-size: 26px;
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   FADE-IN ANIMATION
+   ========================================================= */
+
+.partner-fade-in-hidden {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.partner-fade-in-visible {
+  opacity: 1;
+  transform: translateY(0);
+
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 639px) {
+
+  .partners-section {
+    padding: 40px 0;
+  }
+
+  .partners-header {
+    margin-bottom: 25px;
+  }
+
+  .partners-title {
+    font-size: 30px;
+  }
+
+  .partners-subtitle {
+    font-size: 15px;
+    padding: 0 15px;
+    line-height: 1.5;
+  }
+
+  .partners-grid {
+    gap: 16px;
+  }
+
+  .partner-card {
+    height: 145px;
+    min-height: 145px;
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .partner-card::before {
+    width: 35px;
+    height: 2.5px;
+
+    offset-path: inset(1px round 16px);
+
+    box-shadow:
+      0 0 4px rgba(0, 123, 255, 0.9),
+      0 0 8px rgba(0, 123, 255, 0.7),
+      0 0 14px rgba(0, 207, 255, 0.45);
+  }
+
+  .partner-logo-wrapper {
+    height: 58px;
+    margin-bottom: 7px;
+  }
+
+  .partner-logo {
+    max-height: 58px;
+  }
+
+  .partner-name {
+    font-size: 13px;
+  }
+
+  .partner-logo-fallback {
+    width: 58px;
+    height: 58px;
+  }
+
+  .partner-fallback-icon {
+    font-size: 24px;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 400px) {
+
+  .partners-section {
+    padding: 35px 0;
+  }
+
+  .partners-title {
+    font-size: 27px;
+  }
+
+  .partners-subtitle {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .partners-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .partner-card {
+    height: 135px;
+    min-height: 135px;
+    padding: 12px;
+    border-radius: 16px;
+  }
+.partner-card::before {
+  content: "";
+
+  position: absolute;
+
+  width: 70px;
+  height: 10px;
+
+  border-radius: 999px;
+
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #006eff 20%,
+    #00cfff 50%,
+    #006eff 80%,
+    transparent 100%
+  );
+
+  box-shadow:
+    0 0 5px #006eff,
+    0 0 10px #006eff,
+    0 0 18px #00cfff,
+    0 0 28px rgba(0, 140, 255, 0.7);
+
+  offset-path: inset(1px round 20px);
+  offset-distance: 0%;
+  offset-rotate: auto;
+
+  animation: partner-border-light 2.5s linear infinite;
+
+  pointer-events: none;
+  z-index: 10;
+}
+
+  .partner-logo-wrapper {
+    height: 52px;
+  }
+
+  .partner-logo {
+    max-height: 52px;
+  }
+
+  .partner-name {
+    font-size: 12.5px;
+  }
+
+  .partner-logo-fallback {
+    width: 52px;
+    height: 52px;
+  }
+
+  .partner-fallback-icon {
+    font-size: 22px;
+  }
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .partner-card::before {
+    animation: none;
+    opacity: 0;
+  }
+
+  .partner-card,
+  .partner-logo,
+  .partner-logo-fallback {
+    transition: none;
+  }
+}

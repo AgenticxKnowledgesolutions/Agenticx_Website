@@ -12,6 +12,7 @@ import PlacedStudentsSection from '@/components/features/home/PlacedStudentsSect
 import CtaSection from '@/components/features/home/CtaSection'
 import DemoModal from '@/components/features/home/DemoModal'
 import SEO from '@/components/seo/SEO'
+import Partners from '@/components/features/home/Partners'
 
 export default function Home() {
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
@@ -61,7 +62,7 @@ export default function Home() {
       <div ref={popularCoursesRef}>
         <PopularCourses />
       </div>
-
+      <Partners/>
       <WhyChooseUs />
       <WhyAgenticX />
       <SuccessStories />
