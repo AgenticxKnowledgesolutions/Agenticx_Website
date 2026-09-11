@@ -15,7 +15,6 @@ const partnerImages = import.meta.glob(
     query: '?url',
   }
 ) as Record<string, string>;
-
 const partners: Partner[] = Object.entries(partnerImages).map(
   ([path, logo], index) => {
     const fileName = path.split('/').pop() || '';
@@ -24,7 +23,8 @@ const partners: Partner[] = Object.entries(partnerImages).map(
       .replace(/\.[^/.]+$/, '')
       .replace(/[-_]+/g, ' ')
       .replace(/\s+/g, ' ')
-      .trim();
+      .trim()
+      .toUpperCase();
 
     return {
       id: index + 1,
