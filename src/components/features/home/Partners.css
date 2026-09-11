@@ -1,3 +1,4 @@
+
 /* =========================================================
    PARTNERS SECTION
    ========================================================= */
@@ -49,54 +50,67 @@
 
 
 /* =========================================================
-   RESPONSIVE GRID
+   TABLET
    ========================================================= */
 
 @media (min-width: 640px) {
   .partners-grid {
     grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 768px) {
-  .partners-grid {
-    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
   }
 }
 
+
+/* =========================================================
+   DESKTOP
+   7 PARTNERS IN ONE ROW
+   ========================================================= */
+
 @media (min-width: 1024px) {
   .partners-grid {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 22px;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 18px;
+
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
+
+/* =========================================================
+   LARGE DESKTOP
+   7 PARTNERS IN ONE ROW
+   ========================================================= */
+
 @media (min-width: 1280px) {
   .partners-grid {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 18px;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 22px;
+
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
 
 /* =========================================================
    PARTNER CARD
-   Smaller outer rectangle
    ========================================================= */
 
 .partner-card {
   position: relative;
 
-  height: 130px;
-  min-height: 130px;
+  height: 150px;
+  min-height: 150px;
 
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 
-  padding: 12px;
+  padding: 18px;
 
   background: rgba(255, 255, 255, 0.65);
 
@@ -105,7 +119,7 @@
 
   border: 1px solid rgba(0, 25, 67, 0.06);
 
-  border-radius: 16px;
+  border-radius: 20px;
 
   box-shadow:
     0 10px 30px -5px rgba(0, 25, 67, 0.02),
@@ -114,8 +128,7 @@
   transition:
     transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
     background 0.4s ease,
-    box-shadow 0.4s ease,
-    border-color 0.4s ease;
+    box-shadow 0.4s ease;
 
   overflow: hidden;
   z-index: 0;
@@ -124,7 +137,7 @@
 
 /* =========================================================
    MOVING BLUE LIGHT
-   Only the blue light moves around the border
+   ONLY THIS LIGHT MOVES
    ========================================================= */
 
 .partner-card::before {
@@ -132,8 +145,8 @@
 
   position: absolute;
 
-  width: 40px;
-  height: 2px;
+  width: 45px;
+  height: 3px;
 
   border-radius: 999px;
 
@@ -147,20 +160,21 @@
   );
 
   box-shadow:
-    0 0 4px rgba(0, 123, 255, 0.8),
-    0 0 8px rgba(0, 123, 255, 0.6),
-    0 0 14px rgba(0, 207, 255, 0.4);
+    0 0 4px rgba(0, 123, 255, 0.9),
+    0 0 9px rgba(0, 123, 255, 0.7),
+    0 0 16px rgba(0, 207, 255, 0.45);
 
   /*
    * Makes the light follow the rounded
    * rectangular card border.
    */
-  offset-path: inset(1px round 16px);
+
+  offset-path: inset(1px round 20px);
   offset-distance: 0%;
   offset-rotate: auto;
 
   animation:
-    partner-border-light 5s linear infinite;
+    partner-border-light 3.5s linear infinite;
 
   pointer-events: none;
   z-index: 10;
@@ -206,24 +220,22 @@
 
 /* =========================================================
    CARD HOVER
-   Soft premium hover effect
    ========================================================= */
 
 .partner-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px) scale(1.02);
+
+  /* KEEP ORIGINAL CARD COLOR */
 
   background: #ffffff;
 
-  border-color: rgba(0, 123, 255, 0.15);
-
   box-shadow:
-    0 15px 35px rgba(0, 82, 254, 0.08);
+    0 20px 40px -15px rgba(0, 25, 67, 0.08);
 }
 
 
 /* =========================================================
    LOGO WRAPPER
-   Bigger logo area
    ========================================================= */
 
 .partner-logo-wrapper {
@@ -231,19 +243,19 @@
   z-index: 3;
 
   width: 100%;
-  height: 75px;
+  height: 65px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 
 /* =========================================================
    PARTNER LOGO
-   Bigger logo
+   ORIGINAL BLUE COLOR
    ========================================================= */
 
 .partner-logo {
@@ -252,64 +264,31 @@
 
   display: block;
 
-  max-width: 90%;
-  max-height: 75px;
+  max-width: 100%;
+  max-height: 65px;
 
   width: auto;
   height: auto;
 
   object-fit: contain;
 
+  /* Keep original logo color */
+
   filter: none;
 
   transition:
-    transform 0.3s ease,
-    filter 0.3s ease;
+    transform 0.3s ease;
 }
 
 
 /* =========================================================
    LOGO HOVER
-   Small zoom + soft blue glow
+   NO COLOR CHANGE
    ========================================================= */
 
 .partner-card:hover .partner-logo {
-  transform: scale(1.05);
-
-  filter: drop-shadow(
-    0 6px 12px rgba(0, 123, 255, 0.15)
-  );
-}
-
-
-/* =========================================================
-   SMALL BLUE ACCENT UNDER LOGO
-   ========================================================= */
-
-.partner-logo-wrapper::after {
-  content: "";
-
-  position: absolute;
-
-  bottom: 0;
-
-  width: 25px;
-  height: 2px;
-
-  border-radius: 10px;
-
-  background: #007bff;
-
-  opacity: 0.25;
-
-  transition:
-    width 0.3s ease,
-    opacity 0.3s ease;
-}
-
-.partner-card:hover .partner-logo-wrapper::after {
-  width: 40px;
-  opacity: 0.7;
+  filter: none;
+  transform: none;
 }
 
 
@@ -330,7 +309,7 @@
 
   text-align: center;
 
-  line-height: 1.3;
+  line-height: 1.4;
 
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -364,20 +343,11 @@
     0 4px 12px rgba(0, 25, 67, 0.08);
 
   transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+    transform 0.3s ease;
 }
 
-
-/* =========================================================
-   FALLBACK LOGO HOVER
-   ========================================================= */
-
 .partner-card:hover .partner-logo-fallback {
-  transform: scale(1.05);
-
-  box-shadow:
-    0 6px 16px rgba(0, 123, 255, 0.15);
+  transform: none;
 }
 
 .partner-fallback-icon {
@@ -429,38 +399,38 @@
   }
 
   .partners-grid {
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
 
   .partner-card {
-    height: 125px;
-    min-height: 125px;
+    height: 145px;
+    min-height: 145px;
 
-    padding: 10px;
+    padding: 15px;
 
-    border-radius: 14px;
+    border-radius: 16px;
   }
 
   .partner-card::before {
     width: 35px;
-    height: 2px;
+    height: 2.5px;
 
-    offset-path: inset(1px round 14px);
+    offset-path: inset(1px round 16px);
 
     box-shadow:
-      0 0 4px rgba(0, 123, 255, 0.8),
-      0 0 8px rgba(0, 123, 255, 0.6),
-      0 0 14px rgba(0, 207, 255, 0.4);
+      0 0 4px rgba(0, 123, 255, 0.9),
+      0 0 8px rgba(0, 123, 255, 0.7),
+      0 0 14px rgba(0, 207, 255, 0.45);
   }
 
   .partner-logo-wrapper {
-    height: 68px;
-    margin-bottom: 4px;
+    height: 58px;
+    margin-bottom: 7px;
   }
 
   .partner-logo {
-    max-height: 68px;
-    max-width: 90%;
+    max-height: 58px;
   }
 
   .partner-name {
@@ -502,38 +472,58 @@
   }
 
   .partner-card {
-    height: 115px;
-    min-height: 115px;
+    height: 135px;
+    min-height: 135px;
 
-    padding: 8px;
+    padding: 12px;
 
-    border-radius: 14px;
+    border-radius: 16px;
   }
 
-  .partner-card::before {
-    width: 45px;
-    height: 2.5px;
+  /* Stronger moving blue light on small screens */
 
-    offset-path: inset(1px round 14px);
+  .partner-card::before {
+    content: "";
+
+    position: absolute;
+
+    width: 70px;
+    height: 10px;
+
+    border-radius: 999px;
+
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      #006eff 20%,
+      #00cfff 50%,
+      #006eff 80%,
+      transparent 100%
+    );
 
     box-shadow:
       0 0 5px #006eff,
       0 0 10px #006eff,
       0 0 18px #00cfff,
-      0 0 24px rgba(0, 140, 255, 0.6);
+      0 0 28px rgba(0, 140, 255, 0.7);
+
+    offset-path: inset(1px round 16px);
+    offset-distance: 0%;
+    offset-rotate: auto;
 
     animation:
-      partner-border-light 4s linear infinite;
+      partner-border-light 2.5s linear infinite;
+
+    pointer-events: none;
+    z-index: 10;
   }
 
   .partner-logo-wrapper {
-    height: 60px;
-    margin-bottom: 3px;
+    height: 52px;
   }
 
   .partner-logo {
-    max-height: 60px;
-    max-width: 90%;
+    max-height: 52px;
   }
 
   .partner-name {
@@ -563,8 +553,8 @@
 
   .partner-card,
   .partner-logo,
-  .partner-logo-fallback,
-  .partner-logo-wrapper::after {
+  .partner-logo-fallback {
     transition: none;
   }
 }
+
