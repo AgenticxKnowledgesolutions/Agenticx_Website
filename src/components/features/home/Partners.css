@@ -272,7 +272,10 @@
 
   object-fit: contain;
 
-  /* Keep original logo color */
+  /*
+   * NO GRAYSCALE
+   * Logo keeps its original color.
+   */
 
   filter: none;
 
@@ -294,6 +297,7 @@
 
 /* =========================================================
    PARTNER NAME
+   FULL CAPITAL LETTERS
    ========================================================= */
 
 .partner-name {
@@ -313,6 +317,9 @@
 
   word-wrap: break-word;
   overflow-wrap: break-word;
+
+  /* FULL CAPITAL LETTERS */
+  text-transform: uppercase;
 }
 
 
