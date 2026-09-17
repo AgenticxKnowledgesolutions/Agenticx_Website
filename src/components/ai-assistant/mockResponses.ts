@@ -45,7 +45,7 @@ We build tailormade portals, dashboards, CRM connections, and automated workflow
   contact: `✉️ **Get in Touch**
 We would love to discuss your project requirements or career track questions:
 
-• **Email**: info@agenticx.com / contact@agenticx.com
+• **Email**: anju.muraleedharan@agenticx.co.in / support@agenticx.in
 • **Location**: AgenticX Knowledge Solutions, Corporate Office
 • **Website**: Use our online contact form to send us a direct message.
 
