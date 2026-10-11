@@ -21,6 +21,8 @@ import {
   updateCandidateFeeInfo,
   updateCandidateCertificateInfo,
   getProgramOptions,
+  enrollAdditionalCourse,
+  getCandidatesByLeadId,
 } from "../../../../services/candidateService";
 import type { Candidate, AdminNotification, ProgramOption } from "../../../../services/candidateService";
 import { getCourses } from "../../../../services/courseService";
@@ -62,6 +64,19 @@ export default function CandidatesAdmin() {
   const [collegeNameVal, setCollegeNameVal] = useState("");
 
   const [coursesList, setCoursesList] = useState<Course[]>([]);
+
+  // ── Multi-course enrollment state ───────────────────────────────────────────
+  // enrolledApplications: all CandidateApplications for the current student
+  // selectedApplicationId: which application's data is shown in course-specific sections
+  const [enrolledApplications, setEnrolledApplications] = useState<Candidate[]>([]);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
+  const [addCourseModalOpen, setAddCourseModalOpen] = useState(false);
+  const [selectedNewCourseId, setSelectedNewCourseId] = useState("");
+  const [isEnrollingCourse, setIsEnrollingCourse] = useState(false);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+  // loadingEnrolled: shown while fetching sibling applications
+  const [loadingEnrolled, setLoadingEnrolled] = useState(false);
+  // ────────────────────────────────────────────────────────────────────────────
 
   // Manual payment fields
   const [paymentAmountVal, setPaymentAmountVal] = useState("");
@@ -250,7 +265,7 @@ export default function CandidatesAdmin() {
     isOpen: false,
     title: "",
     message: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   useEffect(() => {
@@ -332,11 +347,116 @@ export default function CandidatesAdmin() {
       setProgrammeDomainVal(c.programmeDomain || "");
       setCollegeNameVal(c.collegeName || "");
 
+      // Multi-course: set the currently opened application as the selected one
+      setSelectedApplicationId(id);
+
+      // Load all applications for this student if they have a leadId
+      if (c.leadId) {
+        setLoadingEnrolled(true);
+        try {
+          const siblings = await getCandidatesByLeadId(c.leadId);
+          setEnrolledApplications(siblings.length > 0 ? siblings : [c]);
+        } catch {
+          setEnrolledApplications([c]);
+        } finally {
+          setLoadingEnrolled(false);
+        }
+      } else {
+        // No leadId — this is a standalone (e.g. imported) record
+        setEnrolledApplications([c]);
+      }
 
     } catch (err) {
       console.error("Failed to load candidate detail:", err);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  /**
+   * Switch to a different CandidateApplication for the same student.
+   * Reinitialises all course-specific form state (program, fee, certificate, status)
+   * without reloading personal/academic/professional data.
+   */
+  const switchToApplication = async (appId: string) => {
+    if (appId === selectedApplicationId) return;
+    setDetailLoading(true);
+    try {
+      const c = await getCandidateById(appId);
+      setSelectedCandidate(c);
+      initSectionForms(c);
+      setSelectedApplicationId(appId);
+      setStatusUpdateVal((c.applicationStatus || "").toLowerCase());
+      setCourseStartDateVal(c.courseStartDate ? c.courseStartDate.split("T")[0] : "");
+      setCompletedAtVal(c.completedAt ? c.completedAt.split("T")[0] : "");
+      setCourseDurationVal(c.courseDuration || "");
+      const normalizePerformance = (p?: string) => {
+        if (!p) return "";
+        const lower = p.toLowerCase();
+        if (lower === "excellent") return "Excellent";
+        if (lower === "good") return "Good";
+        if (lower === "average") return "Average";
+        if (lower === "satisfactory") return "Satisfactory";
+        return p;
+      };
+      const normalizeProgramType = (pt?: string) => {
+        if (!pt) return "";
+        const lower = pt.toLowerCase();
+        if (lower === "course") return "Course";
+        if (lower === "internship") return "Internship";
+        if (lower === "crash course") return "Crash Course";
+        if (lower === "webinar") return "Webinar";
+        if (lower === "workshop") return "Workshop";
+        if (
+          lower === "faculty development programme" ||
+          lower === "faculty development program" ||
+          lower === "fdp"
+        ) return "Faculty Development Programme";
+        return pt;
+      };
+      setPerformanceVal(normalizePerformance(c.performance));
+      setProgramTypeVal(normalizeProgramType(c.programType));
+      setCourseAppliedVal(c.courseApplied || "");
+      setProgrammeDomainVal(c.programmeDomain || "");
+      setCollegeNameVal(c.collegeName || "");
+      // reset edit states so forms don't bleed between applications
+      setEditingProgram(false);
+      setEditingFee(false);
+      setEditingCertMeta(false);
+    } catch (err) {
+      console.error("Failed to switch application:", err);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  /**
+   * Enroll the current student in an additional course.
+   * Calls POST /candidates/enroll-additional with the student's leadId.
+   */
+  const handleEnrollAdditional = async () => {
+    if (!selectedCandidate || !selectedCandidate.leadId || !selectedNewCourseId) return;
+    setEnrollError(null);
+    setIsEnrollingCourse(true);
+    try {
+      const newApp = await enrollAdditionalCourse(selectedCandidate.leadId, selectedNewCourseId);
+      // Add new application to the enrolled list
+      setEnrolledApplications((prev) => [...prev, newApp]);
+      // Switch to the new application
+      await switchToApplication(newApp.id);
+      setAddCourseModalOpen(false);
+      setSelectedNewCourseId("");
+      showToast("Course added successfully!", "success");
+      await loadCandidates();
+    } catch (err: any) {
+      console.error("Failed to enroll additional course:", err);
+      const detail =
+        err.response?.data?.detail ||
+        (typeof err.response?.data === "string" ? err.response.data : null) ||
+        "Failed to add course. The candidate may already be enrolled in this course.";
+      setEnrollError(detail);
+    } finally {
+      setIsEnrollingCourse(false);
     }
   };
 
@@ -629,10 +749,16 @@ export default function CandidatesAdmin() {
     });
   };
 
-  const handleSelectRow = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+  const handleSelectRow = (ids: string[]) => {
+    setSelectedIds((prev) => {
+      const allSelected = ids.every((id) => prev.includes(id));
+      if (allSelected) {
+        return prev.filter((item) => !ids.includes(item));
+      } else {
+        const newIds = ids.filter((id) => !prev.includes(id));
+        return [...prev, ...newIds];
+      }
+    });
   };
 
   const handleSelectAll = () => {
@@ -643,6 +769,81 @@ export default function CandidatesAdmin() {
       setSelectedIds(candidates.map((c) => c.id));
     }
   };
+
+  // ── Candidate grouping (person-level view) ──────────────────────────────────
+  // Group multiple CandidateApplications for the same person into one row.
+  // Grouping key: leadId (authoritative). Candidates without a leadId are
+  // treated as standalone rows to preserve existing import/manual behaviour.
+  interface GroupedCandidate {
+    /** The application shown in the list row (most recent by createdAt). */
+    representative: Candidate;
+    /** All applications belonging to this person (may be length 1). */
+    applications: Candidate[];
+    /** All application IDs — used for bulk checkbox operations. */
+    allIds: string[];
+    /** Comma-separated course names for multi-enrolled persons. */
+    coursesSummary: string;
+    /** True when this person has more than one application. */
+    isGrouped: boolean;
+  }
+
+  const groupedRows: GroupedCandidate[] = (() => {
+    const byLeadId = new Map<string, Candidate[]>();
+    const noLeadId: Candidate[] = [];
+
+    for (const c of candidates) {
+      if (c.leadId) {
+        const existing = byLeadId.get(c.leadId);
+        if (existing) {
+          existing.push(c);
+        } else {
+          byLeadId.set(c.leadId, [c]);
+        }
+      } else {
+        noLeadId.push(c);
+      }
+    }
+
+    const rows: GroupedCandidate[] = [];
+
+    byLeadId.forEach((apps) => {
+      // Sort so the most recently created application is the representative
+      const sorted = [...apps].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      const courses = sorted
+        .map((a) => a.courseApplied || "")
+        .filter(Boolean)
+        .join(", ");
+      rows.push({
+        representative: sorted[0],
+        applications: sorted,
+        allIds: sorted.map((a) => a.id),
+        coursesSummary: courses,
+        isGrouped: sorted.length > 1,
+      });
+    });
+
+    for (const c of noLeadId) {
+      rows.push({
+        representative: c,
+        applications: [c],
+        allIds: [c.id],
+        coursesSummary: c.courseApplied || "",
+        isGrouped: false,
+      });
+    }
+
+    // Preserve server sort order: use the representative's createdAt descending
+    rows.sort(
+      (a, b) =>
+        new Date(b.representative.createdAt).getTime() -
+        new Date(a.representative.createdAt).getTime()
+    );
+
+    return rows;
+  })();
+  // ────────────────────────────────────────────────────────────────────────────
 
   const handleBulkRegenerateCertificates = async () => {
     if (selectedIds.length === 0) return;
@@ -876,6 +1077,63 @@ export default function CandidatesAdmin() {
 
   return (
     <div style={styles.adminContainer}>
+      <style>{`
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 14px;
+    width: 100%;
+  }
+
+  .info-grid > div {
+    min-width: 0;
+  }
+
+  .info-grid .info-label {
+    display: block;
+    margin-bottom: 7px;
+    color: #9bb8dc;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .info-grid .info-value {
+    display: block;
+    width: 100%;
+  }
+
+  .info-grid input,
+  .info-grid select,
+  .info-grid textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 13px;
+    border: 1px solid #43516a;
+    border-radius: 7px;
+    background: #202c3f;
+    color: #d9e2ef;
+    font-size: 16px;
+    outline: none;
+  }
+
+  .info-grid input::placeholder,
+  .info-grid textarea::placeholder {
+    color: #8794a8;
+  }
+
+  .info-grid input:focus,
+  .info-grid select:focus,
+  .info-grid textarea:focus {
+    border-color: #638bc1;
+    box-shadow: 0 0 0 2px rgba(99, 139, 193, 0.12);
+  }
+
+  @media (max-width: 700px) {
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+`}</style>
       {toast && (
         <div style={{
           position: 'fixed',
@@ -1053,7 +1311,7 @@ export default function CandidatesAdmin() {
                 <span className="material-symbols-outlined" style={{ color: activeTab === 'trash' ? '#ef4444' : '#3b82f6' }}>check_box</span>
                 <span style={{ fontWeight: 600, fontSize: '14px' }}>{selectedIds.length} candidate{selectedIds.length > 1 ? 's' : ''} selected</span>
               </div>
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 {activeTab === 'list' && (
                   <>
@@ -1248,120 +1506,169 @@ export default function CandidatesAdmin() {
                         </tr>
                       </thead>
                       <tbody>
-                        {candidates.map((c) => (
-                          <tr
-                            key={c.id}
-                            onClick={() => setSelectedCandidateId(c.id)}
-                            className={`${selectedCandidateId === c.id ? "selected" : ""} ${selectedIds.includes(c.id) ? "admin-selected-row" : ""}`}
-                            style={selectedIds.includes(c.id) ? { background: "rgba(59, 130, 246, 0.05)" } : {}}
-                          >
-                            <td style={{ width: "40px", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
-                              <input
-                                type="checkbox"
-                                checked={selectedIds.includes(c.id)}
-                                onChange={() => handleSelectRow(c.id)}
-                                style={{ cursor: "pointer", width: "16px", height: "16px" }}
-                              />
-                            </td>
-                            <td style={{ fontWeight: "600", color: "#3b82f6" }}>{c.applicationNumber}</td>
-                            <td>
-                              <div style={{ fontWeight: "500" }}>{c.fullName}</div>
-                              <div style={{ fontSize: "12px", color: "#64748b" }}>{c.email} • {c.phone}</div>
-                            </td>
-                            <td>{c.courseApplied}</td>
-                            <td>{c.programType || "-"}</td>
-                            <td>
-                              <span
-                                style={{
+                        {groupedRows.map((group) => {
+                          const c = group.representative;
+                          const groupSelected = group.allIds.every((id) => selectedIds.includes(id));
+                          const groupPartialSelected = !groupSelected && group.allIds.some((id) => selectedIds.includes(id));
+                          return (
+                            <tr
+                              key={c.id}
+                              onClick={() => setSelectedCandidateId(c.id)}
+                              className={`${selectedCandidateId === c.id ? "selected" : ""} ${groupSelected ? "admin-selected-row" : ""}`}
+                              style={groupSelected ? { background: "rgba(59, 130, 246, 0.05)" } : {}}
+                            >
+                              <td style={{ width: "40px", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="checkbox"
+                                  checked={groupSelected}
+                                  ref={(el) => { if (el) el.indeterminate = groupPartialSelected; }}
+                                  onChange={() => handleSelectRow(group.allIds)}
+                                  style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                                />
+                              </td>
+                              <td style={{ fontWeight: "600", color: "#3b82f6" }}>
+                                <div>
+                                  <div>{c.applicationNumber}</div>
+
+                                  {group.applications.length > 1 && (
+                                    <div
+                                      style={{
+                                        fontSize: "11px",
+                                        color: "#94a3b8",
+                                        marginTop: "4px",
+                                        fontWeight: "400",
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
+                                      {group.applications.length} Applications
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: "500" }}>{c.fullName}</div>
+                                <div style={{ fontSize: "12px", color: "#64748b" }}>{c.email} • {c.phone}</div>
+                              </td>
+                              <td>
+                                <span
+                                  style={{
+                                    display: "inline-block",
+                                    padding: "2px 6px",
+                                    background: "rgba(139, 92, 246, 0.12)",
+                                    border: "1px solid rgba(139, 92, 246, 0.25)",
+                                    borderRadius: "4px",
+                                    fontSize: "11px",
+                                    color: "#a78bfa",
+                                    whiteSpace: "nowrap",
+                                  }}>
+                                  {c.courseApplied || "—"}
+                                </span>
+                              </td>
+                              <td>{c.programType || "-"}</td>
+                              <td>
+                                <span style={{
                                   ...styles.badgeStatus,
                                   ...getStatusBadgeStyle(c.applicationStatus),
-                                }}
-                              >
-                                {c.applicationStatus}
-                              </span>
-                            </td>
-                            <td>
-                              <span
-                                style={{
-                                  ...styles.badgeDoc,
-                                  ...getDocBadgeStyle(c.documentStatus),
-                                }}
-                              >
-                                {c.documentStatus}
-                              </span>
-                            </td>
-                            <td>{c.candidateSource}</td>
-                            <td>{new Date(c.createdAt).toLocaleDateString()}</td>
-                          </tr>
-                        ))}
+                                }}>
+                                  {c.applicationStatus}
+                                </span>
+                              </td>
+                              <td>
+                                <span style={{ ...styles.badgeDoc, ...getDocBadgeStyle(c.documentStatus) }}>
+                                  {c.documentStatus}
+                                </span>
+                              </td>
+                              <td>{c.candidateSource}</td>
+                              <td>{new Date(c.createdAt).toLocaleDateString()}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
 
                   {/* Mobile Responsive List Cards */}
                   <div className="candidate-mobile-cards">
-                    {candidates.map((c) => (
-                      <div
-                        key={c.id}
-                        onClick={() => setSelectedCandidateId(c.id)}
-                        style={{
-                          ...styles.mobileCard,
-                          borderColor: selectedCandidateId === c.id ? "#3b82f6" : selectedIds.includes(c.id) ? "rgba(59, 130, 246, 0.4)" : "rgba(255, 255, 255, 0.08)",
-                          background: selectedIds.includes(c.id) ? "rgba(59, 130, 246, 0.03)" : styles.mobileCard.background,
-                        }}
-                      >
-                        <div style={styles.cardHeader}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }} onClick={(e) => e.stopPropagation()}>
-                            <input
-                              type="checkbox"
-                              checked={selectedIds.includes(c.id)}
-                              onChange={() => handleSelectRow(c.id)}
-                              style={{ cursor: "pointer", width: "16px", height: "16px" }}
-                            />
-                            <span style={styles.cardAppNum}>{c.applicationNumber}</span>
-                          </div>
-                          <span
-                            style={{
-                              ...styles.badgeStatus,
-                              ...getStatusBadgeStyle(c.applicationStatus),
-                            }}
-                          >
-                            {c.applicationStatus}
-                          </span>
-                        </div>
-                        <div style={styles.cardName}>{c.fullName}</div>
-                        <div style={styles.cardInfo}>{c.email} | {c.phone}</div>
-                        <div style={styles.cardCourse}>
-                          {c.courseApplied}
-                          {c.programType && (
-                            <span style={{
-                              marginLeft: '8px',
-                              padding: '2px 6px',
-                              background: 'rgba(255,255,255,0.06)',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              borderRadius: '4px',
-                              fontSize: '11px',
-                              color: '#94a3b8'
-                            }}>
-                              {c.programType}
+                    {groupedRows.map((group) => {
+                      const c = group.representative;
+                      const groupSelected = group.allIds.every((id) => selectedIds.includes(id));
+                      return (
+                        <div
+                          key={c.id}
+                          onClick={() => setSelectedCandidateId(c.id)}
+                          style={{
+                            ...styles.mobileCard,
+                            borderColor: selectedCandidateId === c.id ? "#3b82f6" : groupSelected ? "rgba(59, 130, 246, 0.4)" : "rgba(255, 255, 255, 0.08)",
+                            background: groupSelected ? "rgba(59, 130, 246, 0.03)" : styles.mobileCard.background,
+                          }}
+                        >
+                          <div style={styles.cardHeader}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }} onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={groupSelected}
+                                onChange={() => handleSelectRow(group.allIds)}
+                                style={{ cursor: "pointer", width: "16px", height: "16px" }}
+                              />
+                              <span style={styles.cardAppNum}>
+                                {group.isGrouped
+                                  ? `${group.applications.length} Applications`
+                                  : c.applicationNumber}
+                              </span>
+                            </div>
+                            <span style={{ ...styles.badgeStatus, ...getStatusBadgeStyle(c.applicationStatus) }}>
+                              {c.applicationStatus}
                             </span>
-                          )}
+                          </div>
+                          <div style={styles.cardName}>{c.fullName}</div>
+                          <div style={styles.cardInfo}>{c.email} | {c.phone}</div>
+                          <div style={styles.cardCourse}>
+                            {group.isGrouped ? (
+                              <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                                {group.applications.map((a) => (
+                                  <span key={a.id} style={{
+                                    display: "inline-block",
+                                    padding: "2px 6px",
+                                    background: "rgba(139, 92, 246, 0.12)",
+                                    border: "1px solid rgba(139, 92, 246, 0.25)",
+                                    borderRadius: "4px",
+                                    fontSize: "11px",
+                                    color: "#a78bfa",
+                                  }}>
+                                    {a.courseApplied || "—"}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <>
+                                {c.courseApplied}
+                                {c.programType && (
+                                  <span style={{
+                                    marginLeft: "8px",
+                                    padding: "2px 6px",
+                                    background: "rgba(255,255,255,0.06)",
+                                    border: "1px solid rgba(255,255,255,0.1)",
+                                    borderRadius: "4px",
+                                    fontSize: "11px",
+                                    color: "#94a3b8"
+                                  }}>
+                                    {c.programType}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                          <div style={styles.cardFooter}>
+                            <span style={{ ...styles.badgeDoc, ...getDocBadgeStyle(c.documentStatus) }}>
+                              {c.documentStatus}
+                            </span>
+                            <span style={styles.cardDate}>
+                              {new Date(c.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
-                        <div style={styles.cardFooter}>
-                          <span
-                            style={{
-                              ...styles.badgeDoc,
-                              ...getDocBadgeStyle(c.documentStatus),
-                            }}
-                          >
-                            {c.documentStatus}
-                          </span>
-                          <span style={styles.cardDate}>
-                            {new Date(c.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Pagination */}
@@ -1396,6 +1703,10 @@ export default function CandidatesAdmin() {
                   type="button"
                   onClick={() => {
                     setSelectedCandidateId(null);
+                    setEnrolledApplications([]);
+                    setSelectedApplicationId(null);
+                    setAddCourseModalOpen(false);
+                    setEnrollError(null);
                   }}
                   className="candidate-detail-back-btn"
                 >
@@ -1460,6 +1771,101 @@ export default function CandidatesAdmin() {
                   </div>
                 </div>
               </div>
+
+              {/* ── Enrolled Courses Card (Multi-Course) ──────────────────── */}
+              {enrolledApplications.length > 0 && (
+                <div className="info-card-section" style={{ marginBottom: "0" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                    <h4 style={{ color: "#8b5cf6", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                      📚 Enrolled Courses ({enrolledApplications.length})
+                    </h4>
+                    {activeTab !== "trash" && selectedCandidate?.leadId && (
+                      <button
+                        type="button"
+                        onClick={() => { setAddCourseModalOpen(true); setEnrollError(null); setSelectedNewCourseId(""); }}
+                        style={{
+                          background: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)",
+                          border: "none",
+                          color: "#fff",
+                          padding: "6px 14px",
+                          borderRadius: "6px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        + Add Course
+                      </button>
+                    )}
+                  </div>
+                  {loadingEnrolled ? (
+                    <div style={{ color: "#94a3b8", fontSize: "13px", fontStyle: "italic" }}>Loading enrolled courses...</div>
+                  ) : (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                      {enrolledApplications.map((app) => {
+                        const isActive = app.id === selectedApplicationId;
+                        return (
+                          <button
+                            key={app.id}
+                            type="button"
+                            onClick={() => switchToApplication(app.id)}
+                            style={{
+                              background: isActive
+                                ? "linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(109, 40, 217, 0.25) 100%)"
+                                : "rgba(255, 255, 255, 0.04)",
+                              border: isActive
+                                ? "1.5px solid rgba(139, 92, 246, 0.6)"
+                                : "1px solid rgba(255, 255, 255, 0.1)",
+                              borderRadius: "10px",
+                              padding: "10px 16px",
+                              cursor: "pointer",
+                              color: "#fff",
+                              textAlign: "left",
+                              minWidth: "180px",
+                              transition: "all 0.2s",
+                            }}
+                          >
+                            <div style={{ fontWeight: "600", fontSize: "13px", marginBottom: "4px" }}>
+                              {app.courseApplied || "Untitled Course"}
+                            </div>
+                            <div style={{ fontSize: "11px", color: "#94a3b8", marginBottom: "4px" }}>
+                              {app.applicationNumber}
+                            </div>
+                            <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                              <span
+                                style={{
+                                  ...styles.badgeStatus,
+                                  ...getStatusBadgeStyle(app.applicationStatus),
+                                  fontSize: "10px",
+                                  padding: "2px 6px",
+                                }}
+                              >
+                                {app.applicationStatus}
+                              </span>
+                              {app.certificateUrl && (
+                                <span style={{
+                                  fontSize: "10px",
+                                  padding: "2px 6px",
+                                  borderRadius: "4px",
+                                  background: "rgba(16, 185, 129, 0.15)",
+                                  color: "#10b981",
+                                  fontWeight: "700",
+                                }}>
+                                  🎓 Cert
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* ── End Enrolled Courses Card ────────────────────────────── */}
 
               {detailLoading ? (
                 <div style={styles.drawerLoader}>Loading details...</div>
@@ -1558,26 +1964,26 @@ export default function CandidatesAdmin() {
                         </div>
                       ) : (
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Full Name *</label><input type="text" value={personalForm.fullName} onChange={e => setPersonalForm({...personalForm, fullName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Preferred Name</label><input type="text" value={personalForm.preferredName} onChange={e => setPersonalForm({...personalForm, preferredName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Email *</label><input type="email" value={personalForm.email} onChange={e => setPersonalForm({...personalForm, email: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Mobile Phone *</label><input type="text" value={personalForm.phone} onChange={e => setPersonalForm({...personalForm, phone: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>WhatsApp / Alt Mobile</label><input type="text" value={personalForm.whatsappNumber} onChange={e => setPersonalForm({...personalForm, whatsappNumber: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Emergency Contact</label><input type="text" value={personalForm.emergencyContact} onChange={e => setPersonalForm({...personalForm, emergencyContact: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Date of Birth</label><input type="date" value={personalForm.dateOfBirth} onChange={e => setPersonalForm({...personalForm, dateOfBirth: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Gender</label><select value={personalForm.gender} onChange={e => setPersonalForm({...personalForm, gender: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}><option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>New Aadhaar Number (12 Digits)</label><input type="text" placeholder="Update Aadhaar" value={personalForm.aadhaarNumber} onChange={e => setPersonalForm({...personalForm, aadhaarNumber: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>PAN Number</label><input type="text" placeholder="e.g. ABCDE1234F" value={personalForm.panNumber} onChange={e => setPersonalForm({...personalForm, panNumber: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>City</label><input type="text" value={personalForm.city} onChange={e => setPersonalForm({...personalForm, city: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>District</label><input type="text" value={personalForm.district} onChange={e => setPersonalForm({...personalForm, district: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>State</label><input type="text" value={personalForm.state} onChange={e => setPersonalForm({...personalForm, state: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Country</label><input type="text" value={personalForm.country} onChange={e => setPersonalForm({...personalForm, country: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Pincode</label><input type="text" value={personalForm.pincode} onChange={e => setPersonalForm({...personalForm, pincode: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Name</label><input type="text" value={personalForm.parentGuardianName} onChange={e => setPersonalForm({...personalForm, parentGuardianName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Occupation</label><input type="text" value={personalForm.parentGuardianOccupation} onChange={e => setPersonalForm({...personalForm, parentGuardianOccupation: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Phone</label><input type="text" value={personalForm.parentGuardianPhone} onChange={e => setPersonalForm({...personalForm, parentGuardianPhone: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Relationship</label><input type="text" value={personalForm.parentGuardianRelationship} onChange={e => setPersonalForm({...personalForm, parentGuardianRelationship: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div style={{ gridColumn: "1 / -1" }}><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Address</label><textarea rows={2} value={personalForm.address} onChange={e => setPersonalForm({...personalForm, address: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px", resize: "none" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Full Name *</label><input type="text" value={personalForm.fullName} onChange={e => setPersonalForm({ ...personalForm, fullName: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Preferred Name</label><input type="text" value={personalForm.preferredName} onChange={e => setPersonalForm({ ...personalForm, preferredName: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Email *</label><input type="email" value={personalForm.email} onChange={e => setPersonalForm({ ...personalForm, email: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Mobile Phone *</label><input type="text" value={personalForm.phone} onChange={e => setPersonalForm({ ...personalForm, phone: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>WhatsApp / Alt Mobile</label><input type="text" value={personalForm.whatsappNumber} onChange={e => setPersonalForm({ ...personalForm, whatsappNumber: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Emergency Contact</label><input type="text" value={personalForm.emergencyContact} onChange={e => setPersonalForm({ ...personalForm, emergencyContact: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Date of Birth</label><input type="date" value={personalForm.dateOfBirth} onChange={e => setPersonalForm({ ...personalForm, dateOfBirth: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Gender</label><select value={personalForm.gender} onChange={e => setPersonalForm({ ...personalForm, gender: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}><option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>New Aadhaar Number (12 Digits)</label><input type="text" placeholder="Update Aadhaar" value={personalForm.aadhaarNumber} onChange={e => setPersonalForm({ ...personalForm, aadhaarNumber: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>PAN Number</label><input type="text" placeholder="e.g. ABCDE1234F" value={personalForm.panNumber} onChange={e => setPersonalForm({ ...personalForm, panNumber: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>City</label><input type="text" value={personalForm.city} onChange={e => setPersonalForm({ ...personalForm, city: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>District</label><input type="text" value={personalForm.district} onChange={e => setPersonalForm({ ...personalForm, district: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>State</label><input type="text" value={personalForm.state} onChange={e => setPersonalForm({ ...personalForm, state: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Country</label><input type="text" value={personalForm.country} onChange={e => setPersonalForm({ ...personalForm, country: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Pincode</label><input type="text" value={personalForm.pincode} onChange={e => setPersonalForm({ ...personalForm, pincode: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Name</label><input type="text" value={personalForm.parentGuardianName} onChange={e => setPersonalForm({ ...personalForm, parentGuardianName: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Occupation</label><input type="text" value={personalForm.parentGuardianOccupation} onChange={e => setPersonalForm({ ...personalForm, parentGuardianOccupation: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Phone</label><input type="text" value={personalForm.parentGuardianPhone} onChange={e => setPersonalForm({ ...personalForm, parentGuardianPhone: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Guardian Relationship</label><input type="text" value={personalForm.parentGuardianRelationship} onChange={e => setPersonalForm({ ...personalForm, parentGuardianRelationship: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div style={{ gridColumn: "1 / -1" }}><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Address</label><textarea rows={2} value={personalForm.address} onChange={e => setPersonalForm({ ...personalForm, address: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px", resize: "none" }} /></div>
                         </div>
                       )}
                     </div>
@@ -1634,18 +2040,18 @@ export default function CandidatesAdmin() {
                         </div>
                       ) : (
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Highest Qualification</label><input type="text" value={academicForm.qualification} onChange={e => setAcademicForm({...academicForm, qualification: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>College / Institution Name</label><input type="text" value={academicForm.collegeName} onChange={e => setAcademicForm({...academicForm, collegeName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>University Name</label><input type="text" value={academicForm.universityName} onChange={e => setAcademicForm({...academicForm, universityName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>SSLC Details / %</label><input type="text" placeholder="e.g. 88%" value={academicForm.sslcDetails} onChange={e => setAcademicForm({...academicForm, sslcDetails: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Plus Two Details / %</label><input type="text" placeholder="e.g. 92%" value={academicForm.plusTwoDetails} onChange={e => setAcademicForm({...academicForm, plusTwoDetails: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Diploma Details</label><input type="text" value={academicForm.diplomaDetails} onChange={e => setAcademicForm({...academicForm, diplomaDetails: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>UG Degree & Major</label><input type="text" placeholder="e.g. B.Tech Computer Science" value={academicForm.ugDetails} onChange={e => setAcademicForm({...academicForm, ugDetails: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>PG Degree & Major</label><input type="text" placeholder="e.g. M.Tech AI" value={academicForm.pgDetails} onChange={e => setAcademicForm({...academicForm, pgDetails: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Percentage (%)</label><input type="number" step="0.1" value={academicForm.academicPercentage} onChange={e => setAcademicForm({...academicForm, academicPercentage: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>CGPA (out of 10)</label><input type="number" step="0.01" value={academicForm.academicCgpa} onChange={e => setAcademicForm({...academicForm, academicCgpa: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Passing Year</label><input type="text" placeholder="e.g. 2024" value={academicForm.passingYear} onChange={e => setAcademicForm({...academicForm, passingYear: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Academic Status</label><select value={academicForm.academicStatus} onChange={e => setAcademicForm({...academicForm, academicStatus: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}><option value="Passed Out">Passed Out</option><option value="Pursuing">Pursuing</option><option value="Discontinued">Discontinued</option></select></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Highest Qualification</label><input type="text" value={academicForm.qualification} onChange={e => setAcademicForm({ ...academicForm, qualification: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>College / Institution Name</label><input type="text" value={academicForm.collegeName} onChange={e => setAcademicForm({ ...academicForm, collegeName: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>University Name</label><input type="text" value={academicForm.universityName} onChange={e => setAcademicForm({ ...academicForm, universityName: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>SSLC Details / %</label><input type="text" placeholder="e.g. 88%" value={academicForm.sslcDetails} onChange={e => setAcademicForm({ ...academicForm, sslcDetails: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Plus Two Details / %</label><input type="text" placeholder="e.g. 92%" value={academicForm.plusTwoDetails} onChange={e => setAcademicForm({ ...academicForm, plusTwoDetails: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Diploma Details</label><input type="text" value={academicForm.diplomaDetails} onChange={e => setAcademicForm({ ...academicForm, diplomaDetails: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>UG Degree & Major</label><input type="text" placeholder="e.g. B.Tech Computer Science" value={academicForm.ugDetails} onChange={e => setAcademicForm({ ...academicForm, ugDetails: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>PG Degree & Major</label><input type="text" placeholder="e.g. M.Tech AI" value={academicForm.pgDetails} onChange={e => setAcademicForm({ ...academicForm, pgDetails: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Percentage (%)</label><input type="number" step="0.1" value={academicForm.academicPercentage} onChange={e => setAcademicForm({ ...academicForm, academicPercentage: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>CGPA (out of 10)</label><input type="number" step="0.01" value={academicForm.academicCgpa} onChange={e => setAcademicForm({ ...academicForm, academicCgpa: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Passing Year</label><input type="text" placeholder="e.g. 2024" value={academicForm.passingYear} onChange={e => setAcademicForm({ ...academicForm, passingYear: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Academic Status</label><select value={academicForm.academicStatus} onChange={e => setAcademicForm({ ...academicForm, academicStatus: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}><option value="Passed Out">Passed Out</option><option value="Pursuing">Pursuing</option><option value="Discontinued">Discontinued</option></select></div>
                         </div>
                       )}
                     </div>
@@ -1695,11 +2101,11 @@ export default function CandidatesAdmin() {
                         </div>
                       ) : (
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Experience (Years / Level)</label><input type="text" placeholder="e.g. 2 Years / Fresher" value={professionalForm.experienceYears} onChange={e => setProfessionalForm({...professionalForm, experienceYears: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Company Name</label><input type="text" value={professionalForm.companyName} onChange={e => setProfessionalForm({...professionalForm, companyName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>LinkedIn URL</label><input type="url" placeholder="https://linkedin.com/in/username" value={professionalForm.linkedinUrl} onChange={e => setProfessionalForm({...professionalForm, linkedinUrl: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Portfolio / Website URL</label><input type="url" placeholder="https://portfolio.dev" value={professionalForm.portfolioUrl} onChange={e => setProfessionalForm({...professionalForm, portfolioUrl: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div style={{ gridColumn: "1 / -1" }}><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Skills (Comma Separated)</label><textarea rows={2} placeholder="React, Node.js, Python..." value={professionalForm.skills} onChange={e => setProfessionalForm({...professionalForm, skills: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px", resize: "none" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Experience (Years / Level)</label><input type="text" placeholder="e.g. 2 Years / Fresher" value={professionalForm.experienceYears} onChange={e => setProfessionalForm({ ...professionalForm, experienceYears: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Company Name</label><input type="text" value={professionalForm.companyName} onChange={e => setProfessionalForm({ ...professionalForm, companyName: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>LinkedIn URL</label><input type="url" placeholder="https://linkedin.com/in/username" value={professionalForm.linkedinUrl} onChange={e => setProfessionalForm({ ...professionalForm, linkedinUrl: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Portfolio / Website URL</label><input type="url" placeholder="https://portfolio.dev" value={professionalForm.portfolioUrl} onChange={e => setProfessionalForm({ ...professionalForm, portfolioUrl: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div style={{ gridColumn: "1 / -1" }}><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Skills (Comma Separated)</label><textarea rows={2} placeholder="React, Node.js, Python..." value={professionalForm.skills} onChange={e => setProfessionalForm({ ...professionalForm, skills: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px", resize: "none" }} /></div>
                         </div>
                       )}
                     </div>
@@ -1707,7 +2113,7 @@ export default function CandidatesAdmin() {
                     {/* Payment History & Manual Entry */}
                     <div className="info-card-section">
                       <h4 style={{ color: "#10b981" }}>Payment History & Manual Entry</h4>
-                      
+
                       {/* Payments List */}
                       <div style={{ marginBottom: "15px", display: "flex", flexDirection: "column", gap: "10px" }}>
                         {(!selectedCandidate.payments || selectedCandidate.payments.length === 0) ? (
@@ -1902,7 +2308,7 @@ export default function CandidatesAdmin() {
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                           <div>
                             <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Program Type</label>
-                            <select value={programForm.programType} onChange={e => setProgramForm({...programForm, programType: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}>
+                            <select value={programForm.programType} onChange={e => setProgramForm({ ...programForm, programType: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}>
                               <option value="">-- Select --</option>
                               <option value="Course">Course</option>
                               <option value="Internship">Internship</option>
@@ -1956,21 +2362,21 @@ export default function CandidatesAdmin() {
                               </select>
                             )}
                           </div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Batch Name</label><input type="text" placeholder="e.g. Batch #2026-A" value={programForm.batchName} onChange={e => setProgramForm({...programForm, batchName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Trainer Name</label><input type="text" value={programForm.trainerName} onChange={e => setProgramForm({...programForm, trainerName: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Joining / Start Date</label><input type="date" value={programForm.courseStartDate} onChange={e => setProgramForm({...programForm, courseStartDate: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Completion Date</label><input type="date" value={programForm.completedAt} onChange={e => setProgramForm({...programForm, completedAt: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Duration</label><input type="text" placeholder="e.g. 3 Months, 5 Hours" value={programForm.courseDuration} onChange={e => setProgramForm({...programForm, courseDuration: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Batch Name</label><input type="text" placeholder="e.g. Batch #2026-A" value={programForm.batchName} onChange={e => setProgramForm({ ...programForm, batchName: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Trainer Name</label><input type="text" value={programForm.trainerName} onChange={e => setProgramForm({ ...programForm, trainerName: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Joining / Start Date</label><input type="date" value={programForm.courseStartDate} onChange={e => setProgramForm({ ...programForm, courseStartDate: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Completion Date</label><input type="date" value={programForm.completedAt} onChange={e => setProgramForm({ ...programForm, completedAt: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Duration</label><input type="text" placeholder="e.g. 3 Months, 5 Hours" value={programForm.courseDuration} onChange={e => setProgramForm({ ...programForm, courseDuration: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
                           <div>
                             <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Mode of Learning</label>
-                            <select value={programForm.modeOfLearning} onChange={e => setProgramForm({...programForm, modeOfLearning: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}>
+                            <select value={programForm.modeOfLearning} onChange={e => setProgramForm({ ...programForm, modeOfLearning: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }}>
                               <option value="Offline">Offline</option>
                               <option value="Online">Online</option>
                               <option value="Hybrid">Hybrid</option>
                             </select>
                           </div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>In Association With</label><input type="text" placeholder="e.g. Younus College of Engineering" value={programForm.trainingLocation} onChange={e => setProgramForm({...programForm, trainingLocation: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Topics Covered</label><input type="text" placeholder="e.g. Artificial Intelligence, Agentic Systems" value={programForm.programmeDomain} onChange={e => setProgramForm({...programForm, programmeDomain: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>In Association With</label><input type="text" placeholder="e.g. Younus College of Engineering" value={programForm.trainingLocation} onChange={e => setProgramForm({ ...programForm, trainingLocation: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Topics Covered</label><input type="text" placeholder="e.g. Artificial Intelligence, Agentic Systems" value={programForm.programmeDomain} onChange={e => setProgramForm({ ...programForm, programmeDomain: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
                         </div>
                       )}
                     </div>
@@ -2305,25 +2711,25 @@ export default function CandidatesAdmin() {
                       ) : (
                         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Standard Course Fee (₹)</label><input type="number" min="0" value={feeForm.standardCourseFee} onChange={e => setFeeForm({...feeForm, standardCourseFee: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Scholarship Amount (₹)</label><input type="number" min="0" value={feeForm.scholarshipAmount} onChange={e => setFeeForm({...feeForm, scholarshipAmount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Special Discount (₹)</label><input type="number" min="0" value={feeForm.specialDiscount} onChange={e => setFeeForm({...feeForm, specialDiscount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Corporate Discount (₹)</label><input type="number" min="0" value={feeForm.corporateDiscount} onChange={e => setFeeForm({...feeForm, corporateDiscount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Promo Discount (₹)</label><input type="number" min="0" value={feeForm.promoDiscount} onChange={e => setFeeForm({...feeForm, promoDiscount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>GST (%)</label><input type="number" min="0" max="100" value={feeForm.gstPercentage} onChange={e => setFeeForm({...feeForm, gstPercentage: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Convenience Fee (₹)</label><input type="number" min="0" value={feeForm.convenienceFee} onChange={e => setFeeForm({...feeForm, convenienceFee: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Booking Amount (₹)</label><input type="number" min="0" value={feeForm.bookingAmount} onChange={e => setFeeForm({...feeForm, bookingAmount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Admission Fee Amount (₹)</label><input type="number" min="0" value={feeForm.admissionFeeAmount} onChange={e => setFeeForm({...feeForm, admissionFeeAmount: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
-                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Offer Expiry Date</label><input type="date" value={feeForm.offerExpiryDate} onChange={e => setFeeForm({...feeForm, offerExpiryDate: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Standard Course Fee (₹)</label><input type="number" min="0" value={feeForm.standardCourseFee} onChange={e => setFeeForm({ ...feeForm, standardCourseFee: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Scholarship Amount (₹)</label><input type="number" min="0" value={feeForm.scholarshipAmount} onChange={e => setFeeForm({ ...feeForm, scholarshipAmount: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Special Discount (₹)</label><input type="number" min="0" value={feeForm.specialDiscount} onChange={e => setFeeForm({ ...feeForm, specialDiscount: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Corporate Discount (₹)</label><input type="number" min="0" value={feeForm.corporateDiscount} onChange={e => setFeeForm({ ...feeForm, corporateDiscount: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Promo Discount (₹)</label><input type="number" min="0" value={feeForm.promoDiscount} onChange={e => setFeeForm({ ...feeForm, promoDiscount: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>GST (%)</label><input type="number" min="0" max="100" value={feeForm.gstPercentage} onChange={e => setFeeForm({ ...feeForm, gstPercentage: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Convenience Fee (₹)</label><input type="number" min="0" value={feeForm.convenienceFee} onChange={e => setFeeForm({ ...feeForm, convenienceFee: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Booking Amount (₹)</label><input type="number" min="0" value={feeForm.bookingAmount} onChange={e => setFeeForm({ ...feeForm, bookingAmount: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Admission Fee Amount (₹)</label><input type="number" min="0" value={feeForm.admissionFeeAmount} onChange={e => setFeeForm({ ...feeForm, admissionFeeAmount: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
+                            <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Offer Expiry Date</label><input type="date" value={feeForm.offerExpiryDate} onChange={e => setFeeForm({ ...feeForm, offerExpiryDate: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px" }} /></div>
                           </div>
-                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Offer Remarks</label><textarea rows={2} value={feeForm.offerRemarks} onChange={e => setFeeForm({...feeForm, offerRemarks: e.target.value})} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px", resize: "none" }} /></div>
+                          <div><label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600", marginBottom: "4px", display: "block" }}>Offer Remarks</label><textarea rows={2} value={feeForm.offerRemarks} onChange={e => setFeeForm({ ...feeForm, offerRemarks: e.target.value })} style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "#fff", fontSize: "13px", resize: "none" }} /></div>
                           <div style={{ display: "flex", gap: "20px", alignItems: "center", margin: "5px 0" }}>
                             <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#fff", cursor: "pointer" }}>
-                              <input type="checkbox" checked={feeForm.admissionFeePaid} onChange={e => setFeeForm({...feeForm, admissionFeePaid: e.target.checked})} />
+                              <input type="checkbox" checked={feeForm.admissionFeePaid} onChange={e => setFeeForm({ ...feeForm, admissionFeePaid: e.target.checked })} />
                               Admission Fee Paid
                             </label>
                             <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#fff", cursor: "pointer" }}>
-                              <input type="checkbox" checked={feeForm.autoEnrollEnabled} onChange={e => setFeeForm({...feeForm, autoEnrollEnabled: e.target.checked})} />
+                              <input type="checkbox" checked={feeForm.autoEnrollEnabled} onChange={e => setFeeForm({ ...feeForm, autoEnrollEnabled: e.target.checked })} />
                               Auto-Enroll on Admission Fee Payment
                             </label>
                           </div>
@@ -2572,7 +2978,7 @@ export default function CandidatesAdmin() {
               </span>
               {confirmDialog.title}
             </h3>
-            
+
             <p style={{
               margin: '0 0 24px 0',
               fontSize: '14px',
@@ -2581,7 +2987,7 @@ export default function CandidatesAdmin() {
             }}>
               {confirmDialog.message}
             </p>
-            
+
             <div style={{
               display: 'flex',
               justifyContent: 'flex-end',
@@ -2630,6 +3036,152 @@ export default function CandidatesAdmin() {
           </div>
         </div>
       )}
+
+      {/* ── Add Course Modal ──────────────────────────────────────────────── */}
+      {addCourseModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#1e293b',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: '480px',
+            width: '100%',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
+            color: '#fff'
+          }}>
+            <h3 style={{
+              margin: '0 0 16px 0',
+              fontSize: '18px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: '#8b5cf6'
+            }}>
+              <span>📚</span>
+              Add Additional Course
+            </h3>
+
+            <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: '#94a3b8', lineHeight: '1.5' }}>
+              Enroll <strong style={{ color: '#fff' }}>{selectedCandidate?.fullName}</strong> in an additional course.
+              Personal information will be reused from the existing profile.
+            </p>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', marginBottom: '6px', display: 'block' }}>
+                Select Course / Program
+              </label>
+              <select
+                value={selectedNewCourseId}
+                onChange={(e) => { setSelectedNewCourseId(e.target.value); setEnrollError(null); }}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '10px 12px',
+                  background: '#0f172a',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontSize: '14px',
+                }}
+              >
+                <option value="">-- Select a course --</option>
+
+              {programOptions
+                  .filter((p) => {
+                          // Exclude courses without a valid program ID
+                    if (p.id === null) return false;
+
+                    // Don't show courses already enrolled by this candidate
+                    const enrolledTitles = enrolledApplications.map(
+                    (a) => (a.courseApplied || "").trim().toLowerCase()
+                  );
+
+                 return !enrolledTitles.includes(
+                      (p.name || "").trim().toLowerCase()
+                );
+                })
+              .map((p) => (
+                <option key={p.id!} value={p.id!}>
+                {p.name}
+               </option>
+              ))}
+              </select>
+            </div>
+
+            {enrollError && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                marginBottom: '16px',
+                fontSize: '13px',
+                color: '#f87171',
+                lineHeight: '1.5',
+              }}>
+                {enrollError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={() => { setAddCourseModalOpen(false); setEnrollError(null); setSelectedNewCourseId(""); }}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#94a3b8',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleEnrollAdditional}
+                disabled={!selectedNewCourseId || isEnrollingCourse}
+                style={{
+                  background: !selectedNewCourseId || isEnrollingCourse
+                    ? 'rgba(139, 92, 246, 0.3)'
+                    : 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 20px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: !selectedNewCourseId || isEnrollingCourse ? 'not-allowed' : 'pointer',
+                  opacity: !selectedNewCourseId || isEnrollingCourse ? 0.6 : 1,
+                  boxShadow: '0 4px 12px rgba(139, 92, 246, 0.25)',
+                }}
+              >
+                {isEnrollingCourse ? "Enrolling..." : "Add Course"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── End Add Course Modal ──────────────────────────────────────────── */}
+
     </div>
   );
 }

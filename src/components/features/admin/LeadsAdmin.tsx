@@ -81,6 +81,7 @@ export default function LeadsAdmin() {
   const [bulkActionValue, setBulkActionValue] = useState('');
 
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
 
   const loadLeads = async (force = false) => {
@@ -366,10 +367,10 @@ export default function LeadsAdmin() {
   };
 
   const handleSelectAll = () => {
-    if (selectedIds.length === leads.length) {
+    if (selectedIds.length === filteredLeads.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(leads.map(l => l.id));
+      setSelectedIds(filteredLeads.map(l => l.id));
     }
   };
 
@@ -486,6 +487,21 @@ export default function LeadsAdmin() {
     "College Drive", "Instagram", "Facebook", "Google Search", "Google Business",
     "AI Assistant", "Manual Entry"
   ];
+
+  // Derive filtered leads from search query (client-side, no extra API calls)
+  const filteredLeads = (() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return leads;
+    return leads.filter(lead => {
+      return (
+        lead.name.toLowerCase().includes(q) ||
+        lead.email.toLowerCase().includes(q) ||
+        (lead.phone || '').toLowerCase().includes(q) ||
+        (lead.interestedCourse || '').toLowerCase().includes(q) ||
+        lead.id.toLowerCase().includes(q)
+      );
+    });
+  })();
 
   return (
     <div className="admin-page">
@@ -642,7 +658,57 @@ export default function LeadsAdmin() {
 
       {/* Main Table Panel */}
       <div className="admin-kpi-card glass-panel" style={{ display: 'block', padding: '24px' }}>
-        <h3 style={{ marginBottom: '20px', color: '#001943' }}>Lead Listings</h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
+          <h3 style={{ margin: 0, color: '#001943' }}>Lead Listings</h3>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <span
+              className="material-symbols-outlined"
+              style={{ position: 'absolute', left: '10px', fontSize: '18px', color: '#94a3b8', pointerEvents: 'none' }}
+            >
+              search
+            </span>
+            <input
+              id="leads-search-input"
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search leads..."
+              style={{
+                background: '#f8fafc',
+                color: '#001943',
+                border: '1px solid #cbd5e1',
+                height: '38px',
+                borderRadius: '8px',
+                padding: '0 36px 0 36px',
+                outline: 'none',
+                fontSize: '13px',
+                width: '240px',
+                transition: 'border-color 0.15s',
+              }}
+              onFocus={e => (e.currentTarget.style.borderColor = '#3b82f6')}
+              onBlur={e => (e.currentTarget.style.borderColor = '#cbd5e1')}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#94a3b8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0',
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+              </button>
+            )}
+          </div>
+        </div>
         
         <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch', marginBottom: '16px' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
@@ -651,7 +717,7 @@ export default function LeadsAdmin() {
                 <th style={{ padding: '12px 8px', width: '40px' }}>
                   <input 
                     type="checkbox" 
-                    checked={leads.length > 0 && selectedIds.length === leads.length}
+                    checked={filteredLeads.length > 0 && selectedIds.length === filteredLeads.length}
                     onChange={handleSelectAll}
                     style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                   />
@@ -677,12 +743,14 @@ export default function LeadsAdmin() {
                     <td style={{ padding: '16px 8px' }}><div className="skeleton-line" style={{ width: '20%' }} /></td>
                   </tr>
                 ))
-              ) : leads.length === 0 ? (
+              ) : filteredLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>No student inquiries found.</td>
+                  <td colSpan={7} style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>
+                    {searchQuery.trim() ? `No leads match "${searchQuery.trim()}".` : 'No student inquiries found.'}
+                  </td>
                 </tr>
               ) : (
-                leads.map(lead => (
+                filteredLeads.map(lead => (
                   <tr 
                     key={lead.id} 
                     style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
@@ -756,7 +824,7 @@ export default function LeadsAdmin() {
                 <span>Loading more leads...</span>
               </div>
             ) : (
-              <span>All leads loaded ({leads.length})</span>
+              <span>{searchQuery.trim() ? `${filteredLeads.length} of ${leads.length} leads shown` : `All leads loaded (${leads.length})`}</span>
             )}
           </div>
         )}

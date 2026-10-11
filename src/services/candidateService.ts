@@ -613,6 +613,7 @@ export const updateCandidateFeeInfo = async (id: string, data: any): Promise<Can
 };
 
 export interface ProgramOption {
+  id: string | null;
   name: string;
   type: string;
   count: number;
@@ -623,3 +624,34 @@ export const getProgramOptions = async (): Promise<ProgramOption[]> => {
   return res.data;
 };
 
+/**
+ * Enroll an existing candidate (identified by lead_id) in an additional course.
+ * Calls POST /candidates/enroll-additional
+ * Backend creates a new CandidateApplication without sending onboarding email.
+ */
+export const enrollAdditionalCourse = async (
+  leadId: string,
+  newProgramId: string
+): Promise<Candidate> => {
+  const res = await api.post("/candidates/enroll-additional", {
+    lead_id: leadId,
+    new_program_id: newProgramId,
+  });
+  return mapCandidate(res.data);
+};
+
+/**
+ * Fetch all CandidateApplications that share the same lead_id.
+ * Used to display the "Enrolled Courses" list in the Candidate Profile.
+ */
+export const getCandidatesByLeadId = async (
+  leadId: string
+): Promise<Candidate[]> => {
+  const res = await api.get("/candidates/", {
+    params: { lead_id: leadId, limit: 100 },
+  });
+  if (res.data && Array.isArray(res.data.records)) {
+    return res.data.records.map(mapCandidate);
+  }
+  return [];
+};

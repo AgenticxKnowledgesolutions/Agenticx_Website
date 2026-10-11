@@ -162,7 +162,7 @@ export default function Contact() {
               </div>
               <p className="card-text">
                 {settings?.companyName || "AgenticX Knowledge Solutions"}<br/>
-                {settings?.addressLine1 || "3rd Floor, Raj Plaza"}<br/>
+                {settings?.addressLine1 || "3rd Floor, Raj Plaza,"}<br/>
                 {[settings?.addressLine2, settings?.city, settings?.state, settings?.postalCode].filter(Boolean).join(", ") || "Town Limit, Kollam"}
               </p>
             </div>
